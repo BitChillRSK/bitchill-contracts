@@ -7,13 +7,13 @@ const rpcUrl = process.env.RPC_URL
 // Configuración del proveedor y del contrato
 const provider = new ethers.JsonRpcProvider(rpcUrl);
 const contractAddress = '';
-const abi = []; // ABI de tu contrato actualizado
-const privateKey = process.env.PRIVATE_KEY; // Mantén esto seguro y no lo expongas
+const abi = [];
+const privateKey = process.env.PRIVATE_KEY;
 const wallet = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
 // Lista de direcciones de usuarios
-const userAddresses = ['0x...', '0x...' ]
+const userAddresses = ['0x...', '0x...']
 
 async function checkAndExecuteBuys() {
     for (const userAddress of userAddresses) {
