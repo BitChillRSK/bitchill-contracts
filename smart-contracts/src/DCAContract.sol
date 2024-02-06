@@ -33,6 +33,7 @@ contract DCAContract is Ownable {
     mapping(address user => uint256 purchasePeriod) private s_docPurchasePeriods; // Time between purchases
     mapping(address user => uint256 lastPurchaseTimestamp) private s_lastPurchaseTimestamps; // Time between purchases
     mapping(address user => uint256 accumulatedBtc) private s_rbtcBalances; // Accumulated RBTC balance of users
+    address[] private s_users; // Users that have deposited DOC in the DCA contract
 
     //////////////////////
     // Events ////////////
@@ -96,6 +97,12 @@ contract DCAContract is Ownable {
         bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
         if (!depositSuccess) revert DocDepositFailed();
 
+        // Add user to users array
+        /**
+         * @notice every time a user makes a deposit they will be added to the users array, which is filtered in the dApp's back end.
+         * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
+         */
+        s_users.push(msg.sender);
         // Update user's DOC balance in the mapping
         s_docBalances[msg.sender] += depositAmount;
 
@@ -147,8 +154,11 @@ contract DCAContract is Ownable {
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
     function buy(address buyer) external onlyOwner {
-        if (block.timestamp - s_lastPurchaseTimestamps[buyer] < s_docPurchasePeriods[buyer]) {
-            revert CannotBuyIfPurchasePeriodHasNotElapsed();
+        // If the user made their first purchase, check that period has elapsed before making a new purchase
+        if (s_rbtcBalances[buyer] > 0) {
+            if (block.timestamp - s_lastPurchaseTimestamps[buyer] < s_docPurchasePeriods[buyer]) {
+                revert CannotBuyIfPurchasePeriodHasNotElapsed();
+            }
         }
 
         // Redeem DOC for rBTC
@@ -199,6 +209,18 @@ contract DCAContract is Ownable {
 
     function getPurchaseAmount() external view returns (uint256) {
         return s_docPurchaseAmounts[msg.sender];
+    }
+
+    function getPurchasePeriod() external view returns (uint256) {
+        return s_docPurchasePeriods[msg.sender];
+    }
+
+    function getUsers() external view returns (address[] memory) {
+        return s_users;
+    }
+
+    function getTotalNumberOfDeposits() external view returns (uint256) {
+        return s_users.length;
     }
 
     receive() external payable onlyMocProxy {}

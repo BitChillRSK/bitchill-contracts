@@ -17,10 +17,12 @@ contract DCAContractTest is Test {
 
     address USER = makeAddr("user");
     address OWNER = makeAddr("owner");
-    uint256 constant STARTING_USER_BALANCE = 10 ether; // 10 rBTC
-    uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC
+    uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
+    uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
     uint256 constant DOC_TO_DEPOSIT = 1000 ether; // 1000 DOC
     uint256 constant DOC_TO_SPEND = 100 ether; // 100 DOC for periodical purchases
+    uint256 constant PURCHASE_PERIOD = 5 seconds;
+    uint256 constant BTC_PRICE = 40_000;
 
     //////////////////////
     // Events ////////////
@@ -61,7 +63,7 @@ contract DCAContractTest is Test {
 
         // Send rBTC funds to mock contract and user
         vm.deal(mocProxyAddress, 1000 ether);
-        vm.deal(USER, STARTING_USER_BALANCE);
+        vm.deal(USER, STARTING_RBTC_USER_BALANCE);
 
         // Mint 10000 DOC for the user
         mockDockToken.mint(USER, USER_TOTAL_DOC);
@@ -73,6 +75,9 @@ contract DCAContractTest is Test {
         vm.stopPrank();
     }
 
+    /////////////////////////
+    /// DOC deposit tests ///
+    /////////////////////////
     function testDocDeposit() external {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaContract.getDocBalance();
@@ -93,13 +98,16 @@ contract DCAContractTest is Test {
         vm.stopPrank();
     }
 
-    function testCannotDepositWithoutApprovingFirst() external {
+    function testDepositRevertsIfDocNotApproved() external {
         vm.startPrank(USER);
         vm.expectRevert();
         dcaContract.depositDOC(DOC_TO_DEPOSIT);
         vm.stopPrank();
     }
 
+    ////////////////////////////
+    /// DOC Withdrawal tests ///
+    ////////////////////////////
     function testDocWithdrawal() external {
         vm.startPrank(USER);
         vm.expectEmit(true, true, false, false);
@@ -117,17 +125,27 @@ contract DCAContractTest is Test {
         vm.stopPrank();
     }
 
-    function testWithdrawalAmountCannotExceedBalance() external {
+    function testWithdrawalRevertsIfAmountExceedsBalance() external {
         vm.startPrank(USER);
         vm.expectRevert(DocWithdrawalAmountExceedsBalance.selector);
         dcaContract.withdrawDOC(USER_TOTAL_DOC);
         vm.stopPrank();
     }
 
+    ///////////////////////////////
+    /// DCA configuration tests ///
+    ///////////////////////////////
     function testSetPurchaseAmount() external {
         vm.startPrank(USER);
         dcaContract.setPurchaseAmount(DOC_TO_SPEND);
         assertEq(DOC_TO_SPEND, dcaContract.getPurchaseAmount());
+        vm.stopPrank();
+    }
+
+    function testSetPurchasePeriod() external {
+        vm.startPrank(USER);
+        dcaContract.setPurchasePeriod(PURCHASE_PERIOD);
+        assertEq(PURCHASE_PERIOD, dcaContract.getPurchasePeriod());
         vm.stopPrank();
     }
 
@@ -145,17 +163,63 @@ contract DCAContractTest is Test {
         vm.stopPrank();
     }
 
-    function testPurchase() external {
+    //////////////////////
+    /// Purchase tests ///
+    //////////////////////
+    function testSinglePurchase() external {
         vm.startPrank(USER);
         mockDockToken.approve(address(dcaContract), DOC_TO_DEPOSIT);
         uint256 docBalanceBeforePurchase = dcaContract.getDocBalance();
+        uint256 RbtcBalanceBeforePurchase = dcaContract.getRbtcBalance();
         dcaContract.setPurchaseAmount(DOC_TO_SPEND);
         vm.stopPrank();
         vm.prank(OWNER);
-        // console.log(dcaContract.owner());
         dcaContract.buy(USER);
-        vm.prank(USER);
+        vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaContract.getDocBalance();
+        uint256 RbtcBalanceAfterPurchase = dcaContract.getRbtcBalance();
+        vm.stopPrank();
+        // Check that DOC was substracted and rBTC was added to user's balances
         assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, DOC_TO_SPEND);
+        assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, DOC_TO_SPEND / BTC_PRICE);
+    }
+
+    function testCannotBuyIfPeriodNotElapsed() external {
+        vm.startPrank(USER);
+        mockDockToken.approve(address(dcaContract), DOC_TO_DEPOSIT);
+        dcaContract.setPurchaseAmount(DOC_TO_SPEND);
+        dcaContract.setPurchasePeriod(PURCHASE_PERIOD);
+        vm.stopPrank();
+        vm.prank(OWNER);
+        dcaContract.buy(USER); // first purchase
+        vm.expectRevert(CannotBuyIfPurchasePeriodHasNotElapsed.selector);
+        vm.prank(OWNER);
+        dcaContract.buy(USER); // second purchase
+    }
+
+    function testSeveralPurchases() external {
+        uint8 numOfPurchases = 5;
+        vm.prank(USER);
+        dcaContract.setPurchasePeriod(PURCHASE_PERIOD);
+        for (uint8 i; i < numOfPurchases; i++) {
+            this.testSinglePurchase();
+            vm.warp(block.timestamp + PURCHASE_PERIOD);
+        }
+        vm.prank(USER);
+        assertEq(dcaContract.getRbtcBalance(), (DOC_TO_SPEND / BTC_PRICE) * numOfPurchases);
+    }
+
+    /////////////////////////////
+    /// rBTC Withdrawal tests ///
+    /////////////////////////////
+
+    function testWithdrawRbtc() external {
+        this.testSinglePurchase();
+        vm.startPrank(USER);
+        uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
+        dcaContract.withdrawAccumulatedRbtc();
+        uint256 rbtcBalanceAfterWithdrawal = USER.balance;
+        vm.stopPrank();
+        assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, DOC_TO_SPEND / BTC_PRICE);
     }
 }
