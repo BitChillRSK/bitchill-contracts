@@ -22,7 +22,7 @@ interface MocProxyContract {
  * @notice The DOC deposited in this contract will be used to make periodical rBTC purchases
  * @custom:unaudited This is an unaudited contract
  */
-contract DCAContract is Ownable {
+contract RbtcDca is Ownable {
     //////////////////////
     // State variables ///
     //////////////////////
@@ -48,26 +48,26 @@ contract DCAContract is Ownable {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error DepositAmountMustBeGreaterThanZero();
-    error DocWithdrawalAmountMustBeGreaterThanZero();
-    error DocWithdrawalAmountExceedsBalance();
-    error DocDepositFailed();
-    error DocWithdrawalFailed();
-    error PurchaseAmountMustBeGreaterThanZero();
-    error PurchasePeriodMustBeGreaterThanZero();
-    error PurchaseAmountMustBeLowerThanHalfOfBalance();
-    error RedeemDocRequestFailed();
-    error RedeemFreeDocFailed();
-    error CannotWithdrawRbtcBeforeBuying();
-    error rBtcWithdrawalFailed();
-    error OnlyMocProxyContractCanSendRbtcToDcaContract();
-    error CannotBuyIfPurchasePeriodHasNotElapsed();
+    error RbtcDca__DepositAmountMustBeGreaterThanZero();
+    error RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
+    error RbtcDca__DocWithdrawalAmountExceedsBalance();
+    error RbtcDca__DocDepositFailed();
+    error RbtcDca__DocWithdrawalFailed();
+    error RbtcDca__PurchaseAmountMustBeGreaterThanZero();
+    error RbtcDca__PurchasePeriodMustBeGreaterThanZero();
+    error RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
+    error RbtcDca__RedeemDocRequestFailed();
+    error RbtcDca__RedeemFreeDocFailed();
+    error RbtcDca__CannotWithdrawRbtcBeforeBuying();
+    error RbtcDca__rBtcWithdrawalFailed();
+    error RbtcDca__OnlyMocProxyContractCanSendRbtcToDcaContract();
+    error RbtcDca__CannotBuyIfPurchasePeriodHasNotElapsed();
 
     //////////////////////
     // Modifiers /////////
     //////////////////////
     modifier onlyMocProxy() {
-        if (msg.sender != address(i_mocProxyContract)) revert OnlyMocProxyContractCanSendRbtcToDcaContract();
+        if (msg.sender != address(i_mocProxyContract)) revert RbtcDca__OnlyMocProxyContractCanSendRbtcToDcaContract();
         _;
     }
 
@@ -91,7 +91,7 @@ contract DCAContract is Ownable {
      * @param depositAmount: the amount of DOC to deposit
      */
     function depositDOC(uint256 depositAmount) external {
-        if (depositAmount <= 0) revert DepositAmountMustBeGreaterThanZero();
+        if (depositAmount <= 0) revert RbtcDca__DepositAmountMustBeGreaterThanZero();
 
         uint256 prevDocBalance = s_docBalances[msg.sender];
         // Update user's DOC balance in the mapping
@@ -100,7 +100,7 @@ contract DCAContract is Ownable {
         // Transfer DOC from the user to this contract, user must have called the DOC contract's
         // approve function with this contract's address and the amount approved
         bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
-        if (!depositSuccess) revert DocDepositFailed();
+        if (!depositSuccess) revert RbtcDca__DocDepositFailed();
 
         // Add user to users array
         /**
@@ -117,15 +117,15 @@ contract DCAContract is Ownable {
      * @param withdrawalAmount: the amount of DOC to withdraw
      */
     function withdrawDOC(uint256 withdrawalAmount) external {
-        if (withdrawalAmount <= 0) revert DocWithdrawalAmountMustBeGreaterThanZero();
-        if (withdrawalAmount > s_docBalances[msg.sender]) revert DocWithdrawalAmountExceedsBalance();
+        if (withdrawalAmount <= 0) revert RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
+        if (withdrawalAmount > s_docBalances[msg.sender]) revert RbtcDca__DocWithdrawalAmountExceedsBalance();
 
         // Update user's DOC balance in the mapping
         s_docBalances[msg.sender] -= withdrawalAmount;
 
         // Transfer DOC from this contract back to the user
         bool withdrawalSuccess = i_docTokenContract.transfer(msg.sender, withdrawalAmount);
-        if (!withdrawalSuccess) revert DocWithdrawalFailed();
+        if (!withdrawalSuccess) revert RbtcDca__DocWithdrawalFailed();
 
         emit DocWithdrawn(msg.sender, withdrawalAmount);
     }
@@ -135,8 +135,10 @@ contract DCAContract is Ownable {
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
     function setPurchaseAmount(uint256 purchaseAmount) external {
-        if (purchaseAmount <= 0) revert PurchaseAmountMustBeGreaterThanZero();
-        if (purchaseAmount > s_docBalances[msg.sender] / 2) revert PurchaseAmountMustBeLowerThanHalfOfBalance(); //At least two DCA purchases
+        if (purchaseAmount <= 0) revert RbtcDca__PurchaseAmountMustBeGreaterThanZero();
+        if (purchaseAmount > s_docBalances[msg.sender] / 2) {
+            revert RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
+        } //At least two DCA purchases
         s_docPurchaseAmounts[msg.sender] = purchaseAmount;
         emit PurchaseAmountSet(msg.sender, purchaseAmount);
     }
@@ -146,7 +148,7 @@ contract DCAContract is Ownable {
      * @notice the period
      */
     function setPurchasePeriod(uint256 purchasePeriod) external {
-        if (purchasePeriod <= 0) revert PurchasePeriodMustBeGreaterThanZero();
+        if (purchasePeriod <= 0) revert RbtcDca__PurchasePeriodMustBeGreaterThanZero();
         s_docPurchasePeriods[msg.sender] = purchasePeriod;
         emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
@@ -160,7 +162,7 @@ contract DCAContract is Ownable {
         // If the user made their first purchase, check that period has elapsed before making a new purchase
         if (s_rbtcBalances[buyer] > 0) {
             if (block.timestamp - s_lastPurchaseTimestamps[buyer] < s_docPurchasePeriods[buyer]) {
-                revert CannotBuyIfPurchasePeriodHasNotElapsed();
+                revert RbtcDca__CannotBuyIfPurchasePeriodHasNotElapsed();
             }
         }
 
@@ -171,13 +173,13 @@ contract DCAContract is Ownable {
         (bool success,) = address(i_mocProxyContract).call(
             abi.encodeWithSignature("redeemDocRequest(uint256)", s_docPurchaseAmounts[buyer])
         );
-        if (!success) revert RedeemDocRequestFailed();
+        if (!success) revert RbtcDca__RedeemDocRequestFailed();
         // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
         uint256 balancePrev = address(this).balance;
         (success,) = address(i_mocProxyContract).call(
             abi.encodeWithSignature("redeemFreeDoc(uint256)", s_docPurchaseAmounts[buyer])
         );
-        if (!success) revert RedeemFreeDocFailed();
+        if (!success) revert RbtcDca__RedeemFreeDocFailed();
         uint256 balancePost = address(this).balance;
 
         s_rbtcBalances[buyer] += (balancePost - balancePrev);
@@ -191,12 +193,12 @@ contract DCAContract is Ownable {
     function withdrawAccumulatedRbtc() external {
         address user = msg.sender;
         uint256 rbtcBalance = s_rbtcBalances[user];
-        if (rbtcBalance == 0) revert CannotWithdrawRbtcBeforeBuying();
+        if (rbtcBalance == 0) revert RbtcDca__CannotWithdrawRbtcBeforeBuying();
 
         s_rbtcBalances[user] = 0;
         // Transfer RBTC from this contract back to the user
         (bool sent,) = user.call{value: rbtcBalance}("");
-        if (!sent) revert rBtcWithdrawalFailed();
+        if (!sent) revert RbtcDca__rBtcWithdrawalFailed();
         emit rBtcWithdrawn(user, rbtcBalance);
     }
 
