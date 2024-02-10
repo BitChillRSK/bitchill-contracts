@@ -17,9 +17,9 @@ contract DeployDca is Script {
         vm.startBroadcast();
         // After startBroadcast -> "real" tx
         DCAContract dcaContract = new DCAContract(docToken, mocProxy);
-        // dcaContract.transferOwnership(OWNER); // Only for tests!!!
+        dcaContract.transferOwnership(OWNER); // Only for tests!!!
         // dcaContract.transferOwnership(0x8191c3a9DF486A09d8087E99A1b2b6885Cc17214); // Carlos
-        dcaContract.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
+        // dcaContract.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
         vm.stopBroadcast();
         return (dcaContract, helperConfig);
     }

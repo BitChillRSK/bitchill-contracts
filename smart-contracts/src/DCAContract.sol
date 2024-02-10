@@ -58,6 +58,7 @@ contract DCAContract is Ownable {
     error PurchaseAmountMustBeLowerThanHalfOfBalance();
     error RedeemDocRequestFailed();
     error RedeemFreeDocFailed();
+    error CannotWithdrawRbtcBeforeBuying();
     error rBtcWithdrawalFailed();
     error OnlyMocProxyContractCanSendRbtcToDcaContract();
     error CannotBuyIfPurchasePeriodHasNotElapsed();
@@ -92,6 +93,10 @@ contract DCAContract is Ownable {
     function depositDOC(uint256 depositAmount) external {
         if (depositAmount <= 0) revert DepositAmountMustBeGreaterThanZero();
 
+        uint256 prevDocBalance = s_docBalances[msg.sender];
+        // Update user's DOC balance in the mapping
+        s_docBalances[msg.sender] += depositAmount;
+
         // Transfer DOC from the user to this contract, user must have called the DOC contract's
         // approve function with this contract's address and the amount approved
         bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
@@ -99,12 +104,10 @@ contract DCAContract is Ownable {
 
         // Add user to users array
         /**
-         * @notice every time a user makes a deposit they will be added to the users array, which is filtered in the dApp's back end.
+         * @notice every time a user who ran out of deposited DOC makes a new deposit they will be added to the users array, which is filtered in the dApp's back end.
          * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
          */
-        s_users.push(msg.sender);
-        // Update user's DOC balance in the mapping
-        s_docBalances[msg.sender] += depositAmount;
+        if (prevDocBalance == 0) s_users.push(msg.sender);
 
         emit DocDeposited(msg.sender, depositAmount);
     }
@@ -117,12 +120,12 @@ contract DCAContract is Ownable {
         if (withdrawalAmount <= 0) revert DocWithdrawalAmountMustBeGreaterThanZero();
         if (withdrawalAmount > s_docBalances[msg.sender]) revert DocWithdrawalAmountExceedsBalance();
 
+        // Update user's DOC balance in the mapping
+        s_docBalances[msg.sender] -= withdrawalAmount;
+
         // Transfer DOC from this contract back to the user
         bool withdrawalSuccess = i_docTokenContract.transfer(msg.sender, withdrawalAmount);
         if (!withdrawalSuccess) revert DocWithdrawalFailed();
-
-        // Update user's DOC balance in the mapping
-        s_docBalances[msg.sender] -= withdrawalAmount;
 
         emit DocWithdrawn(msg.sender, withdrawalAmount);
     }
@@ -153,13 +156,16 @@ contract DCAContract is Ownable {
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buy(address buyer) external onlyOwner {
+    function buyRbtc(address buyer) external onlyOwner {
         // If the user made their first purchase, check that period has elapsed before making a new purchase
         if (s_rbtcBalances[buyer] > 0) {
             if (block.timestamp - s_lastPurchaseTimestamps[buyer] < s_docPurchasePeriods[buyer]) {
                 revert CannotBuyIfPurchasePeriodHasNotElapsed();
             }
         }
+
+        s_docBalances[buyer] -= s_docPurchaseAmounts[buyer];
+        s_lastPurchaseTimestamps[buyer] = block.timestamp;
 
         // Redeem DOC for rBTC
         (bool success,) = address(i_mocProxyContract).call(
@@ -174,11 +180,8 @@ contract DCAContract is Ownable {
         if (!success) revert RedeemFreeDocFailed();
         uint256 balancePost = address(this).balance;
 
-        s_docBalances[buyer] -= s_docPurchaseAmounts[buyer];
         s_rbtcBalances[buyer] += (balancePost - balancePrev);
-        s_lastPurchaseTimestamps[buyer] = block.timestamp;
 
-        // Emit event
         emit RbtcBought(msg.sender, s_docPurchaseAmounts[buyer], balancePost - balancePrev);
     }
 
@@ -186,18 +189,19 @@ contract DCAContract is Ownable {
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */
     function withdrawAccumulatedRbtc() external {
+        address user = msg.sender;
+        uint256 rbtcBalance = s_rbtcBalances[user];
+        if (rbtcBalance == 0) revert CannotWithdrawRbtcBeforeBuying();
+
+        s_rbtcBalances[user] = 0;
         // Transfer RBTC from this contract back to the user
-        (bool sent,) = msg.sender.call{value: s_rbtcBalances[msg.sender]}("");
+        (bool sent,) = user.call{value: rbtcBalance}("");
         if (!sent) revert rBtcWithdrawalFailed();
-
-        // Update user's RBTC balance in the mapping
-        s_rbtcBalances[msg.sender] -= s_rbtcBalances[msg.sender];
-
-        emit rBtcWithdrawn(msg.sender, s_rbtcBalances[msg.sender]);
+        emit rBtcWithdrawn(user, rbtcBalance);
     }
 
     //////////////////////
-    // Getter functions///
+    // Getter functions //
     //////////////////////
     function getDocBalance() external view returns (uint256) {
         return s_docBalances[msg.sender];

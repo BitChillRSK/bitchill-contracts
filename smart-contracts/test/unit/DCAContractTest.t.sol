@@ -22,7 +22,7 @@ contract DCAContractTest is Test {
     uint256 constant DOC_TO_DEPOSIT = 1000 ether; // 1000 DOC
     uint256 constant DOC_TO_SPEND = 100 ether; // 100 DOC for periodical purchases
     uint256 constant PURCHASE_PERIOD = 5 seconds;
-    uint256 constant BTC_PRICE = 40_000;
+    uint256 constant BTC_PRICE = 50_000;
 
     //////////////////////
     // Events ////////////
@@ -174,7 +174,7 @@ contract DCAContractTest is Test {
         dcaContract.setPurchaseAmount(DOC_TO_SPEND);
         vm.stopPrank();
         vm.prank(OWNER);
-        dcaContract.buy(USER);
+        dcaContract.buyRbtc(USER);
         vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaContract.getDocBalance();
         uint256 RbtcBalanceAfterPurchase = dcaContract.getRbtcBalance();
@@ -191,10 +191,10 @@ contract DCAContractTest is Test {
         dcaContract.setPurchasePeriod(PURCHASE_PERIOD);
         vm.stopPrank();
         vm.prank(OWNER);
-        dcaContract.buy(USER); // first purchase
+        dcaContract.buyRbtc(USER); // first purchase
         vm.expectRevert(CannotBuyIfPurchasePeriodHasNotElapsed.selector);
         vm.prank(OWNER);
-        dcaContract.buy(USER); // second purchase
+        dcaContract.buyRbtc(USER); // second purchase
     }
 
     function testSeveralPurchases() external {

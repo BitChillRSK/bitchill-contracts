@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 contract MockMocProxy {
-    uint256 constant BTC_PRICE = 40_000;
+    uint256 constant BTC_PRICE = 50_000;
 
     event DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
 
