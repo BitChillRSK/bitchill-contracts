@@ -7,6 +7,12 @@ import {
 	TableHead,
 	TableRow,
 } from '@mui/material';
+import { Web3Context } from '../../context/Web3Context';
+import { useContext, useEffect } from 'react';
+import { ethers } from 'ethers';
+import Web3 from 'web3';
+
+import { ABI_DCA } from './../dca/ABI_APPROVE';
 
 const rows = [
 	{
@@ -35,7 +41,33 @@ const rows = [
 		estado: 'Pendiente',
 	},
 ];
+
+const DCA_ADDRESS = '0x322D577d1db3Be7151BC547409780676a59a0E75';
+
 export default function TableActividad() {
+	const { provider, web3auth } = useContext(Web3Context);
+
+	useEffect(() => {
+		const getEventsDCA = async () => {
+			console.log('provider', provider);
+			console.log('web3auth', web3auth);
+			const provider3 = new ethers.providers.Web3Provider(provider);
+			const signer = provider3.getSigner();
+			const dcaContract = new ethers.Contract(DCA_ADDRESS, ABI_DCA, signer);
+
+			dcaContract.on('RbtcBought', (user, docAmount, rbtcAmount, event) => {
+				const data = {
+					user,
+					docAmount: docAmount.toString(),
+					rbtcAmount: rbtcAmount.toString(),
+				};
+				console.log('event RbtcBought', data);
+			});
+		};
+
+		getEventsDCA();
+	}, []);
+
 	return (
 		<TableContainer component={Paper}>
 			<Table aria-label='simple table'>
