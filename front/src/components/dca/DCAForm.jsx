@@ -21,7 +21,7 @@ import {
 	listaFrequencia,
 	frecuenciaASegundos,
 } from './utils-dca';
-import { Link } from 'react-router-dom';
+import ExplorerLink from '../explorer/ExplorerLink';
 const DCA_ADDRESS = '0x322D577d1db3Be7151BC547409780676a59a0E75';
 
 const WALLET_APPROVE = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
@@ -159,13 +159,7 @@ const DCAFrom = () => {
 					</div>
 					<div>
 						{!isLoading && txPosition && (
-							<Link
-								to={`https://explorer.testnet.rsk.co/tx/${txPosition.hash}`}
-								target={'_blank'}
-								rel={'noopener noreferrer'}
-							>
-								Revisa la transacción
-							</Link>
+							<ExplorerLink hash={txPosition.hash} />
 						)}
 					</div>
 				</Stack>

@@ -83,7 +83,8 @@ export default function TableActividad() {
 						fromBlock: 0,
 						toBlock: n,
 					})
-					.then(event => console.log(`Eventos ${EVENT_NAME_BUY}`, event));
+					.then(event => console.log(`Eventos ${EVENT_NAME_BUY}`, event))
+					.catch(() => console.log('error when get past events'));
 			});
 		};
 		// getPastEventsDCAWeb3();
