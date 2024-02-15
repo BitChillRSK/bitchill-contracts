@@ -66,7 +66,7 @@ export default function Actividad() {
 
 				setGastado(gastadoUSD);
 			} catch (error) {
-				console.log('error', error);
+				console.error('error', error);
 			} finally {
 				setIsLoading(false);
 			}
