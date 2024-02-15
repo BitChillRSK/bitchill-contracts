@@ -35,10 +35,9 @@ export default function Withdraw() {
 				18
 			);
 			const withdraw = await dcaContract.withdrawDOC(withdrawAmount);
-			console.log('cantidad retirada', withdraw);
 			setTxWithdraw(withdraw);
 		} catch (error) {
-			console.log('Error al realizar withdraw', error);
+			console.error('Error al realizar withdraw', error);
 		} finally {
 			setIsLoading(false);
 		}

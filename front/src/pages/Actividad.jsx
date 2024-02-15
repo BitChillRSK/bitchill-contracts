@@ -1,4 +1,4 @@
-import { Card, Skeleton, Stack, Typography } from '@mui/material';
+import { Card, Stack, Typography } from '@mui/material';
 import TableActividad from '../components/actividad/TableActividad';
 import { useEffect, useState } from 'react';
 import { ethers } from 'ethers';

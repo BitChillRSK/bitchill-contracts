@@ -9,9 +9,6 @@ import {
 } from '@mui/material';
 import TableSkeleton from './TableSkeleton';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-
-const EXPLORER_ULR = import.meta.env.VITE_EXPLORER_URL;
 
 export default function TableActividad({ isLoading, rows }) {
 	return (
