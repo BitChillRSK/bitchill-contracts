@@ -25,7 +25,7 @@ import ExplorerLink from '../explorer/ExplorerLink';
 
 const DCA_ADDRESS = import.meta.env.VITE_DCA_ADDRESS;
 
-const WALLET_APPROVE = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
+const WALLET_APPROVE = import.meta.env.VITE_WALLET_APPROVE;
 
 const DCAFrom = () => {
 	const [cantidad, setCantidad] = useState(0);
@@ -62,15 +62,13 @@ const DCAFrom = () => {
 			 * 0 Llamar a la función approve del contrato
 			 */
 			const tx = await tokenContract.approve(DCA_ADDRESS, amount);
-			const approveTx = await tx.wait();
-			console.log('approveTx', approveTx);
+			await tx.wait();
 
 			/**
 			 * 1 depositDOC
 			 */
 			const depositDOC = await dcaContract.depositDOC(amount);
 			await depositDOC.wait();
-			console.log('depositDOC', depositDOC);
 			setTxPosition(depositDOC);
 			/**
 			 * 2 setPurchaseAmount
@@ -80,7 +78,6 @@ const DCAFrom = () => {
 				purchaseAmount
 			);
 			await setPurchaseAmount.wait();
-			console.log('setPurchaseAmount', setPurchaseAmount);
 
 			/**
 			 * 3 setPurchasePeriode
@@ -90,7 +87,6 @@ const DCAFrom = () => {
 				segundosFrecuencia
 			);
 			await setPurchasePeriod.wait();
-			console.log('setPurchasePeriod', setPurchasePeriod);
 		} catch (error) {
 			console.error('Error sending transaction:', error);
 		} finally {
