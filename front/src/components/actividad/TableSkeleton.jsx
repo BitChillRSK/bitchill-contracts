@@ -1,7 +1,7 @@
 import { Skeleton, TableCell, TableRow } from '@mui/material';
 
 export default function TableSkeleton() {
-	return [...Array(5)].map(index => (
+	return [...Array(5)].map((_, index) => (
 		<TableRow
 			key={index}
 			sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
