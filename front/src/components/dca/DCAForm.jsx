@@ -22,7 +22,8 @@ import {
 	frecuenciaASegundos,
 } from './utils-dca';
 import ExplorerLink from '../explorer/ExplorerLink';
-const DCA_ADDRESS = '0x322D577d1db3Be7151BC547409780676a59a0E75';
+
+const DCA_ADDRESS = import.meta.env.VITE_DCA_ADDRESS;
 
 const WALLET_APPROVE = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
 

@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import useGetAccount from '../hooks/web3/useGetAccount';
 import { ABI_DCA } from '../components/dca/ABI_APPROVE';
 
-const DCA_ADDRESS = '0x322D577d1db3Be7151BC547409780676a59a0E75';
+const DCA_ADDRESS = import.meta.env.VITE_DCA_ADDRESS;
 
 const EVENT_NAME_BUY = 'RbtcBought';
 

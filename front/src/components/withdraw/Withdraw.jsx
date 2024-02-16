@@ -6,7 +6,7 @@ import { ABI_DCA } from '../dca/ABI_APPROVE';
 import { TextField, Button } from '@mui/material';
 import ExplorerLink from '../explorer/ExplorerLink';
 
-const DCA_ADDRESS = '0x322D577d1db3Be7151BC547409780676a59a0E75';
+const DCA_ADDRESS = import.meta.env.VITE_DCA_ADDRESS;
 
 export default function Withdraw() {
 	const [isLoading, setIsLoading] = useState(false);
