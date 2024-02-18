@@ -7,8 +7,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 // Interfaces ////////
 //////////////////////
 interface DocTokenContract {
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
-    function transfer(address to, uint256 value) external returns (bool);
+    function allowance(address owner, address spender) external view returns (uint256);
+    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool);
+    function transfer(address recipient, uint256 amount) external returns (bool);
 }
 
 interface MocProxyContract {
@@ -51,6 +52,7 @@ contract RbtcDca is Ownable {
     error RbtcDca__DepositAmountMustBeGreaterThanZero();
     error RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
     error RbtcDca__DocWithdrawalAmountExceedsBalance();
+    error RbtcDca__NotEnoughDocAllowanceForDcaContract();
     error RbtcDca__DocDepositFailed();
     error RbtcDca__DocWithdrawalFailed();
     error RbtcDca__PurchaseAmountMustBeGreaterThanZero();
@@ -99,6 +101,9 @@ contract RbtcDca is Ownable {
 
         // Transfer DOC from the user to this contract, user must have called the DOC contract's
         // approve function with this contract's address and the amount approved
+        if (i_docTokenContract.allowance(msg.sender, address(this)) < depositAmount) {
+            revert RbtcDca__NotEnoughDocAllowanceForDcaContract();
+        }
         bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
         if (!depositSuccess) revert RbtcDca__DocDepositFailed();
 

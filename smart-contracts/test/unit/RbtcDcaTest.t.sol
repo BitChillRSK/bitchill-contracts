@@ -40,6 +40,7 @@ contract RbtcDcaTest is Test {
     error RbtcDca__DepositAmountMustBeGreaterThanZero();
     error RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
     error RbtcDca__DocWithdrawalAmountExceedsBalance();
+    error RbtcDca__NotEnoughDocAllowanceForDcaContract();
     error RbtcDca__DocDepositFailed();
     error RbtcDca__DocWithdrawalFailed();
     error RbtcDca__PurchaseAmountMustBeGreaterThanZero();
@@ -100,7 +101,7 @@ contract RbtcDcaTest is Test {
 
     function testDepositRevertsIfDocNotApproved() external {
         vm.startPrank(USER);
-        vm.expectRevert();
+        vm.expectRevert(RbtcDca__NotEnoughDocAllowanceForDcaContract.selector);
         rbtcDca.depositDOC(DOC_TO_DEPOSIT);
         vm.stopPrank();
     }
