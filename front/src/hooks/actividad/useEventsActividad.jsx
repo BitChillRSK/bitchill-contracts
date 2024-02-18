@@ -71,7 +71,9 @@ export default function useEventsActividad() {
 			}
 		};
 
-		getEventsDCAEthers();
+		if (account) {
+			getEventsDCAEthers();
+		}
 	}, [account]);
 
 	return { rows, isLoading, comprado, gastado };
