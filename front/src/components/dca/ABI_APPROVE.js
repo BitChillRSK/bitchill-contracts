@@ -466,41 +466,6 @@ export const ABI_DCA = [
 		type: 'constructor',
 	},
 	{
-		inputs: [],
-		name: 'CannotBuyIfPurchasePeriodHasNotElapsed',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'DepositAmountMustBeGreaterThanZero',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'DocDepositFailed',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'DocWithdrawalAmountExceedsBalance',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'DocWithdrawalAmountMustBeGreaterThanZero',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'DocWithdrawalFailed',
-		type: 'error',
-	},
-	{
-		inputs: [],
-		name: 'OnlyMocProxyContractCanSendRbtcToDcaContract',
-		type: 'error',
-	},
-	{
 		inputs: [
 			{
 				internalType: 'address',
@@ -524,32 +489,77 @@ export const ABI_DCA = [
 	},
 	{
 		inputs: [],
-		name: 'PurchaseAmountMustBeGreaterThanZero',
+		name: 'RbtcDca__CannotBuyIfPurchasePeriodHasNotElapsed',
 		type: 'error',
 	},
 	{
 		inputs: [],
-		name: 'PurchaseAmountMustBeLowerThanHalfOfBalance',
+		name: 'RbtcDca__CannotWithdrawRbtcBeforeBuying',
 		type: 'error',
 	},
 	{
 		inputs: [],
-		name: 'PurchasePeriodMustBeGreaterThanZero',
+		name: 'RbtcDca__DepositAmountMustBeGreaterThanZero',
 		type: 'error',
 	},
 	{
 		inputs: [],
-		name: 'RedeemDocRequestFailed',
+		name: 'RbtcDca__DocDepositFailed',
 		type: 'error',
 	},
 	{
 		inputs: [],
-		name: 'RedeemFreeDocFailed',
+		name: 'RbtcDca__DocWithdrawalAmountExceedsBalance',
 		type: 'error',
 	},
 	{
 		inputs: [],
-		name: 'rBtcWithdrawalFailed',
+		name: 'RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__DocWithdrawalFailed',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__NotEnoughDocAllowanceForDcaContract',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__OnlyMocProxyContractCanSendRbtcToDcaContract',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__PurchaseAmountMustBeGreaterThanZero',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__PurchasePeriodMustBeGreaterThanZero',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__RedeemDocRequestFailed',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__RedeemFreeDocFailed',
+		type: 'error',
+	},
+	{
+		inputs: [],
+		name: 'RbtcDca__rBtcWithdrawalFailed',
 		type: 'error',
 	},
 	{
@@ -699,7 +709,7 @@ export const ABI_DCA = [
 				type: 'address',
 			},
 		],
-		name: 'buy',
+		name: 'buyRbtc',
 		outputs: [],
 		stateMutability: 'nonpayable',
 		type: 'function',
