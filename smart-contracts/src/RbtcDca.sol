@@ -24,16 +24,23 @@ interface MocProxyContract {
  * @custom:unaudited This is an unaudited contract
  */
 contract RbtcDca is Ownable {
+    ////////////////////////
+    // Type declarations ///
+    ////////////////////////
+    struct DcaDetails {
+        uint256 docBalance; // DOC balance deposited by the user
+        uint256 docPurchaseAmount; // DOC to spend periodically on rBTC
+        uint256 purchasePeriod; // Time between purchases
+        uint256 lastPurchaseTimestamp; // Timestamp of the latest purchase
+        uint256 rbtcBalance; // User's accumulated RBTC balance
+    }
+
     //////////////////////
     // State variables ///
     //////////////////////
     DocTokenContract immutable i_docTokenContract;
     MocProxyContract immutable i_mocProxyContract;
-    mapping(address user => uint256 docBalance) private s_docBalances; // DOC balances deposited by users
-    mapping(address user => uint256 purchaseAmount) private s_docPurchaseAmounts; // DOC to spend periodically on rBTC
-    mapping(address user => uint256 purchasePeriod) private s_docPurchasePeriods; // Time between purchases
-    mapping(address user => uint256 lastPurchaseTimestamp) private s_lastPurchaseTimestamps; // Time between purchases
-    mapping(address user => uint256 accumulatedBtc) private s_rbtcBalances; // Accumulated RBTC balance of users
+    mapping(address user => DcaDetails usersDcaDetails) private s_dcaDetails;
     address[] private s_users; // Users that have deposited DOC in the DCA contract
 
     //////////////////////
@@ -95,9 +102,9 @@ contract RbtcDca is Ownable {
     function depositDOC(uint256 depositAmount) external {
         if (depositAmount <= 0) revert RbtcDca__DepositAmountMustBeGreaterThanZero();
 
-        uint256 prevDocBalance = s_docBalances[msg.sender];
+        uint256 prevDocBalance = s_dcaDetails[msg.sender].docBalance;
         // Update user's DOC balance in the mapping
-        s_docBalances[msg.sender] += depositAmount;
+        s_dcaDetails[msg.sender].docBalance += depositAmount;
 
         // Transfer DOC from the user to this contract, user must have called the DOC contract's
         // approve function with this contract's address and the amount approved
@@ -123,10 +130,10 @@ contract RbtcDca is Ownable {
      */
     function withdrawDOC(uint256 withdrawalAmount) external {
         if (withdrawalAmount <= 0) revert RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
-        if (withdrawalAmount > s_docBalances[msg.sender]) revert RbtcDca__DocWithdrawalAmountExceedsBalance();
+        if (withdrawalAmount > s_dcaDetails[msg.sender].docBalance) revert RbtcDca__DocWithdrawalAmountExceedsBalance();
 
         // Update user's DOC balance in the mapping
-        s_docBalances[msg.sender] -= withdrawalAmount;
+        s_dcaDetails[msg.sender].docBalance -= withdrawalAmount;
 
         // Transfer DOC from this contract back to the user
         bool withdrawalSuccess = i_docTokenContract.transfer(msg.sender, withdrawalAmount);
@@ -141,10 +148,10 @@ contract RbtcDca is Ownable {
      */
     function setPurchaseAmount(uint256 purchaseAmount) external {
         if (purchaseAmount <= 0) revert RbtcDca__PurchaseAmountMustBeGreaterThanZero();
-        if (purchaseAmount > s_docBalances[msg.sender] / 2) {
+        if (purchaseAmount > s_dcaDetails[msg.sender].docBalance / 2) {
             revert RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
         } //At least two DCA purchases
-        s_docPurchaseAmounts[msg.sender] = purchaseAmount;
+        s_dcaDetails[msg.sender].docPurchaseAmount = purchaseAmount;
         emit PurchaseAmountSet(msg.sender, purchaseAmount);
     }
 
@@ -154,7 +161,7 @@ contract RbtcDca is Ownable {
      */
     function setPurchasePeriod(uint256 purchasePeriod) external {
         if (purchasePeriod <= 0) revert RbtcDca__PurchasePeriodMustBeGreaterThanZero();
-        s_docPurchasePeriods[msg.sender] = purchasePeriod;
+        s_dcaDetails[msg.sender].purchasePeriod = purchasePeriod;
         emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
 
@@ -165,31 +172,31 @@ contract RbtcDca is Ownable {
      */
     function buyRbtc(address buyer) external onlyOwner {
         // If the user made their first purchase, check that period has elapsed before making a new purchase
-        if (s_rbtcBalances[buyer] > 0) {
-            if (block.timestamp - s_lastPurchaseTimestamps[buyer] < s_docPurchasePeriods[buyer]) {
+        if (s_dcaDetails[buyer].rbtcBalance > 0) {
+            if (block.timestamp - s_dcaDetails[buyer].lastPurchaseTimestamp < s_dcaDetails[buyer].purchasePeriod) {
                 revert RbtcDca__CannotBuyIfPurchasePeriodHasNotElapsed();
             }
         }
 
-        s_docBalances[buyer] -= s_docPurchaseAmounts[buyer];
-        s_lastPurchaseTimestamps[buyer] = block.timestamp;
+        s_dcaDetails[buyer].docBalance -= s_dcaDetails[buyer].docPurchaseAmount;
+        s_dcaDetails[buyer].lastPurchaseTimestamp = block.timestamp;
 
         // Redeem DOC for rBTC
         (bool success,) = address(i_mocProxyContract).call(
-            abi.encodeWithSignature("redeemDocRequest(uint256)", s_docPurchaseAmounts[buyer])
+            abi.encodeWithSignature("redeemDocRequest(uint256)", s_dcaDetails[buyer].docPurchaseAmount)
         );
         if (!success) revert RbtcDca__RedeemDocRequestFailed();
         // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
         uint256 balancePrev = address(this).balance;
         (success,) = address(i_mocProxyContract).call(
-            abi.encodeWithSignature("redeemFreeDoc(uint256)", s_docPurchaseAmounts[buyer])
+            abi.encodeWithSignature("redeemFreeDoc(uint256)", s_dcaDetails[buyer].docPurchaseAmount)
         );
         if (!success) revert RbtcDca__RedeemFreeDocFailed();
         uint256 balancePost = address(this).balance;
 
-        s_rbtcBalances[buyer] += (balancePost - balancePrev);
+        s_dcaDetails[buyer].rbtcBalance += (balancePost - balancePrev);
 
-        emit RbtcBought(msg.sender, s_docPurchaseAmounts[buyer], balancePost - balancePrev);
+        emit RbtcBought(buyer, s_dcaDetails[buyer].docPurchaseAmount, balancePost - balancePrev);
     }
 
     /**
@@ -197,10 +204,10 @@ contract RbtcDca is Ownable {
      */
     function withdrawAccumulatedRbtc() external {
         address user = msg.sender;
-        uint256 rbtcBalance = s_rbtcBalances[user];
+        uint256 rbtcBalance = s_dcaDetails[user].rbtcBalance;
         if (rbtcBalance == 0) revert RbtcDca__CannotWithdrawRbtcBeforeBuying();
 
-        s_rbtcBalances[user] = 0;
+        s_dcaDetails[user].rbtcBalance = 0;
         // Transfer RBTC from this contract back to the user
         (bool sent,) = user.call{value: rbtcBalance}("");
         if (!sent) revert RbtcDca__rBtcWithdrawalFailed();
@@ -211,19 +218,23 @@ contract RbtcDca is Ownable {
     // Getter functions //
     //////////////////////
     function getDocBalance() external view returns (uint256) {
-        return s_docBalances[msg.sender];
+        return s_dcaDetails[msg.sender].docBalance;
     }
 
     function getRbtcBalance() external view returns (uint256) {
-        return s_rbtcBalances[msg.sender];
+        return s_dcaDetails[msg.sender].rbtcBalance;
     }
 
     function getPurchaseAmount() external view returns (uint256) {
-        return s_docPurchaseAmounts[msg.sender];
+        return s_dcaDetails[msg.sender].docPurchaseAmount;
     }
 
     function getPurchasePeriod() external view returns (uint256) {
-        return s_docPurchasePeriods[msg.sender];
+        return s_dcaDetails[msg.sender].purchasePeriod;
+    }
+
+    function getUsersDcaDetails() external view returns (DcaDetails memory) {
+        return s_dcaDetails[msg.sender];
     }
 
     function getUsers() external view returns (address[] memory) {

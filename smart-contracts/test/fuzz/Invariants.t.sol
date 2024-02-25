@@ -88,6 +88,7 @@ contract InvariantTest is StdInvariant, Test {
         rbtcDca.getRbtcBalance();
         rbtcDca.getPurchaseAmount();
         rbtcDca.getPurchasePeriod();
+        rbtcDca.getUsersDcaDetails();
         rbtcDca.getUsers();
         rbtcDca.getTotalNumberOfDeposits();
     }
