@@ -114,7 +114,7 @@ contract RbtcDca is Ownable {
         i_mocProxyContract = MocProxyContract(mocProxyAddress);
     }
 
-    function newDepositDOC(uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) amountValidation purchaseAmountValidation purchasePeriodValidation external {
+    function newDcaPosition(uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) amountValidation purchaseAmountValidation purchasePeriodValidation external {
         _depositDOC(depositAmount);
         _setPurchaseAmount(msg.sender, purchaseAmount);
         _setPurchasePeriod(msg.sender, purchasePeriod);
