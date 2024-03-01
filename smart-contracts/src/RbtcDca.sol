@@ -276,7 +276,7 @@ contract RbtcDca is Ownable {
         return s_dcaDetails[msg.sender];
     }
 
-    function getUsers() external view returns (address[] memory) {
+    function getUsers() external view onlyOwner returns (address[] memory) {
         return s_users;
     }
 
