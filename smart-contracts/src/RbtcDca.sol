@@ -126,6 +126,7 @@ contract RbtcDca is Ownable {
      * @param depositAmount: the amount of DOC to deposit
      */
     function depositDOC(uint256 depositAmount) amounGreatherThanZero external {
+        _depositDOC(depositAmount);
         emit DocDeposited(msg.sender, depositAmount);
     }
 
@@ -174,6 +175,7 @@ contract RbtcDca is Ownable {
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
     function setPurchaseAmount(uint256 purchaseAmount) purchaseAmountValidation, external {
+        _setPurchaseAmount(purchaseAmount);
         emit PurchaseAmountSet(msg.sender, purchaseAmount);
     }
 
@@ -187,6 +189,7 @@ contract RbtcDca is Ownable {
      * @notice the period
      */
     function setPurchasePeriod(uint256 purchasePeriod) purchasePeriodValidation external {
+        _setPurchasePeriod(purchasePeriod);
         emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
 
