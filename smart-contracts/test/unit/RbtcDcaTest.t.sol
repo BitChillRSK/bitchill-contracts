@@ -223,4 +223,22 @@ contract RbtcDcaTest is Test {
         vm.stopPrank();
         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, DOC_TO_SPEND / BTC_PRICE);
     }
+
+    /////////////////////////////////
+    /// createDcaSchedule tests  ////
+    /////////////////////////////////
+
+    function testCreateDcaSchedule() external {
+        vm.startPrank(USER);
+        uint256 userBalanceBeforeDeposit = rbtcDca.getDocBalance();
+        mockDockToken.approve(address(rbtcDca), DOC_TO_DEPOSIT);
+        vm.expectEmit(true, true, false, false);
+        emit DocDeposited(USER, DOC_TO_DEPOSIT);
+        rbtcDca.createDcaSchedule(DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD);
+        uint256 userBalanceAfterDeposit = rbtcDca.getDocBalance();
+        assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+        assertEq(DOC_TO_SPEND, rbtcDca.getPurchaseAmount());
+        assertEq(PURCHASE_PERIOD, rbtcDca.getPurchasePeriod());
+        vm.stopPrank();
+    }
 }

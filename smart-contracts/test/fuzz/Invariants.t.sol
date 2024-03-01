@@ -16,6 +16,8 @@ contract InvariantTest is StdInvariant, Test {
     DeployRbtcDca deployer;
     HelperConfig helperConfig;
     Handler handler;
+    address USER = makeAddr("user");
+    address OWNER = makeAddr("owner");
 
     function setUp() external {
         deployer = new DeployRbtcDca();
@@ -83,12 +85,14 @@ contract InvariantTest is StdInvariant, Test {
         assertEq(address(rbtcDca).balance, sumOfUsersBalances);
     }
 
-    function invariant_gettersCantRevert() public view {
+    function invariant_gettersCantRevert() public {
         rbtcDca.getDocBalance();
         rbtcDca.getRbtcBalance();
         rbtcDca.getPurchaseAmount();
         rbtcDca.getPurchasePeriod();
-        rbtcDca.getUsersDcaDetails();
+        rbtcDca.getMyDcaDetails();
+        vm.prank(OWNER);
+        rbtcDca.ownerGetUsersDcaDetails(USER);
         rbtcDca.getUsers();
         rbtcDca.getTotalNumberOfDeposits();
     }

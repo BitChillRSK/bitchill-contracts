@@ -95,33 +95,46 @@ contract RbtcDca is Ownable {
         i_mocProxyContract = MocProxyContract(mocProxyAddress);
     }
 
+    receive() external payable onlyMocProxy {}
+
+    ///////////////////////////////
+    // External functions /////////
+    ///////////////////////////////
+
     /**
      * @notice deposit the full DOC amount for DCA on the contract
      * @param depositAmount: the amount of DOC to deposit
      */
     function depositDOC(uint256 depositAmount) external {
-        if (depositAmount <= 0) revert RbtcDca__DepositAmountMustBeGreaterThanZero();
+        _depositDOC(depositAmount);
+    }
 
-        uint256 prevDocBalance = s_dcaDetails[msg.sender].docBalance;
-        // Update user's DOC balance in the mapping
-        s_dcaDetails[msg.sender].docBalance += depositAmount;
+    /**
+     * @param purchaseAmount: the amount of DOC to swap periodically for rBTC
+     * @notice the amount cannot be greater than or equal to half of the deposited amount
+     */
+    function setPurchaseAmount(uint256 purchaseAmount) external {
+        _setPurchaseAmount(purchaseAmount);
+    }
 
-        // Transfer DOC from the user to this contract, user must have called the DOC contract's
-        // approve function with this contract's address and the amount approved
-        if (i_docTokenContract.allowance(msg.sender, address(this)) < depositAmount) {
-            revert RbtcDca__NotEnoughDocAllowanceForDcaContract();
-        }
-        bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
-        if (!depositSuccess) revert RbtcDca__DocDepositFailed();
+    /**
+     * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
+     * @notice the period
+     */
+    function setPurchasePeriod(uint256 purchasePeriod) external {
+        _setPurchasePeriod(purchasePeriod);
+    }
 
-        // Add user to users array
-        /**
-         * @notice every time a user who ran out of deposited DOC makes a new deposit they will be added to the users array, which is filtered in the dApp's back end.
-         * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
-         */
-        if (prevDocBalance == 0) s_users.push(msg.sender);
-
-        emit DocDeposited(msg.sender, depositAmount);
+    /**
+     * @notice deposit the full DOC amount for DCA on the contract, set the period and the amount for purchases
+     * @param depositAmount: the amount of DOC to deposit
+     * @param purchaseAmount: the amount of DOC to swap periodically for rBTC
+     * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
+     */
+    function createDcaSchedule(uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) external {
+        _depositDOC(depositAmount);
+        _setPurchaseAmount(purchaseAmount);
+        _setPurchasePeriod(purchasePeriod);
     }
 
     /**
@@ -140,29 +153,6 @@ contract RbtcDca is Ownable {
         if (!withdrawalSuccess) revert RbtcDca__DocWithdrawalFailed();
 
         emit DocWithdrawn(msg.sender, withdrawalAmount);
-    }
-
-    /**
-     * @param purchaseAmount: the amount of DOC to swap periodically for rBTC
-     * @notice the amount cannot be greater than or equal to half of the deposited amount
-     */
-    function setPurchaseAmount(uint256 purchaseAmount) external {
-        if (purchaseAmount <= 0) revert RbtcDca__PurchaseAmountMustBeGreaterThanZero();
-        if (purchaseAmount > s_dcaDetails[msg.sender].docBalance / 2) {
-            revert RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
-        } //At least two DCA purchases
-        s_dcaDetails[msg.sender].docPurchaseAmount = purchaseAmount;
-        emit PurchaseAmountSet(msg.sender, purchaseAmount);
-    }
-
-    /**
-     * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
-     * @notice the period
-     */
-    function setPurchasePeriod(uint256 purchasePeriod) external {
-        if (purchasePeriod <= 0) revert RbtcDca__PurchasePeriodMustBeGreaterThanZero();
-        s_dcaDetails[msg.sender].purchasePeriod = purchasePeriod;
-        emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
 
     /**
@@ -214,9 +204,71 @@ contract RbtcDca is Ownable {
         emit rBtcWithdrawn(user, rbtcBalance);
     }
 
+    ///////////////////////////////
+    // Internal functions /////////
+    ///////////////////////////////
+
+    /**
+     * @notice deposit the full DOC amount for DCA on the contract
+     * @param depositAmount: the amount of DOC to deposit
+     */
+    function _depositDOC(uint256 depositAmount) internal {
+        if (depositAmount <= 0) revert RbtcDca__DepositAmountMustBeGreaterThanZero();
+
+        // Transfer DOC from the user to this contract, user must have called the DOC contract's
+        // approve function with this contract's address and the amount approved
+        if (i_docTokenContract.allowance(msg.sender, address(this)) < depositAmount) {
+            revert RbtcDca__NotEnoughDocAllowanceForDcaContract();
+        }
+
+        uint256 prevDocBalance = s_dcaDetails[msg.sender].docBalance;
+
+        // Update user's DOC balance in the mapping
+        s_dcaDetails[msg.sender].docBalance += depositAmount;
+
+        bool depositSuccess = i_docTokenContract.transferFrom(msg.sender, address(this), depositAmount);
+        if (!depositSuccess) revert RbtcDca__DocDepositFailed();
+
+        // Add user to users array
+        /**
+         * @notice every time a user who ran out of deposited DOC makes a new deposit they will be added to the users array, which is filtered in the dApp's back end.
+         * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
+         */
+        if (prevDocBalance == 0) s_users.push(msg.sender);
+
+        emit DocDeposited(msg.sender, depositAmount);
+    }
+
+    /**
+     * @param purchaseAmount: the amount of DOC to swap periodically for rBTC
+     * @notice the amount cannot be greater than or equal to half of the deposited amount
+     */
+    function _setPurchaseAmount(uint256 purchaseAmount) internal {
+        if (purchaseAmount <= 0) revert RbtcDca__PurchaseAmountMustBeGreaterThanZero();
+        if (purchaseAmount > s_dcaDetails[msg.sender].docBalance / 2) {
+            revert RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
+        } //At least two DCA purchases
+        s_dcaDetails[msg.sender].docPurchaseAmount = purchaseAmount;
+        emit PurchaseAmountSet(msg.sender, purchaseAmount);
+    }
+
+    /**
+     * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
+     * @notice the period
+     */
+    function _setPurchasePeriod(uint256 purchasePeriod) internal {
+        if (purchasePeriod <= 0) revert RbtcDca__PurchasePeriodMustBeGreaterThanZero();
+        s_dcaDetails[msg.sender].purchasePeriod = purchasePeriod;
+        emit PurchasePeriodSet(msg.sender, purchasePeriod);
+    }
+
     //////////////////////
     // Getter functions //
     //////////////////////
+    function getMyDcaDetails() external view returns (DcaDetails memory) {
+        return s_dcaDetails[msg.sender];
+    }
+
     function getDocBalance() external view returns (uint256) {
         return s_dcaDetails[msg.sender].docBalance;
     }
@@ -233,8 +285,8 @@ contract RbtcDca is Ownable {
         return s_dcaDetails[msg.sender].purchasePeriod;
     }
 
-    function getUsersDcaDetails() external view returns (DcaDetails memory) {
-        return s_dcaDetails[msg.sender];
+    function ownerGetUsersDcaDetails(address user) external view onlyOwner returns (DcaDetails memory) {
+        return s_dcaDetails[user];
     }
 
     function getUsers() external view returns (address[] memory) {
@@ -244,6 +296,4 @@ contract RbtcDca is Ownable {
     function getTotalNumberOfDeposits() external view returns (uint256) {
         return s_users.length;
     }
-
-    receive() external payable onlyMocProxy {}
 }
