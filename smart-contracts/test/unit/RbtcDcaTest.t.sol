@@ -33,6 +33,9 @@ contract RbtcDcaTest is Test {
     event rBtcWithdrawn(address indexed user, uint256 rbtcAmount);
     event PurchaseAmountSet(address indexed user, uint256 purchaseAmount);
     event PurchasePeriodSet(address indexed user, uint256 purchasePeriod);
+    event newDcaScheduleCreated(
+        address indexed user, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod
+    );
 
     //////////////////////
     // Errors ////////////
@@ -232,8 +235,8 @@ contract RbtcDcaTest is Test {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = rbtcDca.getDocBalance();
         mockDockToken.approve(address(rbtcDca), DOC_TO_DEPOSIT);
-        vm.expectEmit(true, true, false, false);
-        emit DocDeposited(USER, DOC_TO_DEPOSIT);
+        vm.expectEmit(true, true, true, true);
+        emit newDcaScheduleCreated(USER, DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD);
         rbtcDca.createDcaSchedule(DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD);
         uint256 userBalanceAfterDeposit = rbtcDca.getDocBalance();
         assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);

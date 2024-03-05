@@ -55,12 +55,27 @@ contract Handler is Test {
         vm.stopPrank();
     }
 
+    function createDcaSchedule(uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
+        vm.startPrank(msg.sender);
+        depositAmount = bound(depositAmount, 0, USER_TOTAL_DOC);
+        if (depositAmount == 0) return;
+        uint256 maxPurchaseAmount = rbtcDca.getDocBalance() / 2;
+        purchaseAmount = bound(purchaseAmount, 0, maxPurchaseAmount);
+        if (purchaseAmount == 0) return;
+        if (purchasePeriod == 0) return;
+        mockDocToken.mint(msg.sender, USER_TOTAL_DOC);
+        mockDocToken.approve(address(rbtcDca), depositAmount);
+        rbtcDca.createDcaSchedule(depositAmount, purchaseAmount, purchasePeriod);
+        vm.stopPrank();
+    }
+
     function buyRbtc(uint256 buyerAddressSeed) public {
+        vm.startPrank(OWNER);
         address[] memory users = rbtcDca.getUsers();
         if (users.length == 0) return;
         address sender = users[buyerAddressSeed % users.length];
-        vm.prank(OWNER);
         rbtcDca.buyRbtc(sender);
+        vm.stopPrank();
     }
 
     function withdrawAccumulatedRbtc() external {

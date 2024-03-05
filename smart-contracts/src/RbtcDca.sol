@@ -52,6 +52,9 @@ contract RbtcDca is Ownable {
     event rBtcWithdrawn(address indexed user, uint256 rbtcAmount);
     event PurchaseAmountSet(address indexed user, uint256 purchaseAmount);
     event PurchasePeriodSet(address indexed user, uint256 purchasePeriod);
+    event newDcaScheduleCreated(
+        address indexed user, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod
+    );
 
     //////////////////////
     // Errors ////////////
@@ -107,6 +110,7 @@ contract RbtcDca is Ownable {
      */
     function depositDOC(uint256 depositAmount) external {
         _depositDOC(depositAmount);
+        emit DocDeposited(msg.sender, depositAmount);
     }
 
     /**
@@ -115,6 +119,7 @@ contract RbtcDca is Ownable {
      */
     function setPurchaseAmount(uint256 purchaseAmount) external {
         _setPurchaseAmount(purchaseAmount);
+        emit PurchaseAmountSet(msg.sender, purchaseAmount);
     }
 
     /**
@@ -123,6 +128,7 @@ contract RbtcDca is Ownable {
      */
     function setPurchasePeriod(uint256 purchasePeriod) external {
         _setPurchasePeriod(purchasePeriod);
+        emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
 
     /**
@@ -135,6 +141,7 @@ contract RbtcDca is Ownable {
         _depositDOC(depositAmount);
         _setPurchaseAmount(purchaseAmount);
         _setPurchasePeriod(purchasePeriod);
+        emit newDcaScheduleCreated(msg.sender, depositAmount, purchaseAmount, purchasePeriod);
     }
 
     /**
@@ -235,8 +242,6 @@ contract RbtcDca is Ownable {
          * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
          */
         if (prevDocBalance == 0) s_users.push(msg.sender);
-
-        emit DocDeposited(msg.sender, depositAmount);
     }
 
     /**
@@ -249,7 +254,6 @@ contract RbtcDca is Ownable {
             revert RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
         } //At least two DCA purchases
         s_dcaDetails[msg.sender].docPurchaseAmount = purchaseAmount;
-        emit PurchaseAmountSet(msg.sender, purchaseAmount);
     }
 
     /**
@@ -259,7 +263,6 @@ contract RbtcDca is Ownable {
     function _setPurchasePeriod(uint256 purchasePeriod) internal {
         if (purchasePeriod <= 0) revert RbtcDca__PurchasePeriodMustBeGreaterThanZero();
         s_dcaDetails[msg.sender].purchasePeriod = purchasePeriod;
-        emit PurchasePeriodSet(msg.sender, purchasePeriod);
     }
 
     //////////////////////

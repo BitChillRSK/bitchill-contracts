@@ -75,6 +75,7 @@ contract InvariantTest is StdInvariant, Test {
     function invariant_DcaContractRbtcBalanceEqualsSumOfAllUsers() public {
         // get the contract's rBTC balance
         // compare it to the sum of all users' balances
+        vm.prank(OWNER);
         address[] memory users = rbtcDca.getUsers();
         users = removeDuplicates(users);
         uint256 sumOfUsersBalances;
@@ -93,6 +94,7 @@ contract InvariantTest is StdInvariant, Test {
         rbtcDca.getMyDcaDetails();
         vm.prank(OWNER);
         rbtcDca.ownerGetUsersDcaDetails(USER);
+        vm.prank(OWNER);
         rbtcDca.getUsers();
         rbtcDca.getTotalNumberOfDeposits();
     }
