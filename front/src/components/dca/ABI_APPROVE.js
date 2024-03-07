@@ -694,6 +694,37 @@ export const ABI_DCA = [
 			{
 				indexed: false,
 				internalType: 'uint256',
+				name: 'depositAmount',
+				type: 'uint256',
+			},
+			{
+				indexed: false,
+				internalType: 'uint256',
+				name: 'purchaseAmount',
+				type: 'uint256',
+			},
+			{
+				indexed: false,
+				internalType: 'uint256',
+				name: 'purchasePeriod',
+				type: 'uint256',
+			},
+		],
+		name: 'newDcaScheduleCreated',
+		type: 'event',
+	},
+	{
+		anonymous: false,
+		inputs: [
+			{
+				indexed: true,
+				internalType: 'address',
+				name: 'user',
+				type: 'address',
+			},
+			{
+				indexed: false,
+				internalType: 'uint256',
 				name: 'rbtcAmount',
 				type: 'uint256',
 			},
@@ -721,6 +752,29 @@ export const ABI_DCA = [
 				name: 'depositAmount',
 				type: 'uint256',
 			},
+			{
+				internalType: 'uint256',
+				name: 'purchaseAmount',
+				type: 'uint256',
+			},
+			{
+				internalType: 'uint256',
+				name: 'purchasePeriod',
+				type: 'uint256',
+			},
+		],
+		name: 'createDcaSchedule',
+		outputs: [],
+		stateMutability: 'nonpayable',
+		type: 'function',
+	},
+	{
+		inputs: [
+			{
+				internalType: 'uint256',
+				name: 'depositAmount',
+				type: 'uint256',
+			},
 		],
 		name: 'depositDOC',
 		outputs: [],
@@ -735,6 +789,46 @@ export const ABI_DCA = [
 				internalType: 'uint256',
 				name: '',
 				type: 'uint256',
+			},
+		],
+		stateMutability: 'view',
+		type: 'function',
+	},
+	{
+		inputs: [],
+		name: 'getMyDcaDetails',
+		outputs: [
+			{
+				components: [
+					{
+						internalType: 'uint256',
+						name: 'docBalance',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'docPurchaseAmount',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'purchasePeriod',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'lastPurchaseTimestamp',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'rbtcBalance',
+						type: 'uint256',
+					},
+				],
+				internalType: 'struct RbtcDca.DcaDetails',
+				name: '',
+				type: 'tuple',
 			},
 		],
 		stateMutability: 'view',
@@ -813,6 +907,52 @@ export const ABI_DCA = [
 				internalType: 'address',
 				name: '',
 				type: 'address',
+			},
+		],
+		stateMutability: 'view',
+		type: 'function',
+	},
+	{
+		inputs: [
+			{
+				internalType: 'address',
+				name: 'user',
+				type: 'address',
+			},
+		],
+		name: 'ownerGetUsersDcaDetails',
+		outputs: [
+			{
+				components: [
+					{
+						internalType: 'uint256',
+						name: 'docBalance',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'docPurchaseAmount',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'purchasePeriod',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'lastPurchaseTimestamp',
+						type: 'uint256',
+					},
+					{
+						internalType: 'uint256',
+						name: 'rbtcBalance',
+						type: 'uint256',
+					},
+				],
+				internalType: 'struct RbtcDca.DcaDetails',
+				name: '',
+				type: 'tuple',
 			},
 		],
 		stateMutability: 'view',

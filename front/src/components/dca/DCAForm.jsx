@@ -56,37 +56,24 @@ const DCAFrom = () => {
 		const dcaContract = new ethers.Contract(DCA_ADDRESS, ABI_DCA, signer);
 		const cantidadTotal = cantidad * frequencia * duracion;
 
-		const amount = ethers.utils.parseUnits(cantidadTotal.toString(), 18); // Asegúrate de usar la cantidad correcta de decimales
 		try {
 			/**
 			 * 0 Llamar a la función approve del contrato
 			 */
+			const amount = ethers.utils.parseUnits(cantidadTotal.toString(), 18); // Asegúrate de usar la cantidad correcta de decimales
 			const tx = await tokenContract.approve(DCA_ADDRESS, amount);
 			await tx.wait();
 
-			/**
-			 * 1 depositDOC
-			 */
-			const depositDOC = await dcaContract.depositDOC(amount);
-			await depositDOC.wait();
-			setTxPosition(depositDOC);
-			/**
-			 * 2 setPurchaseAmount
-			 */
 			const purchaseAmount = ethers.utils.parseUnits(cantidad.toString(), 18);
-			const setPurchaseAmount = await dcaContract.setPurchaseAmount(
-				purchaseAmount
-			);
-			await setPurchaseAmount.wait();
-
-			/**
-			 * 3 setPurchasePeriode
-			 */
 			const segundosFrecuencia = frecuenciaASegundos(frequencia);
-			const setPurchasePeriod = await dcaContract.setPurchasePeriod(
+
+			const dcaSchedule = await dcaContract.createDcaSchedule(
+				amount,
+				purchaseAmount,
 				segundosFrecuencia
 			);
-			await setPurchasePeriod.wait();
+			await dcaSchedule.wait();
+			setTxPosition(dcaSchedule);
 		} catch (error) {
 			console.error('Error sending transaction:', error);
 		} finally {
