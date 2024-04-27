@@ -22,7 +22,7 @@ contract InvariantTest is StdInvariant, Test {
     function setUp() external {
         deployer = new DeployRbtcDca();
         (rbtcDca, helperConfig) = deployer.run();
-        (address docTokenAddress,) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress,,) = helperConfig.activeNetworkConfig();
         docToken = MockDocToken(docTokenAddress);
         handler = new Handler(rbtcDca, docToken);
         targetContract(address(handler));

@@ -12,7 +12,7 @@ contract DeployRbtcDca is Script {
     function run() external returns (RbtcDca, HelperConfig) {
         // Before startBroadcast -> not a "real" tx
         HelperConfig helperConfig = new HelperConfig(); // This comes with our mocks!
-        (address docToken, address mocProxy) = helperConfig.activeNetworkConfig();
+        (address docToken, address mocProxy, address kdocToken) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
         // After startBroadcast -> "real" tx

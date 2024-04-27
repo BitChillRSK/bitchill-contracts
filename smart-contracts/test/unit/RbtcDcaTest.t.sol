@@ -60,7 +60,7 @@ contract RbtcDcaTest is Test {
         (rbtcDca, helperConfig) = deployRbtcDca.run();
         // console.log("Test contract", address(this));
 
-        (address docTokenAddress, address mocProxyAddress) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress, address mocProxyAddress, address kdocToken) = helperConfig.activeNetworkConfig();
 
         mockDockToken = MockDocToken(docTokenAddress);
         mockMocProxy = MockMocProxy(docTokenAddress);
