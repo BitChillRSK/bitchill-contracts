@@ -1,144 +1,88 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.20;
 
-import {IDocToken} from "./interfaces/IDocToken.sol";
-import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-// import {DcaManager} from "./DcaManager.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TokenHandler is ITokenHandler {
+/**
+ * @title TokenHandler
+ * @dev Base contract for handling various tokens.
+ */
+abstract contract TokenHandler is ITokenHandler, Ownable {
     //////////////////////
     // State variables ///
     //////////////////////
-    IDocToken immutable i_docToken;
-    IkDocToken immutable i_kdocToken;
-    mapping(address user => DcaDetails usersDcaDetails) private s_dcaDetails;
-    address[] private s_users; // Users that have deposited DOC in the DCA contract
-    // DcaManager immutable i_dcaManager;
+    address public immutable i_stableToken; // The stablecoin token to be deposited
+    address public immutable i_dcaManager; // The DCA manager contract
+    mapping(address user => uint256 amount) s_usersAccumulatedRbtc;
 
-    constructor(address docTokenAddress, address kdocTokenAddress /*, address dcaManagerAddress  */ ) {
-        i_kdocToken = IkDocToken(kdocTokenAddress);
-        i_docToken = IDocToken(docTokenAddress);
-        // i_dcaManager = DcaManager(dcaManagerAddress);
+    // Store user DCA details generically
+    // mapping(address => DcaDetails) public dcaDetails;
+
+    //////////////////////
+    // Modifiers /////////
+    //////////////////////
+    modifier onlyDcaManager() {
+        if (msg.sender != i_dcaManager) revert TokenHandler__OnlyDcaManagerCanCall();
+        _;
     }
 
-    ///////////////////////////////
-    // External functions /////////
-    ///////////////////////////////
+    constructor(address tokenAddress, address dcaManagerAddress) {
+        i_stableToken = tokenAddress;
+        i_dcaManager = dcaManagerAddress;
+    }
+
+    receive() external payable /*onlyMocProxy*/ {} // Cambiar onlyMocProxy por algo que controle que el rbtc venga de fuentes conocidas?
 
     /**
-     * @notice deposit the full DOC amount for DCA on the contract
-     * @param depositAmount: the amount of DOC to deposit
+     * @notice deposit the full token amount for DCA on the contract
+     * @param depositAmount: the amount to deposit
      */
-    function depositDOC(uint256 depositAmount) external {
-        _depositDOC(depositAmount);
-        emit DocDeposited(msg.sender, depositAmount);
+    function depositToken(address user, uint256 depositAmount) external override {
+        if (depositAmount <= 0) revert TokenHandler__DepositAmountMustBeGreaterThanZero();
+
+        // Transfer the selected token from the user to this contract, user must have called the token contract's
+        // approve function with this contract's address and the amount approved
+        if (IERC20(i_stableToken).allowance(user, address(this)) < depositAmount) {
+            revert TokenHandler__InsufficientTokenAllowance(i_stableToken);
+        }
+
+        bool depositSuccess = IERC20(i_stableToken).transferFrom(user, address(this), depositAmount);
+        if (!depositSuccess) revert TokenHandler__TokenDepositFailed(i_stableToken);
+
+        emit TokenHandler__TokenDeposited(i_stableToken, user, depositAmount);
     }
 
     /**
      * @notice withdraw some or all of the DOC previously deposited
      * @param withdrawalAmount: the amount of DOC to withdraw
      */
-    function withdrawDOC(uint256 withdrawalAmount) external {
-        if (withdrawalAmount <= 0) revert RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
-        if (withdrawalAmount > s_dcaDetails[msg.sender].docBalance) revert RbtcDca__DocWithdrawalAmountExceedsBalance();
-
-        // Update user's DOC balance in the mapping
-        s_dcaDetails[msg.sender].docBalance -= withdrawalAmount;
+    function withdrawToken(address user, uint256 withdrawalAmount) external override {
+        if (withdrawalAmount <= 0) revert TokenHandler__WithdrawalAmountMustBeGreaterThanZero();
 
         // Transfer DOC from this contract back to the user
-        bool withdrawalSuccess = i_docToken.transfer(msg.sender, withdrawalAmount);
-        if (!withdrawalSuccess) revert RbtcDca__DocWithdrawalFailed();
+        bool withdrawalSuccess = IERC20(i_stableToken).transfer(user, withdrawalAmount);
+        if (!withdrawalSuccess) revert TokenHandler__TokenWithdrawalFailed(i_stableToken);
 
-        emit DocWithdrawn(msg.sender, withdrawalAmount);
+        emit TokenHandler__TokenWithdrawn(i_stableToken, user, withdrawalAmount);
     }
 
     /**
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */
-    function withdrawAccumulatedRbtc() external {
-        address user = msg.sender;
-        uint256 rbtcBalance = s_dcaDetails[user].rbtcBalance;
-        if (rbtcBalance == 0) revert RbtcDca__CannotWithdrawRbtcBeforeBuying();
+    function withdrawAccumulatedRbtc(address user) external override {
+        uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
+        if (rbtcBalance == 0) revert TokenHandler__NoAccumulatedRbtcToWithdraw();
 
-        s_dcaDetails[user].rbtcBalance = 0;
+        s_usersAccumulatedRbtc[user] = 0;
         // Transfer RBTC from this contract back to the user
         (bool sent,) = user.call{value: rbtcBalance}("");
-        if (!sent) revert RbtcDca__rBtcWithdrawalFailed();
-        emit rBtcWithdrawn(user, rbtcBalance);
+        if (!sent) revert TokenHandler__rBtcWithdrawalFailed();
+        emit TokenHandler__rBtcWithdrawn(user, rbtcBalance);
     }
 
-    function mintKdoc(uint256 depositAmount) external {
-        bool depositSuccess = i_docToken.transferFrom(msg.sender, address(this), depositAmount);
-        // bool depositSuccess = i_docToken.transferFrom(address(i_dcaManager), address(this), depositAmount);
-        require(depositSuccess, "Deposit failed");
-        bool approvalSuccess = i_docToken.approve(address(i_kdocToken), depositAmount);
-        require(approvalSuccess, "Approval failed");
-        i_kdocToken.mint(depositAmount);
+    function getAccumulatedRbtcBalance() external view returns (uint256) {
+        return s_usersAccumulatedRbtc[msg.sender];
     }
-
-    function redeemKdoc(uint256 withdrawalAmount) external {
-        i_kdocToken.redeemUnderlying(withdrawalAmount);
-        bool withdrawalSuccess = i_docToken.transfer(msg.sender, withdrawalAmount);
-        require(withdrawalSuccess);
-    }
-
-    ///////////////////////////////
-    // Internal functions /////////
-    ///////////////////////////////
-
-    /**
-     * @notice deposit the full DOC amount for DCA on the contract
-     * @param depositAmount: the amount of DOC to deposit
-     */
-    function _depositDOC(uint256 depositAmount) internal {
-        if (depositAmount <= 0) revert RbtcDca__DepositAmountMustBeGreaterThanZero();
-
-        // Transfer DOC from the user to this contract, user must have called the DOC contract's
-        // approve function with this contract's address and the amount approved
-        if (i_docToken.allowance(msg.sender, address(this)) < depositAmount) {
-            revert RbtcDca__NotEnoughDocAllowanceForDcaContract();
-        }
-
-        uint256 prevDocBalance = s_dcaDetails[msg.sender].docBalance;
-
-        // Update user's DOC balance in the mapping
-        s_dcaDetails[msg.sender].docBalance += depositAmount;
-
-        bool depositSuccess = i_docToken.transferFrom(msg.sender, address(this), depositAmount);
-        if (!depositSuccess) revert RbtcDca__DocDepositFailed();
-
-        // Add user to users array
-        /**
-         * @notice every time a user who ran out of deposited DOC makes a new deposit they will be added to the users array, which is filtered in the dApp's back end.
-         * Dynamic arrays have 2^256 positions, so repeated addresses are not an issue.
-         */
-        if (prevDocBalance == 0) s_users.push(msg.sender);
-    }
-
-    ////////////////////////////////
-    /// Tropykus Interactions //////
-    ////////////////////////////////
-
-    // function _mintKdoc(address user, uint256 docToDeposit) internal {
-    //     if(docToDeposit > s_dcaDetails[user].docBalance) revert RbtcDca__CannotDepositInTropykusMoreThanBalance();
-    //     bool approvalSuccess = i_docToken.approve(address(i_kdocToken), docToDeposit);
-    //     if(!approvalSuccess) revert RbtcDca__DocApprovalForKdocContractFailed();
-
-    //     // Update user's DOC balance in the mapping
-    //     s_dcaDetails[user].docBalance -= docToDeposit;
-
-    //     // Mint kDOC by depositing DOC
-    //     uint256 errorCode = i_kdocToken.mint(docToDeposit);
-    //     if(errorCode > 0) revert RbtcDca__TropykusDepositFailed();
-    // }
-
-    // function _redeemKdoc(address user, uint256 docToWithdraw) internal {
-    //     i_kdocToken.redeemUnderlying(docToWithdraw);
-
-    //     // Update user's DOC balance in the mapping
-    //     s_dcaDetails[user].docBalance += docToWithdraw;
-
-    //     require(withdrawalSuccess);
-    // }
 }

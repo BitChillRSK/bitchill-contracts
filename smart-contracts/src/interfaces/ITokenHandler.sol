@@ -7,66 +7,56 @@ pragma solidity ^0.8.20;
  * @dev Interface for the TokenHandler contract.
  */
 interface ITokenHandler {
-    ////////////////////////
-    // Type declarations ///
-    ////////////////////////
-    struct DcaDetails {
-        uint256 docBalance; // DOC balance deposited by the user
-        uint256 docPurchaseAmount; // DOC to spend periodically on rBTC
-        uint256 purchasePeriod; // Time between purchases in seconds
-        uint256 lastPurchaseTimestamp; // Timestamp of the latest purchase
-        uint256 rbtcBalance; // User's accumulated RBTC balance
-    }
-
     //////////////////////
     // Events ////////////
     //////////////////////
-    event DocDeposited(address indexed user, uint256 amount);
-    event DocWithdrawn(address indexed user, uint256 amount);
-    event PurchaseAmountSet(address indexed user, uint256 purchaseAmount);
-    event PurchasePeriodSet(address indexed user, uint256 purchasePeriod);
-    event newDcaScheduleCreated(
-        address indexed user, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod
-    );
-    event rBtcWithdrawn(address indexed user, uint256 amount);
+    event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 amount);
+    event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 amount);
+    event TokenHandler__rBtcWithdrawn(address indexed user, uint256 amount);
+    event TokenHandler__RbtcBought(address indexed user, uint256 tokenSpent, uint256 rBtcBought);
 
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error RbtcDca__DepositAmountMustBeGreaterThanZero();
-    error RbtcDca__DocWithdrawalAmountMustBeGreaterThanZero();
-    error RbtcDca__DocWithdrawalAmountExceedsBalance();
-    error RbtcDca__NotEnoughDocAllowanceForDcaContract();
-    error RbtcDca__DocDepositFailed();
-    error RbtcDca__DocWithdrawalFailed();
-    error RbtcDca__PurchaseAmountMustBeGreaterThanZero();
-    error RbtcDca__PurchasePeriodMustBeGreaterThanZero();
-    error RbtcDca__PurchaseAmountMustBeLowerThanHalfOfBalance();
-    error RbtcDca__CannotWithdrawRbtcBeforeBuying();
-    error RbtcDca__rBtcWithdrawalFailed();
+    error TokenHandler__DepositAmountMustBeGreaterThanZero();
+    error TokenHandler__WithdrawalAmountMustBeGreaterThanZero();
+    error TokenHandler__InsufficientTokenAllowance(address token);
+    error TokenHandler__TokenDepositFailed(address token);
+    error TokenHandler__TokenWithdrawalFailed(address token);
+    error TokenHandler__PurchaseAmountMustBeGreaterThanZero();
+    error TokenHandler__PurchasePeriodMustBeGreaterThanZero();
+    error TokenHandler__PurchaseAmountMustBeLowerThanHalfOfBalance();
+    error TokenHandler__NoAccumulatedRbtcToWithdraw();
+    error TokenHandler__rBtcWithdrawalFailed();
+    error TokenHandler__OnlyDcaManagerCanCall();
 
     ///////////////////////////////
     // External functions /////////
     ///////////////////////////////
 
     /**
-     * @notice deposit the full DOC amount for DCA on the contract
-     * @param depositAmount: the amount of DOC to deposit
+     * @notice Deposit a specified amount of a stablecoin into the contract for DCA operations.
+     * @param amount The amount of the stablecoin to deposit.
+     * @param user The user making the deposit.
      */
-    function depositDOC(uint256 depositAmount) external;
+    function depositToken(address user, uint256 amount) external;
 
     /**
-     * @notice withdraw some or all of the DOC previously deposited
-     * @param withdrawalAmount: the amount of DOC to withdraw
+     * @notice Withdraw a specified amount of a stablecoin from the contract.
+     * @param amount The amount of the stablecoin to withdraw.
+     * @param user The user making the withdrawal.
      */
-    function withdrawDOC(uint256 withdrawalAmount) external;
+    function withdrawToken(address user, uint256 amount) external;
+
+    /**
+     * @param buyer: the user on behalf of which the contract is making the rBTC purchase
+     * @notice this function will be called periodically through a CRON job running on a web server
+     * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
+     */
+    function buyRbtc(address buyer, uint256 purchaseAmount) external;
 
     /**
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */
-    function withdrawAccumulatedRbtc() external;
-
-    function mintKdoc(uint256 depositAmount) external;
-
-    function redeemKdoc(uint256 withdrawalAmount) external;
+    function withdrawAccumulatedRbtc(address user) external;
 }
