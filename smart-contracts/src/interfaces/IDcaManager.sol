@@ -20,17 +20,17 @@ interface IDcaManager {
     //////////////////////
     // Events ////////////
     //////////////////////
-    event DcaManager__TokenBalanceUpdated(address indexed token, uint256 indexed scheduleIndex, uint256 amount);
-    event DcaManager__TokenWithdrawn(address indexed user, address indexed token, uint256 amount);
-    event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 amount);
-    event RbtcBought(address indexed user, uint256 docAmount, uint256 rbtcAmount);
-    event rBtcWithdrawn(address indexed user, uint256 rbtcAmount);
-    event PurchaseAmountSet(address indexed user, uint256 purchaseAmount);
-    event PurchasePeriodSet(address indexed user, uint256 purchasePeriod);
+    event DcaManager__TokenBalanceUpdated(address indexed token, uint256 indexed scheduleIndex, uint256 indexed amount);
+    event DcaManager__TokenWithdrawn(address indexed user, address indexed token, uint256 indexed amount);
+    // event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 indexed amount);
+    event RbtcBought(address indexed user, uint256 indexed docAmount, uint256 indexed rbtcAmount);
+    event rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
+    event PurchaseAmountSet(address indexed user, uint256 indexed purchaseAmount);
+    event PurchasePeriodSet(address indexed user, uint256 indexed purchasePeriod);
     event DcaManager__newDcaScheduleCreated(
         address indexed user,
         address indexed token,
-        uint256 scheduleIndex,
+        uint256 indexed scheduleIndex,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -40,9 +40,9 @@ interface IDcaManager {
     // Errors ////////////
     //////////////////////
     error DcaManager__TokenNotAccepted();
-    error DcaManager__DepositAmountMustBeGreaterThanZero();
-    error DcaManager__DocWithdrawalAmountMustBeGreaterThanZero();
-    error DcaManager__DocWithdrawalAmountExceedsBalance();
+    // error DcaManager__DepositAmountMustBeGreaterThanZero();
+    // error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
+    error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
     error DcaManager__NotEnoughDocAllowanceForDcaContract();
     error DcaManager__DocDepositFailed();
     error DcaManager__DocWithdrawalFailed();
@@ -54,11 +54,10 @@ interface IDcaManager {
     error DcaManager__CannotWithdrawRbtcBeforeBuying();
     error DcaManager__rBtcWithdrawalFailed();
     error DcaManager__OnlyMocProxyCanSendRbtcToDcaContract();
-    error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed();
+    error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
     error DcaManager__CannotDepositInTropykusMoreThanBalance();
     error DcaManager__DocApprovalForKdocContractFailed();
     error DcaManager__TropykusDepositFailed();
-    error DcaManager__WithdrawalAmountExceedsBalance();
     error DcaManager__CannotCreateScheduleSkippingIndexes();
 
     /*//////////////////////////////////////////////////////////////

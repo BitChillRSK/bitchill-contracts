@@ -10,10 +10,10 @@ interface ITokenHandler {
     //////////////////////
     // Events ////////////
     //////////////////////
-    event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 amount);
-    event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 amount);
-    event TokenHandler__rBtcWithdrawn(address indexed user, uint256 amount);
-    event TokenHandler__RbtcBought(address indexed user, uint256 tokenSpent, uint256 rBtcBought);
+    event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
+    event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
+    event TokenHandler__rBtcWithdrawn(address indexed user, uint256 indexed amount);
+    event TokenHandler__RbtcBought(address indexed user, uint256 indexed tokenSpent, uint256 indexed rBtcBought);
 
     //////////////////////
     // Errors ////////////

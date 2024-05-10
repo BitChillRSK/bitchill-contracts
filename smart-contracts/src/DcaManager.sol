@@ -46,7 +46,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount) external override nonReentrant {
         _depositToken(token, scheduleIndex, depositAmount);
-        emit DcaManager__TokenDeposited(msg.sender, token, depositAmount);
+        // emit DcaManager__TokenDeposited(msg.sender, token, depositAmount);
         emit DcaManager__TokenBalanceUpdated(
             token, scheduleIndex, s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance
         );
@@ -103,8 +103,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         override
         nonReentrant
     {
-        if (withdrawalAmount > s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance) {
-            revert DcaManager__WithdrawalAmountExceedsBalance();
+        uint256 tokenBalance = s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance;
+        if (withdrawalAmount > tokenBalance) {
+            revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);
         }
         ITokenHandler tokenHandler = _handler(token);
         s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
@@ -135,14 +136,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     function buyRbtc(address buyer, address token, uint256 scheduleIndex) external nonReentrant onlyOwner {
-        // If the user made their first purchase, check that period has elapsed before making a new purchase
-        if (s_dcaPositions[buyer][token][scheduleIndex].lastPurchaseTimestamp > 0) {
-            if (
-                block.timestamp - s_dcaPositions[buyer][token][scheduleIndex].lastPurchaseTimestamp
-                    < s_dcaPositions[buyer][token][scheduleIndex].purchasePeriod
-            ) {
-                revert DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed();
-            }
+        // If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
+        uint256 lastPurchaseTimestamp = s_dcaPositions[buyer][token][scheduleIndex].lastPurchaseTimestamp;
+        uint256 purchasePeriod = s_dcaPositions[buyer][token][scheduleIndex].purchasePeriod;
+        if (lastPurchaseTimestamp > 0 && block.timestamp - lastPurchaseTimestamp < purchasePeriod) {
+            revert DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(lastPurchaseTimestamp + purchasePeriod - block.timestamp);
         }
 
         uint256 purchaseAmount = s_dcaPositions[buyer][token][scheduleIndex].purchaseAmount;
