@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 import {IAdminOperations} from "./interfaces/IAdminOperations.sol";
+import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+// import {InterfaceChecker} from "./InterfaceChecker.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title AdminOperations
  * @dev Contract to manage administrative tasks and token handlers
  */
-contract AdminOperations is IAdminOperations, Ownable, AccessControl {
+contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , InterfaceChecker */ {
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     mapping(address => address) private tokenHandlers; // Maps token addresses to their respective TokenHandler
@@ -25,8 +28,28 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl {
      */
     function assignOrUpdateTokenHandler(address token, address handler) public /*onlyRole(ADMIN_ROLE)*/ onlyOwner {
         if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
-        tokenHandlers[token] = handler;
-        emit AdminOperations__TokenHandlerUpdated(token, handler);
+
+        ITokenHandler tokenHandler = ITokenHandler(handler);
+
+        if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
+            tokenHandlers[token] = handler;
+            emit AdminOperations__TokenHandlerUpdated(token, handler);
+        } else {
+            revert AdminOperations__ContractIsNotTokenHandler(handler);
+        }
+        // If a contract with no supportsInterface function is passed we will get an empty revert
+
+        // This doesn't work because unhandled reverts (e. g., when the contract in the given address does not have the supportsInterface function) will not be caught
+        // try tokenHandler.supportsInterface(type(ITokenHandler).interfaceId) returns (bool contractIsTokenHandler) {
+        //     if(contractIsTokenHandler){
+        //         tokenHandlers[token] = handler;
+        //         emit AdminOperations__TokenHandlerUpdated(token, handler);
+        //     } else revert AdminOperations__ContractIsNotTokenHandler(handler);
+        // } catch {
+        //     console.log("Catch");
+        //     revert AdminOperations__ContractIsNotTokenHandler(handler);
+        // }
+
     }
 
     /**
@@ -49,4 +72,9 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl {
         }
         return (size > 0);
     }
+
+    // function supportsFunction(address contractAddress, bytes4 functionSignature) public view returns (bool) {
+    //     (bool success, bytes memory data) = contractAddress.staticcall(abi.encodeWithSelector(functionSignature));
+    //     return success && data.length > 0;  // success será true si la función existe y no revierte
+    // }
 }

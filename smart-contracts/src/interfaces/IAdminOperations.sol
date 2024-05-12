@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 /**
  * @title IAdminOperation
@@ -16,6 +16,7 @@ interface IAdminOperations {
     // Errors ////////////
     //////////////////////
     error AdminOperations__EoaCannotBeHandler(address newHandler);
+    error AdminOperations__ContractIsNotTokenHandler(address newHandler);
 
     ///////////////////////////////
     // External functions /////////

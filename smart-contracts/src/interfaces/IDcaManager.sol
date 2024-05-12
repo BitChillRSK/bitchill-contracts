@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 /**
  * @title IDcaManager
@@ -40,25 +40,19 @@ interface IDcaManager {
     // Errors ////////////
     //////////////////////
     error DcaManager__TokenNotAccepted();
-    // error DcaManager__DepositAmountMustBeGreaterThanZero();
-    // error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
-    error DcaManager__NotEnoughDocAllowanceForDcaContract();
-    error DcaManager__DocDepositFailed();
-    error DcaManager__DocWithdrawalFailed();
     error DcaManager__PurchaseAmountMustBeGreaterThanZero();
     error DcaManager__PurchasePeriodMustBeGreaterThanZero();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
-    error DcaManager__RedeemDocRequestFailed();
-    error DcaManager__RedeemFreeDocFailed();
-    error DcaManager__CannotWithdrawRbtcBeforeBuying();
-    error DcaManager__rBtcWithdrawalFailed();
-    error DcaManager__OnlyMocProxyCanSendRbtcToDcaContract();
+    // error DcaManager__OnlyMocProxyCanSendRbtcToDcaContract();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
-    error DcaManager__CannotDepositInTropykusMoreThanBalance();
-    error DcaManager__DocApprovalForKdocContractFailed();
-    error DcaManager__TropykusDepositFailed();
+    // error DcaManager__CannotDepositInTropykusMoreThanBalance();
+    // error DcaManager__DocApprovalForKdocContractFailed();
+    // error DcaManager__TropykusDepositFailed();
     error DcaManager__CannotCreateScheduleSkippingIndexes();
+    error DcaManager__DcaScheduleDoesNotExist();
+    error DcaManager__CannotUpdateInexistentSchedule();
+    error DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount(address token, uint256 remainingBalance);
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS

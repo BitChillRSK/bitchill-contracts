@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 /**
  * @title ITokenHandler
@@ -59,4 +59,14 @@ interface ITokenHandler {
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */
     function withdrawAccumulatedRbtc(address user) external;
+
+    /**
+     * @dev returns the rBTC that has been accumulated by the user through periodical purchases
+     */
+    function getAccumulatedRbtcBalance() external view returns (uint256);
+
+    /**
+     * @dev to comply with ERC165
+     */
+    function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }

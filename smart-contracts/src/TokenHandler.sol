@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity 0.8.24;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title TokenHandler
  * @dev Base contract for handling various tokens.
  */
-abstract contract TokenHandler is ITokenHandler, Ownable {
+abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     //////////////////////
     // State variables ///
     //////////////////////
@@ -84,5 +85,9 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
 
     function getAccumulatedRbtcBalance() external view returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
+    }
+
+    function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
+        return interfaceID == type(ITokenHandler).interfaceId;
     }
 }
