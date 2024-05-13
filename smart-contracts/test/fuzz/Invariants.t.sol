@@ -16,20 +16,35 @@ contract InvariantTest is StdInvariant, Test {
     DcaManager dcaManager;
     AdminOperations adminOperations;
     DocTokenHandler docTokenHandler;
-    MockDocToken docToken;
+    MockDocToken mockDocToken;
     DeployContracts deployer;
     HelperConfig helperConfig;
     Handler handler;
     address USER = makeAddr("user");
     address OWNER = makeAddr("owner");
+    uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
+    uint256 constant INITIAL_DOC_DEPOSIT = 1000 ether;
+    uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
+    uint256 constant INITIAL_PURCHASE_PERIOD = 5 seconds;
 
     function setUp() external {
         deployer = new DeployContracts();
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
         (address docTokenAddress,,) = helperConfig.activeNetworkConfig();
-        docToken = MockDocToken(docTokenAddress);
-        handler = new Handler(adminOperations, docTokenHandler, dcaManager, docToken);
+        mockDocToken = MockDocToken(docTokenAddress);
+        handler = new Handler(adminOperations, docTokenHandler, dcaManager, mockDocToken);
         targetContract(address(handler));
+        vm.prank(OWNER);
+        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
+
+        // Mint 10000 DOC for the user
+        mockDocToken.mint(USER, USER_TOTAL_DOC);
+
+        vm.startPrank(USER);
+        // Here we make the starting point of the invariant tests that the user has created a DCA schedule depositing 1000 DOC to spend 100 DOC every 5 seconds
+        mockDocToken.approve(address(docTokenHandler), USER_TOTAL_DOC);
+        dcaManager.createOrUpdateDcaSchedule(docTokenAddress, 0, INITIAL_DOC_DEPOSIT, INITIAL_PURCHASE_AMOUNT, INITIAL_PURCHASE_PERIOD);
+        vm.stopPrank();
         // bytes4[] memory selectors = new bytes4[](2);
         // selectors[0] = Handler.despositDOC.selector;
         // selectors[1] = Handler.withdrawDOC.selector;
@@ -39,17 +54,21 @@ contract InvariantTest is StdInvariant, Test {
     function invariant_DcaContractDocBalanceEqualsSumOfAllUsers() public {
         // get the total amount of DOC deposited in the contract
         // compare it to the sum of all users' balances 
+        vm.startPrank(OWNER);
         address[] memory users = dcaManager.getUsers();
+        vm.stopPrank();
         users = removeDuplicates(users);
         uint256 sumOfUsersBalances;
         for (uint256 i = 0; i < users.length; i++) {
             vm.startPrank(users[i]);
-            uint256 numOfSchedules = dcaManager.getMyDcaPositions(address(docToken)).length;
+            uint256 numOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
             for (uint256 j = 0; j < numOfSchedules; j++) {
-                sumOfUsersBalances += dcaManager.getScheduleTokenBalance(address(docToken), j);
+                sumOfUsersBalances += dcaManager.getScheduleTokenBalance(address(mockDocToken), j);
             }
+            vm.stopPrank();
         }
-        // assertEq(docToken.balanceOf(address(docTokenHandler)), sumOfUsersBalances);
+        assertEq(mockDocToken.balanceOf(address(docTokenHandler)), sumOfUsersBalances);
+        console.log("Sum of user's balances is", sumOfUsersBalances);
         assert(sumOfUsersBalances >= 0);
     }
 

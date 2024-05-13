@@ -60,8 +60,11 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         if (!success) revert DocTokenHandler__RedeemFreeDocFailed();
         uint256 balancePost = address(this).balance;
 
-        s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
-
-        emit TokenHandler__RbtcBought(buyer, amount, balancePost - balancePrev);
+        if(balancePost > balancePrev) {
+            s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
+            emit TokenHandler__RbtcBought(buyer, address(i_docTokenContract), balancePost - balancePrev, amount);
+        } else {
+            emit TokenHandler__PurchaseFailed(buyer, address(i_docTokenContract));
+        }
     }
 }
