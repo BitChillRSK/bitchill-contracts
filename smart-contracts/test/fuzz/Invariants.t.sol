@@ -27,7 +27,7 @@ contract InvariantTest is StdInvariant, Test {
     uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
     uint256 constant INITIAL_DOC_DEPOSIT = 1000 ether;
     uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
-    uint256 constant INITIAL_PURCHASE_PERIOD = 5 seconds;
+    uint256 constant INITIAL_PURCHASE_PERIOD = 1 weeks;
     uint256 constant MOC_START_RBTC_BALANCE = 500 ether;
 
     function setUp() external {

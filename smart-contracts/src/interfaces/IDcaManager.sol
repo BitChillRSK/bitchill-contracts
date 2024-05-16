@@ -41,8 +41,8 @@ interface IDcaManager {
     //////////////////////
     error DcaManager__TokenNotAccepted();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
-    error DcaManager__PurchaseAmountMustBeGreaterThanZero();
-    error DcaManager__PurchasePeriodMustBeGreaterThanZero();
+    error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token);
+    error DcaManager__PurchasePeriodMustBeGreaterThanMin();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     // error DcaManager__OnlyMocProxyCanSendRbtcToDcaContract();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
@@ -123,6 +123,12 @@ interface IDcaManager {
      */
     function withdrawAllAccmulatedRbtc() external;
 
+    /**
+     * @dev modifies the minimum period that can be set for purchases
+     */
+    function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external;
+
+
     //////////////////////
     // Getter functions //
     //////////////////////
@@ -134,4 +140,9 @@ interface IDcaManager {
     function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
     function getUsers() external view returns (address[] memory);
     function getTotalNumberOfDeposits() external view returns (uint256);
+    
+    /**
+     * @dev returns the minimum period that can be set for purchases
+     */
+    function getMinPurchasePeriod() external returns (uint256);
 }

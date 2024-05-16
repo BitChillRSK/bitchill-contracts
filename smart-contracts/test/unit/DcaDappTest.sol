@@ -28,7 +28,9 @@ contract DcaDappTest is Test {
     uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
     uint256 constant DOC_TO_DEPOSIT = 1000 ether; // 1000 DOC
     uint256 constant DOC_TO_SPEND = 100 ether; // 100 DOC for periodical purchases
-    uint256 constant PURCHASE_PERIOD = 5 seconds;
+    uint256 MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
+    uint256 MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
+    // uint256 constant MIN_PURCHASE_PERIOD = 5 seconds;
     uint256 constant BTC_PRICE = 50_000;
     uint256 SCHEDULE_INDEX = 0;
     uint256 NUM_OF_SCHEDULES = 5;
@@ -96,7 +98,7 @@ contract DcaDappTest is Test {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         dcaManager.createOrUpdateDcaSchedule(
-            address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD
+            address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         vm.stopPrank();
     }
@@ -181,23 +183,31 @@ contract DcaDappTest is Test {
 
     function testSetPurchasePeriod() external {
         vm.startPrank(USER);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, PURCHASE_PERIOD);
-        assertEq(PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX));
-        vm.stopPrank();
-    }
-
-    function testPurchaseAmountCannotBeZero() external {
-        vm.startPrank(USER);
-        vm.expectRevert(IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanZero.selector);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, 0);
+        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
+        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
     function testPurchaseAmountCannotBeMoreThanHalfBalance() external {
-        vm.startPrank(USER);
         vm.expectRevert(IDcaManager.DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance.selector);
+        vm.prank(USER);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT / 2 + 1);
-        vm.stopPrank();
+    }
+
+    function testPurchaseAmountMustBeGreaterThanMin() external {
+        bytes memory encodedRevert = abi.encodeWithSelector(
+            IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanMinimum.selector,
+            address(mockDocToken)
+        );
+        vm.expectRevert(encodedRevert);
+        vm.prank(USER);
+        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_AMOUNT - 1);
+    }
+
+    function testPurchasePeriodMustBeGreaterThanMin() external {
+        vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMin.selector);
+        vm.prank(USER);
+        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
     }
 
     //////////////////////
@@ -223,13 +233,13 @@ contract DcaDappTest is Test {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_SPEND);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, PURCHASE_PERIOD);
+        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         vm.stopPrank();
         vm.prank(OWNER);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX); // first purchase
         bytes memory encodedRevert = abi.encodeWithSelector(
             IDcaManager.DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed.selector,
-            block.timestamp + PURCHASE_PERIOD - block.timestamp
+            block.timestamp + MIN_PURCHASE_PERIOD - block.timestamp
         );
         vm.expectRevert(encodedRevert);
         vm.prank(OWNER);
@@ -239,11 +249,11 @@ contract DcaDappTest is Test {
     function testSeveralPurchases() external {
         uint256 numOfPurchases = 5;
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, PURCHASE_PERIOD);
+        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         for (uint256 i; i < numOfPurchases; i++) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
-            vm.warp(block.timestamp + PURCHASE_PERIOD);
+            vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
         }
         vm.prank(USER);
         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (DOC_TO_SPEND / BTC_PRICE) * numOfPurchases);
@@ -254,7 +264,7 @@ contract DcaDappTest is Test {
         for (uint256 i; i < numOfPurchases; i++) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
-            vm.warp(block.timestamp + PURCHASE_PERIOD);
+            vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
         }
         // Attempt to purchase once more
         bytes memory encodedRevert = abi.encodeWithSelector(
@@ -273,7 +283,7 @@ contract DcaDappTest is Test {
 
         for (uint8 i; i < NUM_OF_SCHEDULES; i++) {
             uint256 scheduleIndex = i;
-            uint256 purchasePeriod = PURCHASE_PERIOD + i * 5 seconds;
+            uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 seconds;
             for (uint8 j; j < numOfPurchases; j++) {
                 vm.startPrank(USER);
                 uint256 docBalanceBeforePurchase =
@@ -369,15 +379,15 @@ contract DcaDappTest is Test {
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         vm.expectEmit(true, true, true, true);
         emit DcaManager__newDcaScheduleCreated(
-            USER, address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD
+            USER, address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         dcaManager.createOrUpdateDcaSchedule(
-            address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, PURCHASE_PERIOD
+            address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
         assertEq(DOC_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), SCHEDULE_INDEX));
-        assertEq(PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX));
+        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
@@ -389,7 +399,7 @@ contract DcaDappTest is Test {
         // test with scheduleIndex == 0 updates the schedule created in setUp, so testUpdateSchedule() would be redundant
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; i++) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
-            uint256 purchasePeriod = PURCHASE_PERIOD + i * 5 seconds;
+            uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 seconds;
             uint256 userBalanceBeforeDeposit;
             if (dcaManager.getMyDcaSchedules(address(mockDocToken)).length > scheduleIndex) {
                 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
@@ -420,7 +430,7 @@ contract DcaDappTest is Test {
         vm.expectRevert(IDcaManager.DcaManager__CannotUpdateInexistentSchedule.selector);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, DOC_TO_SPEND);
         vm.expectRevert(IDcaManager.DcaManager__CannotUpdateInexistentSchedule.selector);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, PURCHASE_PERIOD);
+        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, MIN_PURCHASE_PERIOD);
         vm.stopPrank();
     }
 
@@ -468,7 +478,7 @@ contract DcaDappTest is Test {
     function testTokenHandlerUpdated() external {
         address prevDocTokenHandler = adminOperations.getTokenHandler(address(mockDocToken));
         vm.startBroadcast();
-        DocTokenHandler newDocTokenHandler = new DocTokenHandler(address(mockDocToken), address(dcaManager), address(mockMocProxy));
+        DocTokenHandler newDocTokenHandler = new DocTokenHandler(address(mockDocToken), MIN_PURCHASE_AMOUNT, address(dcaManager), address(mockMocProxy));
         vm.stopBroadcast();
         assert(prevDocTokenHandler != address(newDocTokenHandler));
         vm.prank(OWNER);

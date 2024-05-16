@@ -15,6 +15,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     // State variables ///
     //////////////////////
     address public immutable i_stableToken; // The stablecoin token to be deposited
+    uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     address public immutable i_dcaManager; // The DCA manager contract
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
 
@@ -29,9 +30,10 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         _;
     }
 
-    constructor(address tokenAddress, address dcaManagerAddress) {
+    constructor(address tokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress) {
         i_stableToken = tokenAddress;
         i_dcaManager = dcaManagerAddress;
+        s_minPurchaseAmount = minPurchaseAmount;
     }
 
     receive() external payable /*onlyMocProxy*/ {} // Cambiar onlyMocProxy por algo que controle que el rbtc venga de fuentes conocidas?
@@ -89,5 +91,13 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
 
     function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
         return interfaceID == type(ITokenHandler).interfaceId;
+    }
+
+    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external onlyOwner {
+        s_minPurchaseAmount = minPurchaseAmount;
+    }
+
+    function getMinPurchaseAmount() external returns (uint256) {
+        return s_minPurchaseAmount;
     }
 }

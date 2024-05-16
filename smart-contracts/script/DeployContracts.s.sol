@@ -10,6 +10,7 @@ import {console} from "forge-std/Test.sol";
 
 contract DeployContracts is Script {
     address OWNER = makeAddr("owner");
+    uint256 MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
 
     function run() external returns (AdminOperations, DocTokenHandler, DcaManager, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
@@ -19,7 +20,7 @@ contract DeployContracts is Script {
         // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        DocTokenHandler docTokenHandler = new DocTokenHandler(docToken, address(dcaManager), mocProxy);
+        DocTokenHandler docTokenHandler = new DocTokenHandler(docToken, MIN_PURCHASE_AMOUNT, address(dcaManager), mocProxy);
 
         // For local tests:
         dcaManager.transferOwnership(OWNER); // Only for tests!!!

@@ -55,7 +55,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     /**
      * @dev Retrieves the handler for a given token.
      * @param token The address of the token.
-     * @return The address of the TokenHandler.
+     * @return The address of the TokenHandler. If address(0) is returned, the token is not accepted by the dApp.
      */
     function getTokenHandler(address token) public view returns (address) {
         return tokenHandlers[token];

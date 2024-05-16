@@ -70,4 +70,14 @@ interface ITokenHandler {
      * @dev to comply with ERC165
      */
     function supportsInterface(bytes4 interfaceID) external view returns (bool);
+
+    /**
+     * @dev modifies the minimum amount of the token that can be spent in each purchase
+     */
+    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external;
+
+    /**
+     * @dev returns the minimum amount of the token that can be spent in each purchase
+     */
+    function getMinPurchaseAmount() external returns (uint256);
 }

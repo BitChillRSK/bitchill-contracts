@@ -19,15 +19,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     // State variables ////////////
     ///////////////////////////////
     AdminOperations s_adminOperations;
-    address[] s_acceptedStableCoins;
+
     /**
-     * @notice Each user may open positions with more than one stablecoin and with different schedules
+     * @notice Each user may create different schedules with one or more stablecoins
      */
     mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenDeposited; // User to token deposited flag
-    mapping(address user => address[] usersDepositedTokens) private s_depositedTokens;
+    mapping(address user => address[] depositedTokens) private s_usersDepositedTokens;
     mapping(address user => mapping(address depositedTokens => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
+    uint256 private s_minPurchasePeriod = 1 days; // At most one purchase each day
 
     //////////////////////
     // Functions /////////
@@ -152,8 +153,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
      */
     function withdrawAllAccmulatedRbtc() external nonReentrant {
-        for (uint256 i; i < s_depositedTokens[msg.sender].length; i++) {
-            ITokenHandler tokenHandler = _handler(s_depositedTokens[msg.sender][i]);
+        for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; i++) {
+            ITokenHandler tokenHandler = _handler(s_usersDepositedTokens[msg.sender][i]);
             tokenHandler.withdrawAccumulatedRbtc(msg.sender);
         }
     }
@@ -188,6 +189,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_adminOperations = AdminOperations(adminOperationsAddress);
     }
 
+    function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external onlyOwner {
+        s_minPurchasePeriod = minPurchasePeriod;
+    }
+
     ///////////////////////////////
     // Internal functions /////////
     ///////////////////////////////
@@ -197,10 +202,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
     function _setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount) internal {
-        if (purchaseAmount <= 0) revert DcaManager__PurchaseAmountMustBeGreaterThanZero();
+        ITokenHandler tokenHandler = _handler(token);
+        if (purchaseAmount < tokenHandler.getMinPurchaseAmount()) {
+            revert DcaManager__PurchaseAmountMustBeGreaterThanMinimum(token);
+        } 
+        /**
+         * @notice Purchase amount must be at least twice the balance of the token in the contract to allow at least two DCA purchases
+         */
         if (purchaseAmount > s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance / 2) {
             revert DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
-        } //At least two DCA purchases
+        } 
         s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount = purchaseAmount;
     }
 
@@ -209,7 +220,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice the period
      */
     function _setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod) internal {
-        if (purchasePeriod <= 0) revert DcaManager__PurchasePeriodMustBeGreaterThanZero();
+        if(purchasePeriod < s_minPurchasePeriod) revert DcaManager__PurchasePeriodMustBeGreaterThanMin();
         s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod = purchasePeriod;
     }
 
@@ -220,10 +231,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _depositToken(address token, uint256 scheduleIndex, uint256 depositAmount) internal {
         ITokenHandler tokenHandler = _handler(token);
-        // if (!_isTokenDeposited(token)) s_depositedTokens[msg.sender].push(token);
+        // if (!_isTokenDeposited(token)) s_usersDepositedTokens[msg.sender].push(token);
         if (!s_tokenDeposited[msg.sender][token]) {
             s_tokenDeposited[msg.sender][token] = true;
-            s_depositedTokens[msg.sender].push(token);
+            s_usersDepositedTokens[msg.sender].push(token);
         }
         if (!s_userRegistered[msg.sender]) {
             s_userRegistered[msg.sender] = true;
@@ -241,8 +252,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     // function _isTokenDeposited(address token) internal view returns (bool) {
-    // for (uint256 i; i < s_depositedTokens[msg.sender].length; i++) {
-    //     if (s_depositedTokens[msg.sender][i] == token) return true;
+    // for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; i++) {
+    //     if (s_usersDepositedTokens[msg.sender][i] == token) return true;
     // }
     // return false;
     // }
@@ -285,5 +296,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function getTotalNumberOfDeposits() external view returns (uint256) {
         return s_users.length;
+    }
+    
+    function getMinPurchasePeriod() external returns (uint256) {
+        return s_minPurchasePeriod;
     }
 }

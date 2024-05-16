@@ -17,8 +17,9 @@ contract Handler is Test {
     MockDocToken public mockDocToken;
     // MockMocProxy public mockMocProxy;
     uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
-    uint256 constant MIN_PURCHASE_AMOUNT = 1 ether; // at least 1 DOC in each periodic purchase
-    uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at most one purchase every 10 years
+    uint256 constant MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC in each periodic purchase
+    uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at least one purchase every 10 years
+    uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     address OWNER = makeAddr("owner");
     address USER = makeAddr("user");
 
@@ -113,11 +114,11 @@ contract Handler is Test {
 
     function setPurchasePeriod(uint256 scheduleIndex, uint256 purchasePeriod) external {
         vm.startPrank(USER);
-        purchasePeriod = bound(purchasePeriod, 0, MAX_PURCHASE_PERIOD);
-        if (purchasePeriod == 0) {
-            vm.stopPrank();
-            return;
-        }
+        purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
+        // if (purchasePeriod == 0) {
+        //     vm.stopPrank();
+        //     return;
+        // }
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
@@ -165,11 +166,11 @@ contract Handler is Test {
             vm.stopPrank();
             return;
         }
-        purchasePeriod = bound(purchasePeriod, 0, MAX_PURCHASE_PERIOD);
-        if (purchasePeriod == 0) {
-            vm.stopPrank();
-            return;
-        }
+        purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
+        // if (purchasePeriod == 0) {
+        //     vm.stopPrank();
+        //     return;
+        // }
         mockDocToken.mint(USER, USER_TOTAL_DOC);
         mockDocToken.approve(address(docTokenHandler), depositAmount);
         dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);

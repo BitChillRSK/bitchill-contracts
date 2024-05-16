@@ -24,11 +24,13 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param docTokenAddress: the address of the Dollar On Chain token on the blockchain of deployment
+     * @param minPurchaseAmount:  the minimum amount of DOC for periodic purchases
+     * @param dcaManagerAddress: the address of the DCA Manager contract
      * @param mocProxyAddress: the address of the MoC proxy contract on the blockchain of deployment
      */
-    constructor(address docTokenAddress, address dcaManagerAddress, address mocProxyAddress /*, address _kdocToken*/ )
+    constructor(address docTokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress, address mocProxyAddress /*, address _kdocToken*/ )
         Ownable(msg.sender)
-        TokenHandler(docTokenAddress, dcaManagerAddress)
+        TokenHandler(docTokenAddress, minPurchaseAmount, dcaManagerAddress)
     {
         i_docTokenContract = IERC20(docTokenAddress);
         i_mocProxyContract = IMocProxy(mocProxyAddress);
