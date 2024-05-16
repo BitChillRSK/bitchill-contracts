@@ -127,11 +127,11 @@ interface IDcaManager {
     // Getter functions //
     //////////////////////
 
-    function getMyDcaPositions(address token) external view returns (DcaDetails[] memory);
+    function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory);
     function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256);
     function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256);
     function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256);
-    function ownerGetUsersDcaPositions(address user, address token) external view returns (DcaDetails[] memory);
+    function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
     function getUsers() external view returns (address[] memory);
     function getTotalNumberOfDeposits() external view returns (uint256);
 }

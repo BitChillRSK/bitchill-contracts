@@ -42,7 +42,7 @@ contract HelperConfig is Script {
         }
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
-        MockMocProxy mockMocProxy = new MockMocProxy();
+        MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
         MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
         vm.stopBroadcast();
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));

@@ -25,7 +25,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenDeposited; // User to token deposited flag
     mapping(address user => address[] usersDepositedTokens) private s_depositedTokens;
-    mapping(address user => mapping(address depositedTokens => DcaDetails[] usersDcaPositions)) private s_dcaPositions;
+    mapping(address user => mapping(address depositedTokens => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
 
@@ -51,13 +51,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param depositAmount: the amount of DOC to deposit
      */
     function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount) external override nonReentrant {
-        if (s_dcaPositions[msg.sender][token].length <= scheduleIndex) {
+        if (s_dcaSchedules[msg.sender][token].length <= scheduleIndex) {
             revert DcaManager__CannotUpdateInexistentSchedule();
         }
         _depositToken(token, scheduleIndex, depositAmount);
         // emit DcaManager__TokenDeposited(msg.sender, token, depositAmount);
         emit DcaManager__TokenBalanceUpdated(
-            token, scheduleIndex, s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance
+            token, scheduleIndex, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
         );
     }
 
@@ -66,7 +66,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
     function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount) external override {
-        if (s_dcaPositions[msg.sender][token].length <= scheduleIndex) {
+        if (s_dcaSchedules[msg.sender][token].length <= scheduleIndex) {
             revert DcaManager__CannotUpdateInexistentSchedule();
         }
         _setPurchaseAmount(token, scheduleIndex, purchaseAmount);
@@ -78,7 +78,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice the period
      */
     function setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod) external override {
-        if (s_dcaPositions[msg.sender][token].length <= scheduleIndex) {
+        if (s_dcaSchedules[msg.sender][token].length <= scheduleIndex) {
             revert DcaManager__CannotUpdateInexistentSchedule();
         }
         _setPurchasePeriod(token, scheduleIndex, purchasePeriod);
@@ -100,12 +100,12 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     ) external override {
-        uint256 numOfSchedules = s_dcaPositions[msg.sender][token].length;
+        uint256 numOfSchedules = s_dcaSchedules[msg.sender][token].length;
         if (numOfSchedules < scheduleIndex) revert DcaManager__CannotCreateScheduleSkippingIndexes();
 
         // If the DCA schedule doesn't exist, intialize it
         if (numOfSchedules == scheduleIndex) {
-            s_dcaPositions[msg.sender][token].push(DcaDetails(0, 0, 0, 0));
+            s_dcaSchedules[msg.sender][token].push(DcaDetails(0, 0, 0, 0));
         }
 
         _depositToken(token, scheduleIndex, depositAmount);
@@ -126,16 +126,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         override
         nonReentrant
     {
-        uint256 tokenBalance = s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance;
+        uint256 tokenBalance = s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
         if (withdrawalAmount > tokenBalance) {
             revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);
         }
         ITokenHandler tokenHandler = _handler(token);
-        s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
+        s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
         tokenHandler.withdrawToken(msg.sender, withdrawalAmount);
         emit DcaManager__TokenWithdrawn(msg.sender, token, withdrawalAmount);
         emit DcaManager__TokenBalanceUpdated(
-            token, scheduleIndex, s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance
+            token, scheduleIndex, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
         );
     }
 
@@ -160,21 +160,21 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function buyRbtc(address buyer, address token, uint256 scheduleIndex) external nonReentrant onlyOwner {
         // If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
-        uint256 lastPurchaseTimestamp = s_dcaPositions[buyer][token][scheduleIndex].lastPurchaseTimestamp;
-        uint256 purchasePeriod = s_dcaPositions[buyer][token][scheduleIndex].purchasePeriod;
+        uint256 lastPurchaseTimestamp = s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp;
+        uint256 purchasePeriod = s_dcaSchedules[buyer][token][scheduleIndex].purchasePeriod;
         if (lastPurchaseTimestamp > 0 && block.timestamp - lastPurchaseTimestamp < purchasePeriod) {
             revert DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(
                 lastPurchaseTimestamp + purchasePeriod - block.timestamp
             );
         }
 
-        uint256 purchaseAmount = s_dcaPositions[buyer][token][scheduleIndex].purchaseAmount;
-        uint256 tokenBalance = s_dcaPositions[buyer][token][scheduleIndex].tokenBalance;
+        uint256 purchaseAmount = s_dcaSchedules[buyer][token][scheduleIndex].purchaseAmount;
+        uint256 tokenBalance = s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance;
         if (purchaseAmount > tokenBalance) {
             revert DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount(token, tokenBalance);
         }
-        s_dcaPositions[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
-        s_dcaPositions[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
+        s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
+        s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
 
         ITokenHandler tokenHandler = _handler(token);
         tokenHandler.buyRbtc(buyer, purchaseAmount);
@@ -198,10 +198,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount) internal {
         if (purchaseAmount <= 0) revert DcaManager__PurchaseAmountMustBeGreaterThanZero();
-        if (purchaseAmount > s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance / 2) {
+        if (purchaseAmount > s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance / 2) {
             revert DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
         } //At least two DCA purchases
-        s_dcaPositions[msg.sender][token][scheduleIndex].purchaseAmount = purchaseAmount;
+        s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount = purchaseAmount;
     }
 
     /**
@@ -210,7 +210,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod) internal {
         if (purchasePeriod <= 0) revert DcaManager__PurchasePeriodMustBeGreaterThanZero();
-        s_dcaPositions[msg.sender][token][scheduleIndex].purchasePeriod = purchasePeriod;
+        s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod = purchasePeriod;
     }
 
     /**
@@ -231,7 +231,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         }
 
         tokenHandler.depositToken(msg.sender, depositAmount);
-        s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance += depositAmount;
+        s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance += depositAmount;
     }
 
     function _handler(address token) internal view returns (ITokenHandler) {
@@ -251,32 +251,32 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     // Getter functions //
     //////////////////////
 
-    function getMyDcaPositions(address token) external view returns (DcaDetails[] memory) {
-        return s_dcaPositions[msg.sender][token];
+    function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory) {
+        return s_dcaSchedules[msg.sender][token];
     }
 
     function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaPositions[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
-        return s_dcaPositions[msg.sender][token][scheduleIndex].tokenBalance;
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+        return s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
     }
 
     function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaPositions[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
-        return s_dcaPositions[msg.sender][token][scheduleIndex].purchaseAmount;
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+        return s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount;
     }
 
     function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaPositions[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
-        return s_dcaPositions[msg.sender][token][scheduleIndex].purchasePeriod;
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+        return s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod;
     }
 
-    function ownerGetUsersDcaPositions(address user, address token)
+    function ownerGetUsersDcaSchedules(address user, address token)
         external
         view
         onlyOwner
         returns (DcaDetails[] memory)
     {
-        return s_dcaPositions[user][token];
+        return s_dcaSchedules[user][token];
     }
 
     function getUsers() external view onlyOwner returns (address[] memory) {

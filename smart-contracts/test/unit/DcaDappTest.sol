@@ -59,6 +59,8 @@ contract DcaDappTest is Test {
     //////////////////////
     // Errors ////////////
     //////////////////////
+    // Ownable    
+    error OwnableUnauthorizedAccount(address account);
 
     function setUp() external {
         DeployContracts deployContracts = new DeployContracts();
@@ -76,9 +78,16 @@ contract DcaDappTest is Test {
         vm.prank(OWNER);
         adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
 
-        // Send rBTC funds to mock contract and user
+        // Deal rBTC funds to mock contract and user
         vm.deal(mocProxyAddress, 1000 ether);
         vm.deal(USER, STARTING_RBTC_USER_BALANCE);
+
+        // Give the MoC proxy contract allowance
+        mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
+        
+        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour)
+        vm.prank(address(docTokenHandler));
+        mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
         // Mint 10000 DOC for the user
         mockDocToken.mint(USER, USER_TOTAL_DOC);
@@ -260,7 +269,6 @@ contract DcaDappTest is Test {
         this.testCreateSeveralDcaSchedules();
 
         uint8 numOfPurchases = 5;
-        uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 docToSpend = DOC_TO_SPEND / NUM_OF_SCHEDULES;
 
         for (uint8 i; i < NUM_OF_SCHEDULES; i++) {
@@ -290,6 +298,35 @@ contract DcaDappTest is Test {
         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (DOC_TO_SPEND / BTC_PRICE) * numOfPurchases);
     }
 
+    function testOnlyOwnerCanCallDcaManagerToPurchase() external {
+        vm.startPrank(USER);
+        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
+        vm.expectRevert(encodedRevert);
+        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        vm.stopPrank();
+        // Check that balances didn't change
+        assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
+        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+    }
+
+    function testOnlyDcaManagerCanPurchase() external {
+        vm.startPrank(USER);
+        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        vm.expectRevert(ITokenHandler.TokenHandler__OnlyDcaManagerCanCall.selector);
+        docTokenHandler.buyRbtc(USER, SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        vm.stopPrank();
+        // Check that balances didn't change
+        assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
+        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+    }
+
     /////////////////////////////
     /// rBTC Withdrawal tests ///
     /////////////////////////////
@@ -297,12 +334,29 @@ contract DcaDappTest is Test {
     function testWithdrawRbtc() external {
         // TODO: test this for multiple stablecoins/schedules
         this.testSinglePurchase();
-        vm.startPrank(USER);
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
+        vm.prank(USER);
         dcaManager.withdrawAllAccmulatedRbtc();
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-        vm.stopPrank();
         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, DOC_TO_SPEND / BTC_PRICE);
+    }
+
+    function testWithdrawRbtcAfterSeveralPurchases() external {
+        this.testSeveralPurchasesWithSeveralSchedules(); // 5 purchases
+        uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
+        vm.prank(USER);
+        dcaManager.withdrawAllAccmulatedRbtc();
+        uint256 rbtcBalanceAfterWithdrawal = USER.balance;
+        assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, 5 * DOC_TO_SPEND / BTC_PRICE);
+    }
+
+    function testCannotWithdrawBeforePurchasing() external {
+        uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
+        vm.expectRevert(ITokenHandler.TokenHandler__NoAccumulatedRbtcToWithdraw.selector);
+        vm.prank(USER);
+        dcaManager.withdrawAllAccmulatedRbtc();
+        uint256 rbtcBalanceAfterWithdrawal = USER.balance;
+        assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
     }
 
     /////////////////////////////////
@@ -337,7 +391,7 @@ contract DcaDappTest is Test {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = PURCHASE_PERIOD + i * 5 seconds;
             uint256 userBalanceBeforeDeposit;
-            if (dcaManager.getMyDcaPositions(address(mockDocToken)).length > scheduleIndex) {
+            if (dcaManager.getMyDcaSchedules(address(mockDocToken)).length > scheduleIndex) {
                 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
             } else {
                 userBalanceBeforeDeposit = 0;

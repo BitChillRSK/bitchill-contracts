@@ -64,7 +64,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
             s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
             emit TokenHandler__RbtcBought(buyer, address(i_docTokenContract), balancePost - balancePrev, amount);
         } else {
-            emit TokenHandler__PurchaseFailed(buyer, address(i_docTokenContract));
+            revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docTokenContract));
         }
     }
 }

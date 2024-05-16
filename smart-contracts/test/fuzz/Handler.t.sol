@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
+import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
@@ -16,6 +17,8 @@ contract Handler is Test {
     MockDocToken public mockDocToken;
     // MockMocProxy public mockMocProxy;
     uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
+    uint256 constant MIN_PURCHASE_AMOUNT = 1 ether; // at least 1 DOC in each periodic purchase
+    uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at most one purchase every 10 years
     address OWNER = makeAddr("owner");
     address USER = makeAddr("user");
 
@@ -30,18 +33,22 @@ contract Handler is Test {
     function depositDoc(uint256 scheduleIndex, uint256 depositAmount) public {
         vm.startPrank(USER);
         mockDocToken.mint(USER, USER_TOTAL_DOC);
-        depositAmount = bound(depositAmount, 0, USER_TOTAL_DOC);
-        if (depositAmount == 0) {
+        if (depositAmount < 2 * MIN_PURCHASE_AMOUNT) {
             vm.stopPrank();
             return;
         }
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        depositAmount = bound(depositAmount, 2 * MIN_PURCHASE_AMOUNT, USER_TOTAL_DOC);
+        // if (depositAmount == 0) {
+        //     vm.stopPrank();
+        //     return;
+        // }
+        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
             // We need to create a DCA schedule before depositing more DOC 
             dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, depositAmount / 10, 5);
         }
-        // uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        // uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         // if (usersNumOfSchedules == 0) {
         //     vm.stopPrank();
         //     return;
@@ -54,13 +61,13 @@ contract Handler is Test {
 
     function withdrawDoc(uint256 scheduleIndex, uint256 withdrawalAmount) public {
         vm.startPrank(USER);
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
             // We need to create a DCA schedule before withdrawing DOC 
             dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, withdrawalAmount, withdrawalAmount / 10, 5);
         }
-        // uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        // uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         // if (usersNumOfSchedules == 0) {
         //     vm.stopPrank();
         //     return;
@@ -78,20 +85,24 @@ contract Handler is Test {
 
     function setPurchaseAmount(uint256 scheduleIndex, uint256 purchaseAmount) external {
         vm.startPrank(USER);
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
             // We need to create a DCA schedule before modifying the purchase amount
             dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, purchaseAmount * 10, purchaseAmount, 5);
         }
-        // uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        // uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         // if (usersNumOfSchedules == 0) {
         //     vm.stopPrank();
         //     return;
         // }
         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
-        purchaseAmount = bound(purchaseAmount, 0, maxPurchaseAmount);
+        if(maxPurchaseAmount < MIN_PURCHASE_AMOUNT) { // This can happen if the DOC balance left is less than 2 DOC
+            vm.stopPrank();
+            return;
+        }
+        purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, maxPurchaseAmount);
         if (purchaseAmount == 0) {
             vm.stopPrank();
             return;
@@ -102,17 +113,18 @@ contract Handler is Test {
 
     function setPurchasePeriod(uint256 scheduleIndex, uint256 purchasePeriod) external {
         vm.startPrank(USER);
+        purchasePeriod = bound(purchasePeriod, 0, MAX_PURCHASE_PERIOD);
         if (purchasePeriod == 0) {
             vm.stopPrank();
             return;
         }
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
             // We need to create a DCA schedule before modifying the purchase period
             dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, 1000, 100, purchasePeriod);
         }
-        // uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        // uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         // if (usersNumOfSchedules == 0) {
         //     vm.stopPrank();
         //     return;
@@ -124,12 +136,16 @@ contract Handler is Test {
 
     function createOrUpdateDcaSchedule(uint256 scheduleIndex, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
         vm.startPrank(USER);
-        depositAmount = bound(depositAmount, 0, USER_TOTAL_DOC);
-        if (depositAmount == 0) {
+        if (depositAmount < 2 * MIN_PURCHASE_AMOUNT) {
             vm.stopPrank();
             return;
         }
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+        depositAmount = bound(depositAmount, 2 * MIN_PURCHASE_AMOUNT, USER_TOTAL_DOC);
+        // if (depositAmount == 0) {
+        //     vm.stopPrank();
+        //     return;
+        // }
+        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             vm.stopPrank();
             return;
@@ -140,11 +156,16 @@ contract Handler is Test {
             return;
         }
         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
-        purchaseAmount = bound(purchaseAmount, 0, maxPurchaseAmount);
+        if(maxPurchaseAmount < MIN_PURCHASE_AMOUNT) { // This can happen if the DOC balance left is less than 2 DOC
+            vm.stopPrank();
+            return;
+        }
+        purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, maxPurchaseAmount);
         if (purchaseAmount == 0) {
             vm.stopPrank();
             return;
         }
+        purchasePeriod = bound(purchasePeriod, 0, MAX_PURCHASE_PERIOD);
         if (purchasePeriod == 0) {
             vm.stopPrank();
             return;
@@ -156,21 +177,21 @@ contract Handler is Test {
     }
 
     function buyRbtc(uint256 buyerAddressSeed, uint256 scheduleIndex) public {
-        vm.startPrank(USER);
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
-        if (usersNumOfSchedules == 0) {
-            // We need to create a DCA schedule before purchasing rBTC
-            scheduleIndex = 0;
-            dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, 1000, 100, 5);
-        }
-        vm.stopPrank();
-        scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
-        vm.startPrank(OWNER);
+        vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();
         if (users.length == 0) return;
         address buyer = users[buyerAddressSeed % users.length];
+
+        vm.prank(buyer);
+        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(mockDocToken));
+        uint256 usersNumOfSchedules = dcaDetails.length;
+        scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+
+        if(dcaDetails[scheduleIndex].tokenBalance < dcaDetails[scheduleIndex].purchaseAmount) return;
+        if(block.timestamp < dcaDetails[scheduleIndex].lastPurchaseTimestamp + dcaDetails[scheduleIndex].purchasePeriod) return;  
+
+        vm.prank(OWNER);
         dcaManager.buyRbtc(buyer, address(mockDocToken), scheduleIndex);
-        vm.stopPrank();
     }
 
     function withdrawRbtc() external {

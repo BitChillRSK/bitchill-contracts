@@ -16,7 +16,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     //////////////////////
     address public immutable i_stableToken; // The stablecoin token to be deposited
     address public immutable i_dcaManager; // The DCA manager contract
-    mapping(address user => uint256 amount) s_usersAccumulatedRbtc;
+    mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
 
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;

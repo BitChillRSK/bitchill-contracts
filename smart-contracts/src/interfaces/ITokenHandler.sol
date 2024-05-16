@@ -14,7 +14,6 @@ interface ITokenHandler {
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__rBtcWithdrawn(address indexed user, uint256 indexed amount);
     event TokenHandler__RbtcBought(address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent);
-    event TokenHandler__PurchaseFailed(address indexed user, address indexed tokenSpent);
 
     //////////////////////
     // Errors ////////////
@@ -30,6 +29,7 @@ interface ITokenHandler {
     error TokenHandler__NoAccumulatedRbtcToWithdraw();
     error TokenHandler__rBtcWithdrawalFailed();
     error TokenHandler__OnlyDcaManagerCanCall();
+    error TokenHandler__RbtcPurchaseFailed(address user, address tokenSpent);
 
     ///////////////////////////////
     // External functions /////////

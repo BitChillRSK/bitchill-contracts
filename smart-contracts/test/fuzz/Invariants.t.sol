@@ -8,6 +8,7 @@ import {DcaManager} from "src/DcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
+import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {DeployContracts} from "../../script/DeployContracts.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Handler} from "./Handler.t.sol";
@@ -17,6 +18,7 @@ contract InvariantTest is StdInvariant, Test {
     AdminOperations adminOperations;
     DocTokenHandler docTokenHandler;
     MockDocToken mockDocToken;
+    MockMocProxy mockMocProxy;
     DeployContracts deployer;
     HelperConfig helperConfig;
     Handler handler;
@@ -26,11 +28,12 @@ contract InvariantTest is StdInvariant, Test {
     uint256 constant INITIAL_DOC_DEPOSIT = 1000 ether;
     uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
     uint256 constant INITIAL_PURCHASE_PERIOD = 5 seconds;
+    uint256 constant MOC_START_RBTC_BALANCE = 500 ether;
 
     function setUp() external {
         deployer = new DeployContracts();
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
-        (address docTokenAddress,,) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress, address mocProxyAddress,) = helperConfig.activeNetworkConfig();
         mockDocToken = MockDocToken(docTokenAddress);
         handler = new Handler(adminOperations, docTokenHandler, dcaManager, mockDocToken);
         targetContract(address(handler));
@@ -39,6 +42,13 @@ contract InvariantTest is StdInvariant, Test {
 
         // Mint 10000 DOC for the user
         mockDocToken.mint(USER, USER_TOTAL_DOC);
+
+        // Deal rBTC to MoC proxy contract
+        vm.deal(mocProxyAddress, MOC_START_RBTC_BALANCE);
+
+        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour)
+        vm.prank(address(docTokenHandler));
+        mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
         vm.startPrank(USER);
         // Here we make the starting point of the invariant tests that the user has created a DCA schedule depositing 1000 DOC to spend 100 DOC every 5 seconds
@@ -57,34 +67,32 @@ contract InvariantTest is StdInvariant, Test {
         vm.startPrank(OWNER);
         address[] memory users = dcaManager.getUsers();
         vm.stopPrank();
-        users = removeDuplicates(users);
+        // users = removeDuplicates(users);
         uint256 sumOfUsersBalances;
         for (uint256 i = 0; i < users.length; i++) {
             vm.startPrank(users[i]);
-            uint256 numOfSchedules = dcaManager.getMyDcaPositions(address(mockDocToken)).length;
+            uint256 numOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
             for (uint256 j = 0; j < numOfSchedules; j++) {
                 sumOfUsersBalances += dcaManager.getScheduleTokenBalance(address(mockDocToken), j);
             }
             vm.stopPrank();
         }
         assertEq(mockDocToken.balanceOf(address(docTokenHandler)), sumOfUsersBalances);
-        console.log("Sum of user's balances is", sumOfUsersBalances);
-        assert(sumOfUsersBalances >= 0);
     }
 
-    // function invariant_DcaContractRbtcBalanceEqualsSumOfAllUsers() public {
-    //     // get the contract's rBTC balance
-    //     // compare it to the sum of all users' balances
-    //     vm.prank(OWNER);
-    //     address[] memory users = rbtcDca.getUsers();
-    //     users = removeDuplicates(users);
-    //     uint256 sumOfUsersBalances;
-    //     for (uint256 i = 0; i < users.length; i++) {
-    //         vm.prank(users[i]);
-    //         sumOfUsersBalances += rbtcDca.getRbtcBalance();
-    //     }
-    //     assertEq(address(rbtcDca).balance, sumOfUsersBalances);
-    // }
+    function invariant_DocTokenHandlerRbtcBalanceEqualsSumOfAllUsers() public {
+        // get the contract's rBTC balance
+        // compare it to the sum of all users' balances
+        vm.prank(OWNER);
+        address[] memory users = dcaManager.getUsers();
+        // users = removeDuplicates(users);
+        uint256 sumOfUsersBalances;
+        for (uint256 i = 0; i < users.length; i++) {
+            vm.prank(users[i]);
+            sumOfUsersBalances += docTokenHandler.getAccumulatedRbtcBalance();
+        }
+        assertEq(address(docTokenHandler).balance, sumOfUsersBalances);
+    }
 
     // function invariant_gettersCantRevert() public {
     //     rbtcDca.getDocBalance();
