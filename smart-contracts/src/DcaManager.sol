@@ -18,7 +18,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     ///////////////////////////////
     // State variables ////////////
     ///////////////////////////////
-    AdminOperations s_adminOperations;
+    AdminOperations private s_adminOperations;
 
     /**
      * @notice Each user may create different schedules with one or more stablecoins
@@ -189,6 +189,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_adminOperations = AdminOperations(adminOperationsAddress);
     }
 
+    /**
+     * @notice modify the minimum period between purchases
+     * @param minPurchasePeriod: the new period
+     */
     function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external onlyOwner {
         s_minPurchasePeriod = minPurchasePeriod;
     }
@@ -298,7 +302,12 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         return s_users.length;
     }
     
-    function getMinPurchasePeriod() external returns (uint256) {
+    function getAdminOperationsAddress() external view returns (address) {
+        return address(s_adminOperations);
+    }
+        
+
+    function getMinPurchasePeriod() external view returns (uint256) {
         return s_minPurchasePeriod;
     }
 }

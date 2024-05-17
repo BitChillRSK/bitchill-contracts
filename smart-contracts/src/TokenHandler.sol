@@ -45,7 +45,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     function depositToken(address user, uint256 depositAmount) external override {
         if (depositAmount <= 0) revert TokenHandler__DepositAmountMustBeGreaterThanZero();
 
-        // Transfer the selected token from the user to this contract, user must have called the token contract's
+        // Transfer the selected token from the user to this contract. The user must have called the token contract's
         // approve function with this contract's address and the amount approved
         if (IERC20(i_stableToken).allowance(user, address(this)) < depositAmount) {
             revert TokenHandler__InsufficientTokenAllowance(i_stableToken);
@@ -97,7 +97,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         s_minPurchaseAmount = minPurchaseAmount;
     }
 
-    function getMinPurchaseAmount() external returns (uint256) {
+    function getMinPurchaseAmount() external view returns (uint256) {
         return s_minPurchaseAmount;
     }
 }

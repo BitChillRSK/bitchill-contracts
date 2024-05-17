@@ -58,6 +58,10 @@ contract DcaDappTest is Test {
     // AdminOperations
     event AdminOperations__TokenHandlerUpdated(address indexed token, address newHandler);
 
+    //MockMocProxy
+
+    event DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
+
     //////////////////////
     // Errors ////////////
     //////////////////////
@@ -72,7 +76,7 @@ contract DcaDappTest is Test {
         (address docTokenAddress, address mocProxyAddress, address kdocToken) = helperConfig.activeNetworkConfig();
 
         mockDocToken = MockDocToken(docTokenAddress);
-        mockMocProxy = MockMocProxy(docTokenAddress);
+        mockMocProxy = MockMocProxy(mocProxyAddress);
 
         // Add tokenHandler
         vm.expectEmit(true, true, false, false);
@@ -486,6 +490,60 @@ contract DcaDappTest is Test {
         assertEq(adminOperations.getTokenHandler(address(mockDocToken)), address(newDocTokenHandler));
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            ONLYOWNER TESTS
+    //////////////////////////////////////////////////////////////*/
+    function testonlyOwnerCanSetAdminOperations() external {
+        address adminOperationsBefore = dcaManager.getAdminOperationsAddress();
+        bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
+        vm.expectRevert(encodedRevert);
+        vm.prank(USER); // User can't
+        dcaManager.setAdminOperations(address(dcaManager)); // dummy address, e.g. that of DcaManager
+        address adminOperationsAfter = dcaManager.getAdminOperationsAddress();
+        assertEq(adminOperationsBefore, adminOperationsAfter);
+        vm.prank(OWNER); // Owner can
+        dcaManager.setAdminOperations(address(dcaManager));
+        adminOperationsAfter = dcaManager.getAdminOperationsAddress();
+        assertEq(adminOperationsAfter, address(dcaManager));
+    }
+
+    function testonlyOwnerCanModifyMinPurchasePeriod() external {
+        uint256 newMinPurchasePeriod = 2 days;
+        uint256 minPurchasePeriodBefore = dcaManager.getMinPurchasePeriod();
+        bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
+        vm.expectRevert(encodedRevert);
+        vm.prank(USER); // User can't
+        dcaManager.modifyMinPurchasePeriod(newMinPurchasePeriod); // dummy address, e.g. that of DcaManager
+        uint256 minPurchasePeriodAfter = dcaManager.getMinPurchasePeriod();
+        assertEq(minPurchasePeriodBefore, minPurchasePeriodAfter);
+        vm.prank(OWNER); // Owner can
+        dcaManager.modifyMinPurchasePeriod(newMinPurchasePeriod);
+        minPurchasePeriodAfter = dcaManager.getMinPurchasePeriod();
+        assertEq(minPurchasePeriodAfter, newMinPurchasePeriod);
+    }
+
+    
+    /*//////////////////////////////////////////////////////////////
+                          MOCK MOC PROXY TESTS
+    //////////////////////////////////////////////////////////////*/
+    function testMockMocProxyRedeemFreeDoc() external {
+        uint256 redeemAmount = 50_000 ether; // redeem 50,000 DOC
+        mockDocToken.mint(USER, redeemAmount);
+        uint256 rBtcBalancePrev = USER.balance;
+        uint256 docBalancePrev = mockDocToken.balanceOf(USER);
+        vm.startPrank(USER);
+        mockDocToken.approve(address(mockMocProxy), redeemAmount);
+        vm.expectEmit(true, true, true, false);
+        emit DocRedeemed(
+            USER, redeemAmount, 1 ether
+        );
+        mockMocProxy.redeemFreeDoc(redeemAmount);
+        vm.stopPrank();
+        uint256 rBtcBalancePost = USER.balance;
+        uint256 docBalancePost = mockDocToken.balanceOf(USER);
+        assertEq(rBtcBalancePost - rBtcBalancePrev, 1 ether);
+        assertEq(docBalancePrev - docBalancePost, redeemAmount);
+    }
 }
 
 contract DummyERC165Contract {
