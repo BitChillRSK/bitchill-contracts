@@ -30,6 +30,7 @@ interface ITokenHandler {
     error TokenHandler__rBtcWithdrawalFailed();
     error TokenHandler__OnlyDcaManagerCanCall();
     error TokenHandler__RbtcPurchaseFailed(address user, address tokenSpent);
+    error TokenHandler__FeeTransferFailed(address feeCollector, address token, uint256 feeAmount);
 
     ///////////////////////////////
     // External functions /////////

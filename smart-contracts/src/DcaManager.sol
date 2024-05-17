@@ -19,6 +19,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     // State variables ////////////
     ///////////////////////////////
     AdminOperations private s_adminOperations;
+    // address private s_feeCollector; 
+    // mapping(address stableToken => address feeCollector) s_feeCollectors; // Addresses where fees are collected for each token
 
     /**
      * @notice Each user may create different schedules with one or more stablecoins
@@ -40,6 +42,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     constructor(address adminOperationsAddress) Ownable(msg.sender) {
         s_adminOperations = AdminOperations(adminOperationsAddress);
+        // s_feeCalculator = FeeCalculator(feeCalculatorAddress);
+        // s_feeCollector = feeCollector;
     }
 
     fallback() external {
@@ -178,7 +182,19 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
 
         ITokenHandler tokenHandler = _handler(token);
-        tokenHandler.buyRbtc(buyer, purchaseAmount);
+        // tokenHandler.buyRbtc(buyer, purchaseAmount);
+        tokenHandler.buyRbtc(buyer, purchaseAmount, purchasePeriod);
+        
+        // uint256 feeRate = tokenHandler.calculateFeeRate(purchaseAmount, purchasePeriod);
+        // uint256 fee = (purchaseAmount * feeRate) / FEE_PERCENTAGE_DIVISOR;
+        // uint256 netPurchaseAmount = purchaseAmount - fee;
+
+        // s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
+        // s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
+
+        // ITokenHandler tokenHandler = _handler(token);
+        // tokenHandler.buyRbtc(buyer, netPurchaseAmount);
+        // tokenHandler.transferFee(s_feeCollectors[token], fee);
     }
 
     /**
@@ -309,5 +325,21 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function getMinPurchasePeriod() external view returns (uint256) {
         return s_minPurchasePeriod;
+    }
+    
+    // function setFeeCalculator(address feeCalculatorAddress) external onlyOwner {
+    //     s_feeCalculator = FeeCalculator(feeCalculatorAddress);
+    // }
+
+    function setFeeCollector(address token, address feeCollector) external onlyOwner {
+        s_feeCollectors[token] = feeCollector;
+    }
+
+    // function getFeeCalculator() external view returns (address) {
+    //     return address(s_feeCalculator);
+    // }
+
+    function getFeeCollector(address token) external view returns (address) {
+        return s_feeCollectors[token];
     }
 }

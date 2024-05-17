@@ -18,6 +18,11 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     address public immutable i_dcaManager; // The DCA manager contract
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
+    uint256 internal s_minFeeRate; // Minimum fee rate 
+    uint256 internal s_maxFeeRate; // Maximum fee rate
+    uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
+    uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
+    address internal s_feeCollector; // Address to which the fees charged to the user will be sent
 
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;
@@ -100,4 +105,62 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     function getMinPurchaseAmount() external view returns (uint256) {
         return s_minPurchaseAmount;
     }
+
+    /*//////////////////////////////////////////////////////////////
+                           FEE RATE FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Calculates the fee rate based on the annual spending.
+     * @param purchaseAmount The amount of stablecoin to be swapped for rBTC in each purchase.
+     * @param purchasePeriod The period between purchases in seconds.
+     * @return The fee rate in basis points.
+     */
+    function calculateFeeRate(uint256 purchaseAmount, uint256 purchasePeriod) external view returns (uint256) {
+        uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
+
+        if (annualSpending >= s_maxAnnualAmount) {
+            return s_minFeeRate;
+        } else if (annualSpending <= s_minAnnualAmount) {
+            return s_maxFeeRate;
+        } else {
+            // Calculate the linear fee rate
+            uint256 feeRate = s_maxFeeRate - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate)) / (s_maxAnnualAmount - s_minAnnualAmount);
+            return feeRate;
+        }
+    }
+
+    // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {
+    function _transferFee(uint256 fee) internal {
+        bool feeTransferSuccess = IERC20(i_stableToken).transfer(s_feeCollector, fee);
+        if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
+    }
+
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external onlyOwner {
+        if(s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
+        if(s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate); 
+        if(s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount); 
+        if(s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount); 
+    }
+
+    function setMinFeeRate(uint256 minFeeRate) public onlyOwner {
+        s_minFeeRate = minFeeRate; 
+    }
+
+    function setMaxFeeRate(uint256 maxFeeRate) public onlyOwner {
+        s_maxFeeRate = maxFeeRate; 
+    }
+
+    function setMinAnnualAmount(uint256 minAnnualAmount) public onlyOwner {
+        s_minAnnualAmount = minAnnualAmount; 
+    }
+
+    function setMaxAnnualAmount(uint256 maxAnnualAmount) public onlyOwner {
+        s_maxAnnualAmount = maxAnnualAmount; 
+    }
+
+    function setFeeCollectorAddress(address feeCollector) external onlyOwner {
+        s_feeCollector = feeCollector; 
+    }
+
 }
