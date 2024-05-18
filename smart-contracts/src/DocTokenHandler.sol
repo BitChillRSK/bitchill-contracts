@@ -7,6 +7,7 @@ import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title DocTokenHandler
@@ -16,30 +17,30 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     //////////////////////
     // State variables ///
     //////////////////////
-    IMocProxy immutable i_mocProxyContract;
+    IMocProxy public immutable i_mocProxyContract;
     IERC20 public immutable i_docTokenContract;
     // IkDocToken public immutable kdocToken;
-    uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
 
     /**
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
-     * @param docTokenAddress: the address of the Dollar On Chain token on the blockchain of deployment
-     * @param minPurchaseAmount:  the minimum amount of DOC for periodic purchases
-     * @param dcaManagerAddress: the address of the DCA Manager contract
-     * @param mocProxyAddress: the address of the MoC proxy contract on the blockchain of deployment
+     * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
+     * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
+     * @param dcaManagerAddress the address of the DCA Manager contract
+     * @param mocProxyAddress the address of the MoC proxy contract on the blockchain of deployment
+     * @param feeCollector the address of to which fees will sent on every purchase
+     * @param minFeeRate the lowest possible fee
+     * @param maxFeeRate the highest possible fee
+     * @param minAnnualAmount the annual amount below which max fee is applied
+     * @param maxAnnualAmount the annual amount above which min fee is applied
      */
-    constructor(address docTokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress, address mocProxyAddress /*, address feeCollector*/ )
+    constructor(address docTokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress, address feeCollector, address mocProxyAddress, 
+                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
         Ownable(msg.sender)
-        TokenHandler(docTokenAddress, minPurchaseAmount, dcaManagerAddress/*, s_minFeeRate, s_maxFeeRate, s_minAnnualAmount, s_maxAnnualAmount*/)
+        TokenHandler(docTokenAddress, minPurchaseAmount, dcaManagerAddress, feeCollector, minFeeRate, maxFeeRate, minAnnualAmount, maxAnnualAmount)
     {
         i_docTokenContract = IERC20(docTokenAddress);
         i_mocProxyContract = IMocProxy(mocProxyAddress);
-        s_minFeeRate = 100; // Minimum fee rate in basis points (1%)
-        s_maxFeeRate = 200; // Maximum fee rate in basis points (2%)
-        s_minAnnualAmount = 1_000 ether; // Spending below 1,000 DOC annually gets the maximum fee rate
-        s_maxAnnualAmount = 100_000 ether; // Spending above 100,000 DOC annually gets the minimum fee rate
-        // s_feeCollector = feeCollector;
     }
 
     // // DOC-specific functions for interacting with Tropykus
@@ -58,44 +59,52 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, uint256 amount) external override onlyDcaManager {
+    // function buyRbtc(address buyer, uint256 amount) external override onlyDcaManager {
         
-        uint256 feeRate = calculateFeeRate(purchaseAmount, purchasePeriod);
-        uint256 fee = (purchaseAmount * feeRate) / FEE_PERCENTAGE_DIVISOR;
-        uint256 netPurchaseAmount = purchaseAmount - fee;
-        _transferFee(s_feeCollectors[token], fee);
+    //     uint256 feeRate = calculateFeeRate(purchaseAmount, purchasePeriod);
+    //     uint256 fee = (purchaseAmount * feeRate) / FEE_PERCENTAGE_DIVISOR;
+    //     uint256 netPurchaseAmount = purchaseAmount - fee;
+    //     _transferFee(s_feeCollectors[token], fee);
 
-        // Redeem DOC for rBTC
-        (bool success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemDocRequest(uint256)", amount));
-        if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
-        // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
-        uint256 balancePrev = address(this).balance;
-        (success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemFreeDoc(uint256)", amount));
-        if (!success) revert DocTokenHandler__RedeemFreeDocFailed();
-        uint256 balancePost = address(this).balance;
+    //     // Redeem DOC for rBTC
+    //     (bool success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemDocRequest(uint256)", amount));
+    //     if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
+    //     // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
+    //     uint256 balancePrev = address(this).balance;
+    //     (success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemFreeDoc(uint256)", amount));
+    //     if (!success) revert DocTokenHandler__RedeemFreeDocFailed();
+    //     uint256 balancePost = address(this).balance;
 
-        if(balancePost > balancePrev) {
-            s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
-            emit TokenHandler__RbtcBought(buyer, address(i_docTokenContract), balancePost - balancePrev, amount);
-        } else {
-            revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docTokenContract));
-        }
-    }
+    //     if(balancePost > balancePrev) {
+    //         s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
+    //         emit TokenHandler__RbtcBought(buyer, address(i_docTokenContract), balancePost - balancePrev, amount);
+    //     } else {
+    //         revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docTokenContract));
+    //     }
+    // }
 
     function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external override onlyDcaManager {
         
-        uint256 feeRate = calculateFeeRate(purchaseAmount, purchasePeriod);
-        uint256 fee = (purchaseAmount * feeRate) / FEE_PERCENTAGE_DIVISOR;
+        uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
         uint256 netPurchaseAmount = purchaseAmount - fee;
-        _transferFee(s_feeCollector, fee);
+        _transferFee(fee);
+
 
         // Redeem DOC for rBTC
-        (bool success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemDocRequest(uint256)", netPurchaseAmount));
-        if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
+        // (bool success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemDocRequest(uint256)", netPurchaseAmount));
+        // if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
+        try i_mocProxyContract.redeemDocRequest(netPurchaseAmount) {
+        } catch {
+            revert DocTokenHandler__RedeemDocRequestFailed();
+        }
         // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
         uint256 balancePrev = address(this).balance;
-        (success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemFreeDoc(uint256)", netPurchaseAmount));
-        if (!success) revert DocTokenHandler__RedeemFreeDocFailed();
+        // (success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemFreeDoc(uint256)", netPurchaseAmount));
+        // if (!success) revert DocTokenHandler__RedeemFreeDocFailed();
+        try i_mocProxyContract.redeemFreeDoc(netPurchaseAmount) {
+        } catch {
+            revert DocTokenHandler__RedeemFreeDocFailed();
+        }
         uint256 balancePost = address(this).balance;
 
         if(balancePost > balancePrev) {

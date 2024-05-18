@@ -53,7 +53,7 @@ contract Handler is Test {
             uint256 purchaseAmount = depositAmount / 10;
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             mockDocToken.approve(address(docTokenHandler), depositAmount);
-            dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD);
+            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD);
         } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 
         mockDocToken.approve(address(docTokenHandler), depositAmount);
@@ -74,7 +74,7 @@ contract Handler is Test {
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docTokenHandler), depositAmount);
-            dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
         } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 
         uint256 maxWithdrawalAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
@@ -98,7 +98,7 @@ contract Handler is Test {
             uint256 depositAmount = purchaseAmount * 10;
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docTokenHandler), depositAmount);
-            dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
         } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 
         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
@@ -130,14 +130,14 @@ contract Handler is Test {
             uint purchaseAmount = 100 ether;
             // We need to create a DCA schedule before modifying the purchase period
             mockDocToken.approve(address(docTokenHandler), depositAmount);
-            dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
         } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 
         dcaManager.setPurchasePeriod(address(mockDocToken), scheduleIndex, purchasePeriod);
         vm.stopPrank();
     }
 
-    function createOrUpdateDcaSchedule(uint256 userSeed, uint256 scheduleIndex, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
+    function createDcaSchedule(uint256 userSeed, uint256 scheduleIndex, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         if (depositAmount < 2 * MIN_PURCHASE_AMOUNT) {
@@ -176,7 +176,7 @@ contract Handler is Test {
         // }
         // mockDocToken.mint(user, USER_TOTAL_DOC);
         mockDocToken.approve(address(docTokenHandler), depositAmount);
-        dcaManager.createOrUpdateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);
+        dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
         vm.stopPrank();
     }
 

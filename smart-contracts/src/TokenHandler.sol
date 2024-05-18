@@ -5,6 +5,7 @@ import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title TokenHandler
@@ -18,6 +19,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     address public immutable i_dcaManager; // The DCA manager contract
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
+    uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
     uint256 internal s_minFeeRate; // Minimum fee rate 
     uint256 internal s_maxFeeRate; // Maximum fee rate
     uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
@@ -35,10 +37,18 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         _;
     }
 
-    constructor(address tokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress) {
+
+    constructor(address tokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress, address feeCollector, 
+                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) {
         i_stableToken = tokenAddress;
         i_dcaManager = dcaManagerAddress;
         s_minPurchaseAmount = minPurchaseAmount;
+        s_feeCollector = feeCollector;
+        s_minFeeRate = minFeeRate;
+        s_feeCollector = feeCollector;
+        s_maxFeeRate = maxFeeRate;
+        s_minAnnualAmount = minAnnualAmount;
+        s_maxAnnualAmount = maxAnnualAmount;
     }
 
     receive() external payable /*onlyMocProxy*/ {} // Cambiar onlyMocProxy por algo que controle que el rbtc venga de fuentes conocidas?
@@ -47,8 +57,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @notice deposit the full token amount for DCA on the contract
      * @param depositAmount: the amount to deposit
      */
-    function depositToken(address user, uint256 depositAmount) external override {
-        if (depositAmount <= 0) revert TokenHandler__DepositAmountMustBeGreaterThanZero();
+    function depositToken(address user, uint256 depositAmount) external override onlyDcaManager {
 
         // Transfer the selected token from the user to this contract. The user must have called the token contract's
         // approve function with this contract's address and the amount approved
@@ -66,8 +75,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @notice withdraw some or all of the DOC previously deposited
      * @param withdrawalAmount: the amount of DOC to withdraw
      */
-    function withdrawToken(address user, uint256 withdrawalAmount) external override {
-        if (withdrawalAmount <= 0) revert TokenHandler__WithdrawalAmountMustBeGreaterThanZero();
+    function withdrawToken(address user, uint256 withdrawalAmount) external override onlyDcaManager {
 
         // Transfer DOC from this contract back to the user
         bool withdrawalSuccess = IERC20(i_stableToken).transfer(user, withdrawalAmount);
@@ -116,18 +124,19 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @param purchasePeriod The period between purchases in seconds.
      * @return The fee rate in basis points.
      */
-    function calculateFeeRate(uint256 purchaseAmount, uint256 purchasePeriod) external view returns (uint256) {
+    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view returns (uint256) {
         uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
+        uint256 feeRate;
 
         if (annualSpending >= s_maxAnnualAmount) {
-            return s_minFeeRate;
+            feeRate = s_minFeeRate;
         } else if (annualSpending <= s_minAnnualAmount) {
-            return s_maxFeeRate;
+            feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate
-            uint256 feeRate = s_maxFeeRate - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate)) / (s_maxAnnualAmount - s_minAnnualAmount);
-            return feeRate;
+            feeRate = s_maxFeeRate - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate)) / (s_maxAnnualAmount - s_minAnnualAmount);
         }
+        return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
     // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {

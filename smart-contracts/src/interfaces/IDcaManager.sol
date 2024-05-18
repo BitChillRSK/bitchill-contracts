@@ -27,7 +27,15 @@ interface IDcaManager {
     event rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
     event PurchaseAmountSet(address indexed user, uint256 indexed purchaseAmount);
     event PurchasePeriodSet(address indexed user, uint256 indexed purchasePeriod);
-    event DcaManager__newDcaScheduleCreated(
+    event DcaManager__DcaScheduleCreated(
+        address indexed user,
+        address indexed token,
+        uint256 indexed scheduleIndex,
+        uint256 depositAmount,
+        uint256 purchaseAmount,
+        uint256 purchasePeriod
+    );
+    event DcaManager__DcaScheduleUpdated(
         address indexed user,
         address indexed token,
         uint256 indexed scheduleIndex,
@@ -40,6 +48,8 @@ interface IDcaManager {
     // Errors ////////////
     //////////////////////
     error DcaManager__TokenNotAccepted();
+    error DcaManager__DepositAmountMustBeGreaterThanZero();
+    error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
     error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token);
     error DcaManager__PurchasePeriodMustBeGreaterThanMin();
@@ -49,9 +59,8 @@ interface IDcaManager {
     // error DcaManager__CannotDepositInTropykusMoreThanBalance();
     // error DcaManager__DocApprovalForKdocContractFailed();
     // error DcaManager__TropykusDepositFailed();
-    error DcaManager__CannotCreateScheduleSkippingIndexes();
     error DcaManager__DcaScheduleDoesNotExist();
-    error DcaManager__CannotUpdateInexistentSchedule();
+    error DcaManager__InexistentSchedule();
     error DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount(address token, uint256 remainingBalance);
 
     /*//////////////////////////////////////////////////////////////
@@ -75,14 +84,28 @@ interface IDcaManager {
     function withdrawToken(address tokenAddress, uint256 scheduleIndex, uint256 withdrawalAmount) external;
 
     /**
-     * @notice Deposit a specified amount of a stablecoin into the contract for DCA operations.
+     * @notice Create a new DCA schedule depositing a specified amount of a stablecoin into the contract.
+     * @param tokenAddress The token addreess of the stablecoin to deposit.
+     * @param depositAmount The amount of the stablecoin to deposit.
+     * @param purchaseAmount The amount of to spend periodically in buying rBTC
+     * @param purchasePeriod The period for recurrent purchases
+     */
+    function createDcaSchedule(
+        address tokenAddress,
+        uint256 depositAmount,
+        uint256 purchaseAmount,
+        uint256 purchasePeriod
+    ) external;
+
+    /**
+     * @notice Update an existing DCA schedule.
      * @param tokenAddress The token addreess of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
      * @param depositAmount The amount of the stablecoin to deposit.
      * @param purchaseAmount The amount of to spend periodically in buying rBTC
      * @param purchasePeriod The period for recurrent purchases
      */
-    function createOrUpdateDcaSchedule(
+    function updateDcaSchedule(
         address tokenAddress,
         uint256 scheduleIndex,
         uint256 depositAmount,

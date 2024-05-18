@@ -18,8 +18,6 @@ interface ITokenHandler {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error TokenHandler__DepositAmountMustBeGreaterThanZero();
-    error TokenHandler__WithdrawalAmountMustBeGreaterThanZero();
     error TokenHandler__InsufficientTokenAllowance(address token);
     error TokenHandler__TokenDepositFailed(address token);
     error TokenHandler__TokenWithdrawalFailed(address token);
@@ -52,10 +50,12 @@ interface ITokenHandler {
 
     /**
      * @param buyer: the user on behalf of which the contract is making the rBTC purchase
+     * @param purchaseAmount: the amount of the token to be spent on BTC
+     * @param purchasePeriod: the DCA period of the corresopnding schedule
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, uint256 purchaseAmount) external;
+    function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external;
 
     /**
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
