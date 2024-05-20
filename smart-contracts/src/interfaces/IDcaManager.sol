@@ -61,7 +61,8 @@ interface IDcaManager {
     // error DcaManager__TropykusDepositFailed();
     error DcaManager__DcaScheduleDoesNotExist();
     error DcaManager__InexistentSchedule();
-    error DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount(address token, uint256 remainingBalance);
+    error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
+    error DcaManager__BatchBuyArraysLengthMismatch();
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS

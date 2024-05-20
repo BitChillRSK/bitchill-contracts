@@ -14,6 +14,7 @@ interface ITokenHandler {
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__rBtcWithdrawn(address indexed user, uint256 indexed amount);
     event TokenHandler__RbtcBought(address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent);
+    event TokenHandler__SuccessfulRbtcBatchPurchase(address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent);
 
     //////////////////////
     // Errors ////////////
@@ -29,6 +30,7 @@ interface ITokenHandler {
     error TokenHandler__OnlyDcaManagerCanCall();
     error TokenHandler__RbtcPurchaseFailed(address user, address tokenSpent);
     error TokenHandler__FeeTransferFailed(address feeCollector, address token, uint256 feeAmount);
+    error TokenHandler__RbtcBatchPurchaseFailed(address tokenSpent);
 
     ///////////////////////////////
     // External functions /////////
@@ -57,6 +59,14 @@ interface ITokenHandler {
      */
     function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external;
 
+    /**
+     * @param buyers: the users on behalf of which the contract is making the rBTC purchases
+     * @param purchaseAmounts: the amounts of the token to be spent on BTC
+     * @param purchasePeriods: the DCA periods of the corresopnding schedule
+     * @notice this function will be called periodically through a CRON job running on a web server
+     * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
+     */
+    function batchBuyRbtc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) external;
     /**
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */

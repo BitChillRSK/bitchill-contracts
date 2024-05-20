@@ -203,12 +203,37 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
      */
     function withdrawAllAccmulatedRbtc() external nonReentrant {
-        for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; i++) {
+        for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; ++i) {
             _handler(s_usersDepositedTokens[msg.sender][i]).withdrawAccumulatedRbtc(msg.sender);
         }
     }
 
     function buyRbtc(address buyer, address token, uint256 scheduleIndex) external nonReentrant onlyOwner {
+        (uint256 purchaseAmount, uint256 purchasePeriod) = _rBtcPurchaseChecksEffects(buyer, token, scheduleIndex);
+        _handler(token).buyRbtc(buyer, purchaseAmount, purchasePeriod);
+    }
+
+    /**
+     * @param buyers the array of addresses of the users on behalf of whom rBTC is going to be bought
+     * @notice a buyer may be featured more than once in the buyers array if two or more their schedules are due for a purchase
+     * @param token the stablecoin that all users in the array will spend to purchase rBTC
+     * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
+     * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
+     * @param purchasePeriods the purchase period that corresponds to each user's purchase
+     */
+    function batchBuyRbtc(address[] memory buyers, address token, uint256[] memory scheduleIndexes, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) external nonReentrant onlyOwner {
+        uint256 numOfPurchases = buyers.length;
+        if(numOfPurchases != scheduleIndexes.length || numOfPurchases != purchaseAmounts.length || numOfPurchases != purchasePeriods.length) revert DcaManager__BatchBuyArraysLengthMismatch();
+        for(uint256 i; i < numOfPurchases; ++i){
+            /**
+             * @notice Update balances and timestamps, returned values are not needed here
+             */
+            _rBtcPurchaseChecksEffects(buyers[i], token, scheduleIndexes[i]); 
+        }
+        _handler(token).batchBuyRbtc(buyers, purchaseAmounts, purchasePeriods);
+    }
+
+    function _rBtcPurchaseChecksEffects(address buyer, address token, uint256 scheduleIndex) internal returns (uint256, uint256) {
         // If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
         uint256 lastPurchaseTimestamp = s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp;
         uint256 purchasePeriod = s_dcaSchedules[buyer][token][scheduleIndex].purchasePeriod;
@@ -221,24 +246,12 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 purchaseAmount = s_dcaSchedules[buyer][token][scheduleIndex].purchaseAmount;
         uint256 tokenBalance = s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance;
         if (purchaseAmount > tokenBalance) {
-            revert DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount(token, tokenBalance);
+            revert DcaManager__ScheduleBalanceNotEnoughForPurchase(token, tokenBalance);
         }
         s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
         s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
 
-        // tokenHandler.buyRbtc(buyer, purchaseAmount);
-        _handler(token).buyRbtc(buyer, purchaseAmount, purchasePeriod);
-        
-        // uint256 feeRate = tokenHandler.calculateFeeRate(purchaseAmount, purchasePeriod);
-        // uint256 fee = (purchaseAmount * feeRate) / FEE_PERCENTAGE_DIVISOR;
-        // uint256 netPurchaseAmount = purchaseAmount - fee;
-
-        // s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
-        // s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
-
-        // ITokenHandler tokenHandler = _handler(token);
-        // tokenHandler.buyRbtc(buyer, netPurchaseAmount);
-        // tokenHandler.transferFee(s_feeCollectors[token], fee);
+        return(purchaseAmount, purchasePeriod);
     }
 
     /**
@@ -308,7 +321,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     // function _isTokenDeposited(address token) internal view returns (bool) {
-    // for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; i++) {
+    // for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; ++i) {
     //     if (s_usersDepositedTokens[msg.sender][i] == token) return true;
     // }
     // return false;
@@ -361,21 +374,5 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function getMinPurchasePeriod() external view returns (uint256) {
         return s_minPurchasePeriod;
-    }
-    
-    // function setFeeCalculator(address feeCalculatorAddress) external onlyOwner {
-    //     s_feeCalculator = FeeCalculator(feeCalculatorAddress);
-    // }
-
-    // function setFeeCollector(address token, address feeCollector) external onlyOwner {
-    //     s_feeCollectors[token] = feeCollector;
-    // }
-
-    // function getFeeCalculator() external view returns (address) {
-    //     return address(s_feeCalculator);
-    // }
-
-    // function getFeeCollector(address token) external view returns (address) {
-    //     return s_feeCollectors[token];
-    // }
+    }    
 }

@@ -114,4 +114,68 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
             revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docTokenContract));
         }
     }
+
+    function batchBuyRbtc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) external override onlyDcaManager {
+        
+        uint256 numOfPurchases = buyers.length;
+        // uint256 fee;
+        // uint256 aggregatedFee;
+        // uint256[] memory netDocAmountsToSpend = new uint256[](numOfPurchases);
+        // uint256 aggregatedDocAmountToSpend;
+
+        // for(uint256 i; i < numOfPurchases; ++i){
+        //     fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
+        //     aggregatedFee += fee;
+        //     netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
+        //     aggregatedDocAmountToSpend += netDocAmountsToSpend[i];
+        // }
+        
+        // _transferFee(aggregatedFee);
+
+        // Calculate fees and net amounts
+        (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 aggregatedDocAmountToSpend) = _calculateAndTransferFee(purchaseAmounts, purchasePeriods);
+
+
+
+        try i_mocProxyContract.redeemDocRequest(aggregatedDocAmountToSpend) {
+        } catch {
+            revert DocTokenHandler__RedeemDocRequestFailed();
+        }
+        uint256 balancePrev = address(this).balance;
+        try i_mocProxyContract.redeemFreeDoc(aggregatedDocAmountToSpend) {
+        } catch {
+            revert DocTokenHandler__RedeemFreeDocFailed();
+        }
+        uint256 balancePost = address(this).balance;
+
+        if(balancePost > balancePrev) {
+            uint256 totalPurchasedRbtc = balancePrev - balancePost;
+
+            for(uint256 i; i < numOfPurchases; ++i){
+                uint256 usersPurchasedRbtc = totalPurchasedRbtc * netDocAmountsToSpend[i] / aggregatedDocAmountToSpend;
+                s_usersAccumulatedRbtc[buyers[i]] += usersPurchasedRbtc;
+                emit TokenHandler__RbtcBought(buyers[i], address(i_docTokenContract), usersPurchasedRbtc, netDocAmountsToSpend[i]);
+            }
+            emit TokenHandler__SuccessfulRbtcBatchPurchase(address(i_docTokenContract), totalPurchasedRbtc, aggregatedDocAmountToSpend);
+        } else {
+            revert TokenHandler__RbtcBatchPurchaseFailed(address(i_docTokenContract));
+        }
+    }
+
+    function _calculateAndTransferFee(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) internal returns (uint256, uint256[] memory, uint256) {
+        uint256 fee;
+        uint256 aggregatedFee;
+        uint256[] memory netDocAmountsToSpend = new uint256[](purchaseAmounts.length);
+        uint256 aggregatedDocAmountToSpend;
+        for(uint256 i; i < purchaseAmounts.length; ++i){
+            fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
+            aggregatedFee += fee;
+            netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
+            aggregatedDocAmountToSpend += netDocAmountsToSpend[i];
+        }
+        
+        _transferFee(aggregatedFee);
+    return (aggregatedFee, netDocAmountsToSpend, aggregatedDocAmountToSpend);
+}
+
 }

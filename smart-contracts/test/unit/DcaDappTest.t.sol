@@ -107,7 +107,7 @@ contract DcaDappTest is Test {
         // Give the MoC proxy contract allowance
         mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
         
-        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour)
+        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
         vm.prank(address(docTokenHandler));
         mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
@@ -244,6 +244,7 @@ contract DcaDappTest is Test {
 
         vm.prank(OWNER);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
+
         vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
@@ -296,7 +297,7 @@ contract DcaDappTest is Test {
         }
         // Attempt to purchase once more
         bytes memory encodedRevert = abi.encodeWithSelector(
-            IDcaManager.DcaManager__CannotBuyWithTokenBalanceLowerThanPurchaseAmount.selector, address(mockDocToken), 0
+            IDcaManager.DcaManager__ScheduleBalanceNotEnoughForPurchase.selector, address(mockDocToken), 0
         );
         vm.expectRevert(encodedRevert);
         vm.prank(OWNER);
@@ -308,7 +309,7 @@ contract DcaDappTest is Test {
 
         uint8 numOfPurchases = 5;
 
-        for (uint8 i ; i < NUM_OF_SCHEDULES; i++) { // Start at index 1, since schedule 0 has different settings
+        for (uint8 i ; i < NUM_OF_SCHEDULES; ++i) { // Start at index 1, since schedule 0 has different settings
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -392,10 +393,6 @@ contract DcaDappTest is Test {
     }
 
     function testWithdrawRbtcAfterSeveralPurchases() external {
-
-        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
-        uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
-
         uint256 totalDocSpent = this.testSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
