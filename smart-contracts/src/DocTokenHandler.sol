@@ -89,7 +89,6 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         uint256 netPurchaseAmount = purchaseAmount - fee;
         _transferFee(fee);
 
-
         // Redeem DOC for rBTC
         // (bool success,) = address(i_mocProxyContract).call(abi.encodeWithSignature("redeemDocRequest(uint256)", netPurchaseAmount));
         // if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
@@ -118,64 +117,48 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     function batchBuyRbtc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) external override onlyDcaManager {
         
         uint256 numOfPurchases = buyers.length;
-        // uint256 fee;
-        // uint256 aggregatedFee;
-        // uint256[] memory netDocAmountsToSpend = new uint256[](numOfPurchases);
-        // uint256 aggregatedDocAmountToSpend;
 
-        // for(uint256 i; i < numOfPurchases; ++i){
-        //     fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
-        //     aggregatedFee += fee;
-        //     netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
-        //     aggregatedDocAmountToSpend += netDocAmountsToSpend[i];
-        // }
-        
-        // _transferFee(aggregatedFee);
+        // Calculate fee and net amounts
+        (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) = _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
+        _transferFee(aggregatedFee);
 
-        // Calculate fees and net amounts
-        (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 aggregatedDocAmountToSpend) = _calculateAndTransferFee(purchaseAmounts, purchasePeriods);
-
-
-
-        try i_mocProxyContract.redeemDocRequest(aggregatedDocAmountToSpend) {
+        try i_mocProxyContract.redeemDocRequest(totalDocAmountToSpend) {
         } catch {
             revert DocTokenHandler__RedeemDocRequestFailed();
         }
         uint256 balancePrev = address(this).balance;
-        try i_mocProxyContract.redeemFreeDoc(aggregatedDocAmountToSpend) {
+        try i_mocProxyContract.redeemFreeDoc(totalDocAmountToSpend) {
         } catch {
             revert DocTokenHandler__RedeemFreeDocFailed();
         }
         uint256 balancePost = address(this).balance;
 
         if(balancePost > balancePrev) {
-            uint256 totalPurchasedRbtc = balancePrev - balancePost;
+            uint256 totalPurchasedRbtc = balancePost - balancePrev;
 
             for(uint256 i; i < numOfPurchases; ++i){
-                uint256 usersPurchasedRbtc = totalPurchasedRbtc * netDocAmountsToSpend[i] / aggregatedDocAmountToSpend;
+                uint256 usersPurchasedRbtc = totalPurchasedRbtc * netDocAmountsToSpend[i] / totalDocAmountToSpend;
                 s_usersAccumulatedRbtc[buyers[i]] += usersPurchasedRbtc;
                 emit TokenHandler__RbtcBought(buyers[i], address(i_docTokenContract), usersPurchasedRbtc, netDocAmountsToSpend[i]);
             }
-            emit TokenHandler__SuccessfulRbtcBatchPurchase(address(i_docTokenContract), totalPurchasedRbtc, aggregatedDocAmountToSpend);
+            emit TokenHandler__SuccessfulRbtcBatchPurchase(address(i_docTokenContract), totalPurchasedRbtc, totalDocAmountToSpend);
         } else {
             revert TokenHandler__RbtcBatchPurchaseFailed(address(i_docTokenContract));
         }
     }
 
-    function _calculateAndTransferFee(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) internal returns (uint256, uint256[] memory, uint256) {
+    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) internal view returns (uint256, uint256[] memory, uint256) {
         uint256 fee;
         uint256 aggregatedFee;
         uint256[] memory netDocAmountsToSpend = new uint256[](purchaseAmounts.length);
-        uint256 aggregatedDocAmountToSpend;
+        uint256 totalDocAmountToSpend;
         for(uint256 i; i < purchaseAmounts.length; ++i){
             fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
             aggregatedFee += fee;
             netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
-            aggregatedDocAmountToSpend += netDocAmountsToSpend[i];
-        }
-        
-        _transferFee(aggregatedFee);
-    return (aggregatedFee, netDocAmountsToSpend, aggregatedDocAmountToSpend);
-}
+            totalDocAmountToSpend += netDocAmountsToSpend[i];
+        }        
+        return (aggregatedFee, netDocAmountsToSpend, totalDocAmountToSpend);
+    }
 
 }

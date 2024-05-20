@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {Test, console} from "forge-std/Test.sol";
+import "../../src/Constants.sol";
+
 
 contract MockMocProxy {
-    uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
     MockDocToken mockDocToken;
     
-    event DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
+    event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
     constructor(address docTokenAddress) {
         mockDocToken = MockDocToken(docTokenAddress);
     }    
@@ -23,7 +24,7 @@ contract MockMocProxy {
         mockDocToken.burn(docAmount);
         (bool success,) = msg.sender.call{value: redeemedRbtc}("");
         if (success) {
-            emit DocRedeemed(msg.sender, docAmount, redeemedRbtc);
+            emit MockMocProxy__DocRedeemed(msg.sender, docAmount, redeemedRbtc);
         }
     }    
 }

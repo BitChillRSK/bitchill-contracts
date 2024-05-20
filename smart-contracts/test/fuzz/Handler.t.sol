@@ -8,6 +8,7 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
+import "../../src/Constants.sol";
 // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 contract Handler is Test {
@@ -16,12 +17,12 @@ contract Handler is Test {
     DcaManager public dcaManager;
     MockDocToken public mockDocToken;
     // MockMocProxy public mockMocProxy;
-    uint256 constant USER_TOTAL_DOC = 1000_000 ether; // 1 million DOC owned by each user in total
+    uint256 constant USER_TOTAL_DOC = 1_000_000 ether; // 1 million DOC owned by each user in total
     uint256 constant MAX_DEPOSIT_AMOUNT = 10_000 ether; // at most 10.000 DOC per deposit
     uint256 constant MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC in each periodic purchase
     uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at least one purchase every 10 years
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
-    address OWNER = makeAddr("owner");
+    address OWNER = makeAddr(OWNER_STRING);
     // address USER = makeAddr("user");
     address[] public s_users;
 
@@ -119,10 +120,6 @@ contract Handler is Test {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
-        // if (purchasePeriod == 0) {
-        //     vm.stopPrank();
-        //     return;
-        // }
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
@@ -145,10 +142,6 @@ contract Handler is Test {
             return;
         }
         depositAmount = bound(depositAmount, 2 * MIN_PURCHASE_AMOUNT, MAX_DEPOSIT_AMOUNT);
-        // if (depositAmount == 0) {
-        //     vm.stopPrank();
-        //     return;
-        // }
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             vm.stopPrank();
@@ -159,23 +152,11 @@ contract Handler is Test {
             vm.stopPrank();
             return;
         }
-        uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
-        if(maxPurchaseAmount < MIN_PURCHASE_AMOUNT) { // This can happen if the DOC balance left is less than 2 DOC
-            vm.stopPrank();
-            return;
-        }
-        purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, maxPurchaseAmount);
-        if (purchaseAmount == 0) {
-            vm.stopPrank();
-            return;
-        }
+        purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
-        // if (purchasePeriod == 0) {
-        //     vm.stopPrank();
-        //     return;
-        // }
-        // mockDocToken.mint(user, USER_TOTAL_DOC);
         mockDocToken.approve(address(docTokenHandler), depositAmount);
+        console.log(depositAmount);
+        console.log(purchaseAmount);
         dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
         vm.stopPrank();
     }
@@ -199,6 +180,40 @@ contract Handler is Test {
 
         vm.prank(OWNER);
         dcaManager.buyRbtc(buyer, address(mockDocToken), scheduleIndex);
+    }
+
+    /**
+     * @notice In this test we make purchases for all users' first schedule. In a real use case the script running on the back-end should find out which schedules are due for a purchase    
+     */
+    function batchBuyRbtc() external {
+        vm.prank(OWNER);
+        address[] memory users = dcaManager.getUsers();
+        if (users.length == 0) return;
+        uint256 numOfPurchases = users.length;
+        uint256[] memory scheduleIndexes = new uint256[](numOfPurchases);
+        uint256[] memory purchaseAmounts = new uint256[](numOfPurchases);
+        uint256[] memory purchasePeriods = new uint256[](numOfPurchases);
+        uint256 furthestNextPurchaseTimestamp;
+
+        for(uint256 i; i < numOfPurchases; ++i){
+            scheduleIndexes[i] = 0;
+            vm.prank(users[i]);
+            IDcaManager.DcaDetails memory dcaSchedule = dcaManager.getMyDcaSchedules(address(mockDocToken))[0]; // We're making the batch purchase for the first schedule of each user
+            purchaseAmounts[i] = dcaSchedule.purchaseAmount;
+            purchasePeriods[i] = dcaSchedule.purchasePeriod;
+            if(dcaSchedule.tokenBalance < dcaSchedule.purchaseAmount) return;
+            if(furthestNextPurchaseTimestamp < dcaSchedule.lastPurchaseTimestamp + dcaSchedule.purchasePeriod) {
+                furthestNextPurchaseTimestamp = dcaSchedule.lastPurchaseTimestamp + dcaSchedule.purchasePeriod;
+            }
+        }
+
+        // Make sure that all the schedules are due for a purchase
+        if(block.timestamp < furthestNextPurchaseTimestamp) {            
+            vm.warp(furthestNextPurchaseTimestamp);
+        }
+
+        vm.prank(OWNER);
+        dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
     }
 
     function withdrawRbtc(uint256 userSeed) external {

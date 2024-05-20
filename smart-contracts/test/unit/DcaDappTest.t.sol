@@ -26,19 +26,17 @@ contract DcaDappTest is Test {
     MockMocProxy mockMocProxy;
     FeeCalculator feeCalculator;
 
-    address USER = makeAddr("user");
-    address OWNER = makeAddr("owner");
-    address FEE_COLLECTOR = makeAddr("feeCollector");
+    address USER = makeAddr(USER_STRING);
+    address OWNER = makeAddr(OWNER_STRING);
+    address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
-    uint256 constant USER_TOTAL_DOC = 10000 ether; // 10000 DOC owned by the user in total
+    uint256 constant USER_TOTAL_DOC = 10_000 ether; // 10000 DOC owned by the user in total
     uint256 constant DOC_TO_DEPOSIT = 1000 ether; // 1000 DOC
     uint256 constant DOC_TO_SPEND = 100 ether; // 100 DOC for periodical purchases
-    uint256 MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
-    uint256 MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
-    // uint256 constant MIN_PURCHASE_PERIOD = 5 seconds;
-    uint256 constant BTC_PRICE = 50_000;
-    uint256 SCHEDULE_INDEX = 0;
-    uint256 NUM_OF_SCHEDULES = 5;
+    uint256 constant MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
+    uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
+    uint256 constant SCHEDULE_INDEX = 0;
+    uint256 constant NUM_OF_SCHEDULES = 5;
 
     //////////////////////
     // Events ////////////
@@ -67,13 +65,14 @@ contract DcaDappTest is Test {
     // TokenHandler
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
+    event TokenHandler__RbtcBought(address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent);
+    event TokenHandler__SuccessfulRbtcBatchPurchase(address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent);
 
     // AdminOperations
     event AdminOperations__TokenHandlerUpdated(address indexed token, address newHandler);
 
     //MockMocProxy
-
-    event DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
+    event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
 
     //////////////////////
     // Errors ////////////
@@ -242,6 +241,8 @@ contract DcaDappTest is Test {
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
+        vm.expectEmit(true, true, true, false);
+        emit TokenHandler__RbtcBought(USER, address(mockDocToken), netPurchaseAmount / BTC_PRICE, netPurchaseAmount);
         vm.prank(OWNER);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
 
@@ -279,7 +280,7 @@ contract DcaDappTest is Test {
 
         vm.prank(USER);
         dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
-        for (uint256 i; i < numOfPurchases; i++) {
+        for (uint256 i; i < numOfPurchases; ++i) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
             vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
@@ -290,7 +291,7 @@ contract DcaDappTest is Test {
 
     function testRevertPurchasetIfDocRunsOut() external {
         uint256 numOfPurchases = DOC_TO_DEPOSIT / DOC_TO_SPEND;
-        for (uint256 i; i < numOfPurchases; i++) {
+        for (uint256 i; i < numOfPurchases; ++i) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
             vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
@@ -309,7 +310,7 @@ contract DcaDappTest is Test {
 
         uint8 numOfPurchases = 5;
 
-        for (uint8 i ; i < NUM_OF_SCHEDULES; ++i) { // Start at index 1, since schedule 0 has different settings
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -318,7 +319,7 @@ contract DcaDappTest is Test {
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
             uint256 netPurchaseAmount = schedulePurchaseAmount - fee;
 
-            for (uint8 j; j < numOfPurchases; j++) {
+            for (uint8 j; j < numOfPurchases; ++j) {
                 vm.startPrank(USER);
                 uint256 docBalanceBeforePurchase =
                     dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
@@ -372,6 +373,66 @@ contract DcaDappTest is Test {
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
         assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+    }
+
+    function testBatchPurchasesOneUser() external {
+        this.testCreateSeveralDcaSchedules();
+        uint256 prevDocTokenHandlerBalance = address(docTokenHandler).balance;
+        vm.prank(USER);
+        uint256 userAccumulatedRbtcPrev = docTokenHandler.getAccumulatedRbtcBalance();
+        vm.prank(OWNER);
+        address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
+        // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(mockDocToken)).length;
+        address[] memory users = new address[](NUM_OF_SCHEDULES);
+        uint256[] memory scheduleIndexes = new uint256[](NUM_OF_SCHEDULES);
+        uint256[] memory purchaseAmounts = new uint256[](NUM_OF_SCHEDULES);
+        uint256[] memory purchasePeriods = new uint256[](NUM_OF_SCHEDULES);
+
+        uint256 totalNetPurchaseAmount;
+
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+            uint256 scheduleIndex = i;
+            vm.startPrank(USER);
+            uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
+            uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(mockDocToken), scheduleIndex);
+            vm.stopPrank();
+            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
+            totalNetPurchaseAmount += schedulePurchaseAmount - fee;
+            
+            users[i] = user;
+            scheduleIndexes[i] = i;
+            vm.startPrank(OWNER);
+            purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchaseAmount;
+            purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchasePeriod;
+            vm.stopPrank();
+        }
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+            vm.expectEmit(false, false, false, false);
+            emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, 0); // Never mind the actual values on this test
+        }
+        vm.expectEmit(true, true, true, false);
+        emit TokenHandler__SuccessfulRbtcBatchPurchase(address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount);
+        vm.prank(OWNER);
+        dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
+
+        uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
+
+        // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
+        assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
+
+        vm.prank(USER);
+        uint256 userAccumulatedRbtcPost = docTokenHandler.getAccumulatedRbtcBalance();
+        // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
+        assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE); 
+
+        vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
+        vm.prank(OWNER);
+        dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
+        uint256 postDocTokenHandlerBalance2 = address(docTokenHandler).balance;
+        // After a second purchase, we have the same increment
+        assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
+        
+
     }
 
     /////////////////////////////
@@ -458,7 +519,7 @@ contract DcaDappTest is Test {
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
-        for (uint256 i = 1; i < NUM_OF_SCHEDULES; i++) { // Start from 1 since schedule 0 is created in setUp
+        for (uint256 i = 1; i < NUM_OF_SCHEDULES; ++i) { // Start from 1 since schedule 0 is created in setUp
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
             uint256 userBalanceBeforeDeposit;
@@ -481,8 +542,6 @@ contract DcaDappTest is Test {
         }
         vm.stopPrank();
     }
-
-    // function testUpdateSchedule() external {} REDUNDANT
 
     function testCannotUpdateInexistentSchedule() external {
         vm.startPrank(USER);
@@ -593,7 +652,7 @@ contract DcaDappTest is Test {
         vm.startPrank(USER);
         mockDocToken.approve(address(mockMocProxy), redeemAmount);
         vm.expectEmit(true, true, true, false);
-        emit DocRedeemed(
+        emit MockMocProxy__DocRedeemed(
             USER, redeemAmount, 1 ether
         );
         mockMocProxy.redeemFreeDoc(redeemAmount);
@@ -604,10 +663,3 @@ contract DcaDappTest is Test {
         assertEq(docBalancePrev - docBalancePost, redeemAmount);
     }
 }
-
-// contract DummyERC165Contract {
-//     constructor (){}
-//     function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
-//         return interfaceID == type(IDcaManager).interfaceId; // Check against an interface different from TokenHandler's
-//     }
-// }

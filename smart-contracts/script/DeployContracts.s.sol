@@ -10,13 +10,13 @@ import {console} from "forge-std/Test.sol";
 import "../src/Constants.sol";
 
 contract DeployContracts is Script {
-    address OWNER = makeAddr("owner");
-    address FEE_COLLECTOR = makeAddr("feeCollector");
+    address OWNER = makeAddr(OWNER_STRING);
+    address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     uint256 MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
 
     function run() external returns (AdminOperations, DocTokenHandler, DcaManager, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
-        (address docToken, address mocProxy, address kdocToken) = helperConfig.activeNetworkConfig();
+        (address docToken, address mocProxy, /*address kdocToken*/) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
         // After startBroadcast -> "real" tx
