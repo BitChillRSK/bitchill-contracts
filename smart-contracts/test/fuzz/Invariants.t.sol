@@ -103,18 +103,18 @@ contract InvariantTest is StdInvariant, Test {
         console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
     }
 
-    function invariant_DocTokenHandlerRbtcBalanceEqualsSumOfAllUsers() public {
-        // get the contract's rBTC balance
-        // compare it to the sum of all users' balances
+    function invariant_DocTokenHandlerRbtcBalanceNearlyEqualsSumOfAllUsers() public {
+        // get the contract's rBTC balance and compare it to the sum of all users' balances
         vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();
-        // users = removeDuplicates(users);
         uint256 sumOfUsersBalances;
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
             sumOfUsersBalances += docTokenHandler.getAccumulatedRbtcBalance();
         }
-        assertEq(address(docTokenHandler).balance / 10000, sumOfUsersBalances / 10000); // Divide by 10000 because batch purchases cause some precision loss
+        // We can't just user an assertEq because charging fees causes a slight precision loss
+        assertGe(address(docTokenHandler).balance, sumOfUsersBalances); // The rBTC in the DOC token handler contract must be at least as much as the sum balances of the users
+        assertLe(address(docTokenHandler).balance * 9999 / 10000, sumOfUsersBalances); // The rBTC in the DOC token handler contract can only be slightly higher than the sum of balances (therefore, 99.99% of said rBTC should be lower than the sum)
         console.log("Sum of users' rBTC balances:", sumOfUsersBalances);
         console.log("rBTC balance of the DOC token handler contract:", address(docTokenHandler).balance);
     }
