@@ -13,9 +13,21 @@ interface IkDocToken {
      * @param mintAmount the amount of DOC to be deposited
      */
     function mint(uint256 mintAmount) external returns (uint256);
+
     /**
      * @dev This function is used to withdraw DOC from the Tropykus protocol and give back the corresponding kDOC
      * @param redeemAmount the amount of DOC to be withdrawn
      */
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
+    
+    /**
+     * @dev This function is used to withdraw DOC from the Tropykus protocol and give back the corresponding kDOC
+     * @param owner the user that owns the DOC deposited into Tropykus
+     */
+    function getSupplierSnapshotStored(address owner) external returns (
+            uint256 tokens,
+            uint256 underlyingAmount,
+            uint256 suppliedAt,
+            uint256 promisedSupplyRate
+        );
 }

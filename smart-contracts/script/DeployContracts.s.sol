@@ -16,14 +16,14 @@ contract DeployContracts is Script {
 
     function run() external returns (AdminOperations, DocTokenHandler, DcaManager, HelperConfig) {
         HelperConfig helperConfig = new HelperConfig();
-        (address docToken, address mocProxy, /*address kdocToken*/) = helperConfig.activeNetworkConfig();
+        (address docToken, address mocProxy, address kDocToken) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
         // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
         DocTokenHandler docTokenHandler = 
-            new DocTokenHandler(docToken, MIN_PURCHASE_AMOUNT, address(dcaManager), FEE_COLLECTOR, mocProxy, 
+            new DocTokenHandler(address(dcaManager), docToken, kDocToken, MIN_PURCHASE_AMOUNT, FEE_COLLECTOR, mocProxy, 
                                 MIN_FEE_RATE, MAX_FEE_RATE, MIN_ANNUAL_AMOUNT, MAX_ANNUAL_AMOUNT);
 
         // For local tests:

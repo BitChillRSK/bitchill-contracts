@@ -91,4 +91,9 @@ interface ITokenHandler {
      * @dev returns the minimum amount of the token that can be spent in each purchase
      */
     function getMinPurchaseAmount() external returns (uint256);
+
+    /**
+     * @dev returns whether the token deposited will yield interest while waiting to be spent on DCA purchases
+     */
+    function getDepositsYieldInterest() external returns (bool);
 }

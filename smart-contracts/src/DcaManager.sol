@@ -19,13 +19,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     // State variables ////////////
     ///////////////////////////////
     AdminOperations private s_adminOperations;
-    // address private s_feeCollector; 
-    // mapping(address stableToken => address feeCollector) s_feeCollectors; // Addresses where fees are collected for each token
 
     /**
      * @notice Each user may create different schedules with one or more stablecoins
      */
-    mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenDeposited; // User to token deposited flag
+    mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenIsDeposited; // User to token deposited flag
     mapping(address user => address[] depositedTokens) private s_usersDepositedTokens;
     mapping(address user => mapping(address depositedTokens => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
@@ -167,6 +165,29 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             msg.sender, token, scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
         );
     }
+    /**
+     * @dev function to delete a DCA schedule: cancels DCA and retrieves the funds
+     * @param token the token used for DCA in the schedule to be deleted
+     * @param scheduleIndex the index of the schedule
+     */
+    function deleteDcaSchedule(address token, uint256 scheduleIndex) external override nonReentrant {
+        if(scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentSchedule();
+        DcaDetails memory schedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+                
+        // Remove the schedule
+        uint256 lastIndex = s_dcaSchedules[msg.sender][token].length - 1;
+        if (scheduleIndex != lastIndex) {
+            // Overwrite the schedule getting deleted with the one in the last index
+            s_dcaSchedules[msg.sender][token][scheduleIndex] = s_dcaSchedules[msg.sender][token][lastIndex];
+        }
+        // Remove the last schedule
+        s_dcaSchedules[msg.sender][token].pop();
+        
+        // Withdraw all balance
+        _handler(token).withdrawToken(msg.sender, schedule.tokenBalance);
+        
+        emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleIndex, schedule.tokenBalance);
+    }
 
     /**
      * @notice withdraw amount for DCA on the contract
@@ -192,12 +213,27 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw the rBtc accumulated by a user through all the DCA strategies created using a given stablecoin
+     * @notice Users can withdraw the rBtc accumulated through all the DCA strategies created using a given stablecoin
      * @param token The token address of the stablecoin
      */
     function withdrawRbtcFromTokenHandler(address token) external nonReentrant {
         _handler(token).withdrawAccumulatedRbtc(msg.sender);
     }
+    
+    /**
+     * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
+     * @param token The address of the token to withdraw
+     */
+     function withdrawInterestFromTokenHandler(token) external nonReentrant {
+        ITokenHandler tokenHandler = _handler(token);
+        if(!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
+        uint256 lockedTokenAmount;
+        DcaDetails[] dcaSchedules = s_dcaSchedules[msg.sender][token];
+        for(uint256 i; i < dcaSchedules.length; i++){
+            lockedTokenAmount += dcaSchedules[i].tokenBalance;
+        }
+        tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
+     }
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
@@ -304,8 +340,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function _validateDeposit(address token, uint256 depositAmount) internal {
         if (depositAmount <= 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
         // if (!_isTokenDeposited(token)) s_usersDepositedTokens[msg.sender].push(token);
-        if (!s_tokenDeposited[msg.sender][token]) {
-            s_tokenDeposited[msg.sender][token] = true;
+        if (!s_tokenIsDeposited[msg.sender][token]) {
+            s_tokenIsDeposited[msg.sender][token] = true;
             s_usersDepositedTokens[msg.sender].push(token);
         }
         if (!s_userRegistered[msg.sender]) {

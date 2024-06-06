@@ -12,6 +12,7 @@ import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {DeployContracts} from "../../script/DeployContracts.s.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
+import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import "../../src/Constants.sol";
 import "./TestsHelper.t.sol";
@@ -23,6 +24,7 @@ contract DcaDappTest is Test {
     AdminOperations adminOperations;
     HelperConfig helperConfig;
     MockDocToken mockDocToken;
+    MockKdocToken mockKdocToken;
     MockMocProxy mockMocProxy;
     FeeCalculator feeCalculator;
 
@@ -85,10 +87,11 @@ contract DcaDappTest is Test {
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployContracts.run();
         // console.log("Test contract", address(this));
 
-        (address docTokenAddress, address mocProxyAddress, address kdocToken) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) = helperConfig.activeNetworkConfig();
 
         mockDocToken = MockDocToken(docTokenAddress);
         mockMocProxy = MockMocProxy(mocProxyAddress);
+        mockKdocToken = MockDocToken(kDocTokenAddress);
 
         // FeeCalculator helper test contract
         feeCalculator = new FeeCalculator();
@@ -599,7 +602,7 @@ contract DcaDappTest is Test {
         address prevDocTokenHandler = adminOperations.getTokenHandler(address(mockDocToken));
         vm.startBroadcast();
         DocTokenHandler newDocTokenHandler = 
-                    new DocTokenHandler(address(mockDocToken), MIN_PURCHASE_AMOUNT, address(dcaManager), address(mockMocProxy),
+                    new DocTokenHandler(address(dcaManager), address(mockDocToken), address(mockKdocToken), MIN_PURCHASE_AMOUNT, address(mockMocProxy),
                     FEE_COLLECTOR, MIN_FEE_RATE, MAX_FEE_RATE, MIN_ANNUAL_AMOUNT, MAX_ANNUAL_AMOUNT);
         vm.stopBroadcast();
         assert(prevDocTokenHandler != address(newDocTokenHandler));

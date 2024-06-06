@@ -13,9 +13,13 @@ import {Test, console} from "forge-std/Test.sol";
  * @dev Contract to manage administrative tasks and token handlers
  */
 contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , InterfaceChecker */ {
+    
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    mapping(address => address) private tokenHandlers; // Maps token addresses to their respective TokenHandler
+    mapping(address token => address tokenHandlerContract) private s_tokenHandlers; 
 
     constructor() Ownable(msg.sender) {
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -32,7 +36,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         ITokenHandler tokenHandler = ITokenHandler(handler);
 
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
-            tokenHandlers[token] = handler;
+            s_tokenHandlers[token] = handler;
             emit AdminOperations__TokenHandlerUpdated(token, handler);
         } else {
             revert AdminOperations__ContractIsNotTokenHandler(handler);
@@ -42,7 +46,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         // This doesn't work because unhandled reverts (e. g., when the contract in the given address does not have the supportsInterface function) will not be caught
         // try tokenHandler.supportsInterface(type(ITokenHandler).interfaceId) returns (bool contractIsTokenHandler) {
         //     if(contractIsTokenHandler){
-        //         tokenHandlers[token] = handler;
+        //         s_tokenHandlers[token] = handler;
         //         emit AdminOperations__TokenHandlerUpdated(token, handler);
         //     } else revert AdminOperations__ContractIsNotTokenHandler(handler);
         // } catch {
@@ -58,7 +62,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      * @return The address of the TokenHandler. If address(0) is returned, the token is not accepted by the dApp.
      */
     function getTokenHandler(address token) public view returns (address) {
-        return tokenHandlers[token];
+        return s_tokenHandlers[token];
     }
 
     /**

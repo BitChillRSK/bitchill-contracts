@@ -16,4 +16,15 @@ interface IDocTokenHandler {
     //////////////////////
     error DocTokenHandler__RedeemDocRequestFailed();
     error DocTokenHandler__RedeemFreeDocFailed();
+    error DocTokenHandler__RedeemAmountExceedsBalance(uint256 redeemAmount);
+    
+    /*//////////////////////////////////////////////////////////////
+                               FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+    /**
+     * @notice deposit the full token amount for DCA on the contract
+     * @param user: the address of the user making the deposit
+     * @param depositAmount: the amount to deposit
+     */
+    function depositDocAndLend(address user, uint256 depositAmount) external;
 }

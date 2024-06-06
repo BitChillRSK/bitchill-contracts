@@ -25,6 +25,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
     uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
+    bool internal depositsYieldInterest; // Whether the token deposited will yield interest while waiting to be spent on DCA purchases
 
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;
@@ -37,11 +38,10 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         _;
     }
 
-
-    constructor(address tokenAddress, uint256 minPurchaseAmount, address dcaManagerAddress, address feeCollector, 
+    constructor(address dcaManagerAddress, address tokenAddress, uint256 minPurchaseAmount, address feeCollector, 
                 uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) {
-        i_stableToken = tokenAddress;
         i_dcaManager = dcaManagerAddress;
+        i_stableToken = tokenAddress;
         s_minPurchaseAmount = minPurchaseAmount;
         s_feeCollector = feeCollector;
         s_minFeeRate = minFeeRate;
@@ -55,9 +55,10 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
 
     /**
      * @notice deposit the full token amount for DCA on the contract
+     * @param user: the address of the user making the deposit
      * @param depositAmount: the amount to deposit
      */
-    function depositToken(address user, uint256 depositAmount) external override onlyDcaManager {
+    function depositToken(address user, uint256 depositAmount) public override onlyDcaManager {
 
         // Transfer the selected token from the user to this contract. The user must have called the token contract's
         // approve function with this contract's address and the amount approved
@@ -98,7 +99,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         emit TokenHandler__rBtcWithdrawn(user, rbtcBalance);
     }
 
-    function getAccumulatedRbtcBalance() external view returns (uint256) {
+    function getAccumulatedRbtcBalance() external view override returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
     }
 
@@ -106,7 +107,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         return interfaceID == type(ITokenHandler).interfaceId;
     }
 
-    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external onlyOwner {
+    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
         s_minPurchaseAmount = minPurchaseAmount;
     }
 
@@ -124,7 +125,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @param purchasePeriod The period between purchases in seconds.
      * @return The fee rate in basis points.
      */
-    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view returns (uint256) {
+    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view override returns (uint256) {
         uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
         uint256 feeRate;
 
@@ -140,36 +141,40 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     }
 
     // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {
-    function _transferFee(uint256 fee) internal {
+    function _transferFee(uint256 fee) internal override {
         bool feeTransferSuccess = IERC20(i_stableToken).transfer(s_feeCollector, fee);
         if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
     }
 
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external onlyOwner {
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external override onlyOwner {
         if(s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
         if(s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate); 
         if(s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount); 
         if(s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount); 
     }
 
-    function setMinFeeRate(uint256 minFeeRate) public onlyOwner {
+    function setMinFeeRate(uint256 minFeeRate) public override onlyOwner {
         s_minFeeRate = minFeeRate; 
     }
 
-    function setMaxFeeRate(uint256 maxFeeRate) public onlyOwner {
+    function setMaxFeeRate(uint256 maxFeeRate) public override onlyOwner {
         s_maxFeeRate = maxFeeRate; 
     }
 
-    function setMinAnnualAmount(uint256 minAnnualAmount) public onlyOwner {
+    function setMinAnnualAmount(uint256 minAnnualAmount) public override onlyOwner {
         s_minAnnualAmount = minAnnualAmount; 
     }
 
-    function setMaxAnnualAmount(uint256 maxAnnualAmount) public onlyOwner {
+    function setMaxAnnualAmount(uint256 maxAnnualAmount) public override onlyOwner {
         s_maxAnnualAmount = maxAnnualAmount; 
     }
 
-    function setFeeCollectorAddress(address feeCollector) external onlyOwner {
+    function setFeeCollectorAddress(address feeCollector) external override onlyOwner {
         s_feeCollector = feeCollector; 
+    }
+
+    function depositsYieldInterest() external override returns (bool){
+        return depositsYieldInterest;
     }
 
 }
