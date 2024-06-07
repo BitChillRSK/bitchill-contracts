@@ -17,6 +17,9 @@ interface IDocTokenHandler {
     error DocTokenHandler__RedeemDocRequestFailed();
     error DocTokenHandler__RedeemFreeDocFailed();
     error DocTokenHandler__RedeemAmountExceedsBalance(uint256 redeemAmount);
+    error DocTokenHandler__InterestWithdrawalFailed(address user, uint256 interestAmount);
+    error DocTokenHandler__kDocApprovalFailed(address user, uint256 depositAmount);
+    error DocTokenHandler__WithdrawalAmountExceedsKdocBalance(address user, uint256 withdrawalAmount, uint256 balance);
     
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -26,5 +29,5 @@ interface IDocTokenHandler {
      * @param user: the address of the user making the deposit
      * @param depositAmount: the amount to deposit
      */
-    function depositDocAndLend(address user, uint256 depositAmount) external;
+    // function depositDocAndLend(address user, uint256 depositAmount) external;
 }

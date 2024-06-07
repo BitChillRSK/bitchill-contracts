@@ -7,7 +7,7 @@ import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Test, console} from "forge-std/Test.sol";
+import {console} from "forge-std/Test.sol";
 
 /**
  * @title DocTokenHandler
@@ -21,6 +21,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     IERC20 public immutable i_docToken;
     IkDocToken public immutable i_kDocToken;
     mapping(address user => uint256 balance) private s_kDocBalances;
+    uint256 constant EXCHANGE_RATE_DECIMALS = 1E18;
 
     /**
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
@@ -51,17 +52,28 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @param user: the address of the user making the deposit
      * @param depositAmount: the amount to deposit
      */
-    function depositDocAndLend(address user, uint256 depositAmount) external override onlyDcaManager {
-        this.depositToken( user, depositAmount);
+    function depositToken(address user, uint256 depositAmount) public override onlyDcaManager {
+        super.depositToken( user, depositAmount);
         if(i_docToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
             bool approvalSuccess = i_docToken.approve(address(i_kDocToken), depositAmount);
-            require(approvalSuccess, "Approval failed"); // TODO: change this to custom error
+            if(!approvalSuccess) revert DocTokenHandler__kDocApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
         i_kDocToken.mint(depositAmount);
         uint256 postKdocBalance = i_kDocToken.balanceOf(address(this));
-        // Aquí asignamos los kDOC recibidos (postkDocBalance - prevkDocBalance) a un mapping hacemos i_kDocToken.transfer(user)
-        kDocBalances[user] += postKdocBalance - prevKdocBalance;
+        s_kDocBalances[user] += postKdocBalance - prevKdocBalance;
+    }
+    
+    /**
+     * @notice withdraw the token amount sending it back to the user's address
+     * @param user: the address of the user making the withdrawal
+     * @param withdrawalAmount: the amount to withdraw
+     */
+    function withdrawToken(address user, uint256 withdrawalAmount) public override onlyDcaManager {
+        uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
+        if(docInTropykus < withdrawalAmount) revert DocTokenHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
+        _redeemKdoc(withdrawalAmount);
+        super.withdrawToken(user, withdrawalAmount);
     }
 
     /**
@@ -112,15 +124,17 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         
         uint256 numOfPurchases = buyers.length;
 
-        // Redeem kDOC for DOC
-        _redeemKdoc(netDocAmountsToSpend);
-
-        // Calculate net amounts and charge fees
+        // Calculate net amounts
         (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) = _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
+
+        // Redeem kDOC for DOC
+        _redeemKdoc(totalDocAmountToSpend + aggregatedFee);
+
+        // Charge fees
         _transferFee(aggregatedFee);
         
         // Redeem DOC for rBTC
-        (uint256 balancePrev, uint256 balancePost) = _redeemDoc(netPurchaseAmount);
+        (uint256 balancePrev, uint256 balancePost) = _redeemDoc(totalDocAmountToSpend);
 
         // try i_mocProxy.redeemDocRequest(totalDocAmountToSpend) {
         // } catch {
@@ -177,18 +191,21 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
     function _redeemKdoc(uint256 amountToRedeem) internal {
         (, uint256 underlyingAmount, ,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        require(amountToRedeem <= underlyingAmount, "Cannot withdraw more DOC than balance."); // TODO: change this to custom error
+        if(amountToRedeem > underlyingAmount) revert DocTokenHandler__RedeemAmountExceedsBalance(amountToRedeem);
            
         i_kDocToken.redeemUnderlying(amountToRedeem);
     }
 
-    function getUsersKdocBalance(address user) external returns(uint256) {
+    function getUsersKdocBalance(address user) external view returns(uint256) {
         return s_kDocBalances[user];
     }
 
-    function withdrawInterest(address user, uint256 lockedDocAmount) external onlyDcaManager {
-        uint256 docToRedeem = s_kDocBalances[user].toDoc() - lockedDocAmount; // toDoc() es inventada, buscar función de conversión
-        i_kDocToken.redeemUnderlying(docToRedeem);
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
+        uint256 totalDocInDeposit = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
+        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules; // toDoc() es inventada, buscar función de conversión
+        _redeemKdoc(docInterestAmount);
+        bool transferSuccess = i_docToken.transfer(user, docInterestAmount);
+        if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
     }
 
 }

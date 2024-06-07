@@ -30,4 +30,19 @@ interface IkDocToken {
             uint256 suppliedAt,
             uint256 promisedSupplyRate
         );
+
+    /**
+    * @dev Returns the balance of the specified address.
+    * @param owner The address to query the balance of.
+    * @return The balance of the specified address.
+    */
+    function balanceOf(address owner) external returns (uint256);
+
+    /**
+     * @notice Calculates the exchange rate from the underlying to the CToken
+     * @dev This function does not accrue interest before calculating the exchange rate
+     * @return Calculated exchange rate scaled by 1e18
+     */
+    function exchangeRateStored() external view returns (uint256);
+
 }

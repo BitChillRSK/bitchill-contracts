@@ -91,7 +91,7 @@ contract DcaDappTest is Test {
 
         mockDocToken = MockDocToken(docTokenAddress);
         mockMocProxy = MockMocProxy(mocProxyAddress);
-        mockKdocToken = MockDocToken(kDocTokenAddress);
+        mockKdocToken = MockKdocToken(kDocTokenAddress);
 
         // FeeCalculator helper test contract
         feeCalculator = new FeeCalculator();
@@ -517,6 +517,21 @@ contract DcaDappTest is Test {
         vm.stopPrank();
     }
 
+    function testDeleteDcaSchedule() external {
+        vm.startPrank(USER);
+        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
+        );
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
+        );
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 1);
+        assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 2);
+        assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].tokenBalance, DOC_TO_DEPOSIT * 3);
+        vm.stopPrank();
+    }
+
     function testCreateSeveralDcaSchedules() external {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
@@ -554,6 +569,8 @@ contract DcaDappTest is Test {
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, DOC_TO_SPEND);
         vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, MIN_PURCHASE_PERIOD);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        dcaManager.updateDcaSchedule(address(mockDocToken), 1, 1, 1, 1);
         vm.stopPrank();
     }
 
@@ -568,6 +585,11 @@ contract DcaDappTest is Test {
         vm.stopPrank();
     }
 
+    function testCannotDeleteInexistentSchedule() external {
+        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        vm.prank(USER);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 1);
+    }
     /*//////////////////////////////////////////////////////////////
                          ADMIN OPERATIONS TESTS
     //////////////////////////////////////////////////////////////*/

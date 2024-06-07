@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {AdminOperations} from "./AdminOperations.sol";
-import {Test, console} from "forge-std/Test.sol";
+import {console} from "forge-std/Test.sol";
 
 /**
  * @title DCA Manager
@@ -224,11 +224,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
      * @param token The address of the token to withdraw
      */
-     function withdrawInterestFromTokenHandler(token) external nonReentrant {
+     function withdrawInterestFromTokenHandler(address token) external nonReentrant {
         ITokenHandler tokenHandler = _handler(token);
         if(!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         uint256 lockedTokenAmount;
-        DcaDetails[] dcaSchedules = s_dcaSchedules[msg.sender][token];
+        DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
         for(uint256 i; i < dcaSchedules.length; i++){
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }

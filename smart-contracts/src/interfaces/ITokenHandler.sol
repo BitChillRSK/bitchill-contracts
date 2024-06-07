@@ -88,12 +88,62 @@ interface ITokenHandler {
     function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external;
 
     /**
-     * @dev returns the minimum amount of the token that can be spent in each purchase
-     */
+    * @dev Returns the minimum amount of the token that can be spent in each purchase.
+    * @return The minimum purchase amount in token units.
+    */
     function getMinPurchaseAmount() external returns (uint256);
 
     /**
-     * @dev returns whether the token deposited will yield interest while waiting to be spent on DCA purchases
-     */
-    function getDepositsYieldInterest() external returns (bool);
+    * @dev Sets the parameters for the fee rate.
+    * @param minFeeRate The minimum fee rate.
+    * @param maxFeeRate The maximum fee rate.
+    * @param minAnnualAmount The minimum annual amount for fee calculations.
+    * @param maxAnnualAmount The maximum annual amount for fee calculations.
+    */
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external;
+
+    /**
+    * @dev Sets the minimum fee rate.
+    * @param minFeeRate The minimum fee rate.
+    */
+    function setMinFeeRate(uint256 minFeeRate) external;
+
+    /**
+    * @dev Sets the maximum fee rate.
+    * @param maxFeeRate The maximum fee rate.
+    */
+    function setMaxFeeRate(uint256 maxFeeRate) external;
+
+    /**
+    * @dev Sets the minimum annual amount for fee calculations.
+    * @param minAnnualAmount The minimum annual amount.
+    */
+    function setMinAnnualAmount(uint256 minAnnualAmount) external;
+
+    /**
+    * @dev Sets the maximum annual amount for fee calculations.
+    * @param maxAnnualAmount The maximum annual amount.
+    */
+    function setMaxAnnualAmount(uint256 maxAnnualAmount) external;
+
+    /**
+    * @dev Sets the address of the fee collector.
+    * @param feeCollector The address of the fee collector.
+    */
+    function setFeeCollectorAddress(address feeCollector) external;
+
+
+    /**
+    * @dev Checks if deposits yield interest.
+    * @return A boolean indicating if deposits yield interest.
+    */
+    function depositsYieldInterest() external returns (bool);
+
+    /**
+    * @dev Withdraws the interest earned for a user.
+    * @param user The address of the user withdrawing the interest.
+    * @param docLockedInDcaSchedules The amount of DOC locked in DCA schedules by the user.
+    */
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external;
+
 }

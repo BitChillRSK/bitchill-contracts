@@ -63,8 +63,8 @@ interface IDcaManager {
     error DcaManager__InexistentSchedule();
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
     error DcaManager__BatchBuyArraysLengthMismatch();
-    event DcaManager__DcaScheduleDeleted(address indexed user, address indexed token, uint256 indexed scheduleIndex, uint256 refundedAmount);
-    error DcaManager__TokenDoesNotYieldInterest(address indexed token);
+    event DcaManager__DcaScheduleDeleted(address user, address token, uint256 scheduleIndex, uint256 refundedAmount);
+    error DcaManager__TokenDoesNotYieldInterest(address token);
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
