@@ -8,7 +8,7 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
-import "../../src/Constants.sol";
+import "../Constants.sol";
 // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 contract Handler is Test {

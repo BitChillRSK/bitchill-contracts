@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {Test, console} from "forge-std/Test.sol";
-import "../../src/Constants.sol";
+import "../Constants.sol";
 
 
 contract MockMocProxy {

@@ -72,7 +72,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     function withdrawToken(address user, uint256 withdrawalAmount) public override onlyDcaManager {
         uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
         if(docInTropykus < withdrawalAmount) revert DocTokenHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
-        _redeemKdoc(withdrawalAmount);
+        _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
     }
 
@@ -85,22 +85,22 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      */
     function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external override onlyDcaManager {
         
-        // Redeem kDOC for DOC
-        _redeemKdoc(purchaseAmount);
+        // Redeem DOC (repaying kDOC)
+        _redeemDoc(buyer, purchaseAmount);
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
         uint256 netPurchaseAmount = purchaseAmount - fee;
         _transferFee(fee);
 
-        // Redeem DOC for rBTC
-        (uint256 balancePrev, uint256 balancePost) = _redeemDoc(netPurchaseAmount);
+        // Redeem rBTC repaying DOC
+        (uint256 balancePrev, uint256 balancePost) = _redeemRbtc(netPurchaseAmount);
 
         // // (bool success,) = address(i_mocProxy).call(abi.encodeWithSignature("redeemDocRequest(uint256)", netPurchaseAmount));
-        // // if (!success) revert DocTokenHandler__RedeemDocRequestFailed();
+        // // if (!success) revert DocTokenHandler__redeemDocRequestFailed();
         // try i_mocProxy.redeemDocRequest(netPurchaseAmount) {
         // } catch {
-        //     revert DocTokenHandler__RedeemDocRequestFailed();
+        //     revert DocTokenHandler__redeemDocRequestFailed();
         // }
         // // Now that redeemDocRequest has completed, proceed to redeemFreeDoc
         // uint256 balancePrev = address(this).balance;
@@ -127,18 +127,18 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         // Calculate net amounts
         (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) = _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
-        // Redeem kDOC for DOC
-        _redeemKdoc(totalDocAmountToSpend + aggregatedFee);
+        // Redeem DOC (and repay kDOC)
+        _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
 
         // Charge fees
         _transferFee(aggregatedFee);
         
         // Redeem DOC for rBTC
-        (uint256 balancePrev, uint256 balancePost) = _redeemDoc(totalDocAmountToSpend);
+        (uint256 balancePrev, uint256 balancePost) = _redeemRbtc(totalDocAmountToSpend);
 
         // try i_mocProxy.redeemDocRequest(totalDocAmountToSpend) {
         // } catch {
-        //     revert DocTokenHandler__RedeemDocRequestFailed();
+        //     revert DocTokenHandler__redeemDocRequestFailed();
         // }
         // uint256 balancePrev = address(this).balance;
         // try i_mocProxy.redeemFreeDoc(totalDocAmountToSpend) {
@@ -175,7 +175,11 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         return (aggregatedFee, netDocAmountsToSpend, totalDocAmountToSpend);
     }
     
-    function _redeemDoc(uint256 docAmountToSpend) internal returns (uint256, uint256) {
+    /**
+     * @notice the guys at Money on Chain mistakenly named their functions as "redeem DOC", when it is rBTC that gets redeemed (by repaying DOC)
+     * @param docAmountToSpend the amount of DOC to repay to redeem rBTC
+     */
+    function _redeemRbtc(uint256 docAmountToSpend) internal returns (uint256, uint256) {
         try i_mocProxy.redeemDocRequest(docAmountToSpend) {
         } catch {
             revert DocTokenHandler__RedeemDocRequestFailed();
@@ -189,11 +193,40 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         return (balancePrev, balancePost);
     }
 
-    function _redeemKdoc(uint256 amountToRedeem) internal {
+    function _redeemDoc(address user, uint256 docToRedeem) internal {
         (, uint256 underlyingAmount, ,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if(amountToRedeem > underlyingAmount) revert DocTokenHandler__RedeemAmountExceedsBalance(amountToRedeem);
-           
-        i_kDocToken.redeemUnderlying(amountToRedeem);
+        if(docToRedeem > underlyingAmount) revert DocTokenHandler__RedeemAmountExceedsBalance(docToRedeem);
+        uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
+        uint256 usersKdocBalance = s_kDocBalances[user];
+        uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
+        if(kDocToRepay > usersKdocBalance) {
+            revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
+        } 
+        s_kDocBalances[user] -= kDocToRepay;
+        i_kDocToken.redeemUnderlying(docToRedeem);
+        emit DocTokenHandler__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
+    }
+
+    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem) internal {
+        // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
+        uint256 kDocBalancePrev = i_kDocToken.balanceOf(address(this));
+        i_kDocToken.redeemUnderlying(totalDocToRedeem);
+        uint256 kDocBalancePost = i_kDocToken.balanceOf(address(this));
+
+        if(kDocBalancePrev - kDocBalancePost > 0)
+        {
+            uint256 totalKdocRepayed = kDocBalancePrev - kDocBalancePost;
+            uint256 numOfPurchases = users.length;
+            for(uint256 i; i < numOfPurchases; ++i){
+                // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
+                uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
+                s_kDocBalances[users[i]] -= usersRepayedKdoc;
+                emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
+            }     
+            emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);       
+        } else {
+            revert DocTokenHandler__BatchRedeemDocFailed();
+        }
     }
 
     function getUsersKdocBalance(address user) external view returns(uint256) {
@@ -203,7 +236,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
         uint256 totalDocInDeposit = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
         uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules; // toDoc() es inventada, buscar función de conversión
-        _redeemKdoc(docInterestAmount);
+        _redeemDoc(user, docInterestAmount);
         bool transferSuccess = i_docToken.transfer(user, docInterestAmount);
         if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
     }

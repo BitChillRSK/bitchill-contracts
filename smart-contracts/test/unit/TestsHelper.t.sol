@@ -3,7 +3,7 @@
 pragma solidity 0.8.24;
 
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import "../../src/Constants.sol";
+import "../Constants.sol";
 
 contract DummyERC165Contract {
     constructor (){}

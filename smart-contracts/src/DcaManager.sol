@@ -252,6 +252,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     /**
      * @param buyers the array of addresses of the users on behalf of whom rBTC is going to be bought
      * @notice a buyer may be featured more than once in the buyers array if two or more their schedules are due for a purchase
+     * @notice we need to take extra care in the back end to not mismatch a user's address with a wrong DCA schedule
      * @param token the stablecoin that all users in the array will spend to purchase rBTC
      * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase

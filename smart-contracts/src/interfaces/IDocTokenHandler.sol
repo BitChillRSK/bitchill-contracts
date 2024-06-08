@@ -10,6 +10,9 @@ interface IDocTokenHandler {
     //////////////////////
     // Events ////////////
     //////////////////////
+    event DocTokenHandler__SuccessfulDocRedemption(address indexed user, uint256 indexed docRedeemed, uint256 indexed kDocRepayed);
+    event DocTokenHandler__SuccessfulBatchDocRedemption(uint256 indexed docRedeemed, uint256 indexed kDocRepayed);
+    event DocTokenHandler__DocRedeemedKdocRepayed(address indexed user, uint256 docRedeemed, uint256 indexed kDocRepayed);
 
     //////////////////////
     // Errors ////////////
@@ -20,6 +23,8 @@ interface IDocTokenHandler {
     error DocTokenHandler__InterestWithdrawalFailed(address user, uint256 interestAmount);
     error DocTokenHandler__kDocApprovalFailed(address user, uint256 depositAmount);
     error DocTokenHandler__WithdrawalAmountExceedsKdocBalance(address user, uint256 withdrawalAmount, uint256 balance);
+    error DocTokenHandler__KdocToRepayExceedsUsersBalance(address user, uint256 kDocAmountToRepay, uint256 kDocUserbalance);
+    error DocTokenHandler__BatchRedeemDocFailed();
     
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS

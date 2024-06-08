@@ -7,7 +7,7 @@ import {DcaManager} from "../src/DcaManager.sol";
 import {DocTokenHandler} from "../src/DocTokenHandler.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {console} from "forge-std/Test.sol";
-import "../src/Constants.sol";
+import "../test/Constants.sol";
 
 contract DeployContracts is Script {
     address OWNER = makeAddr(OWNER_STRING);

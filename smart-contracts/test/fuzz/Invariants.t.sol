@@ -8,12 +8,13 @@ import {DcaManager} from "src/DcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
+import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {DeployContracts} from "../../script/DeployContracts.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Handler} from "./Handler.t.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import "../../src/Constants.sol";
+import "../Constants.sol";
 
 
 contract InvariantTest is StdInvariant, Test {
@@ -21,6 +22,7 @@ contract InvariantTest is StdInvariant, Test {
     AdminOperations adminOperations;
     DocTokenHandler docTokenHandler;
     MockDocToken mockDocToken;
+    MockKdocToken mockKdocToken;
     MockMocProxy mockMocProxy;
     DeployContracts deployer;
     HelperConfig helperConfig;
@@ -38,8 +40,9 @@ contract InvariantTest is StdInvariant, Test {
     function setUp() external {
         deployer = new DeployContracts();
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
-        (address docTokenAddress, address mocProxyAddress,) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) = helperConfig.activeNetworkConfig();
         mockDocToken = MockDocToken(docTokenAddress);
+        mockKdocToken = MockKdocToken(kDocTokenAddress);
 
         // Assign DOC token handler
         vm.prank(OWNER);
@@ -88,19 +91,23 @@ contract InvariantTest is StdInvariant, Test {
         // compare it to the sum of all users' balances 
         vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();
-        // users = removeDuplicates(users);
-        uint256 sumOfUsersBalances;
-        for (uint256 i = 0; i < users.length; i++) {
+        uint256 sumOfUsersDepositedDoc;
+        for (uint256 i; i < users.length; ++i) {
             vm.startPrank(users[i]);
             uint256 numOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
-            for (uint256 j = 0; j < numOfSchedules; j++) {
-                sumOfUsersBalances += dcaManager.getScheduleTokenBalance(address(mockDocToken), j);
+            for (uint256 j; j < numOfSchedules; ++j) {
+                sumOfUsersDepositedDoc += dcaManager.getScheduleTokenBalance(address(mockDocToken), j);
             }
             vm.stopPrank();
         }
-        assertEq(mockDocToken.balanceOf(address(docTokenHandler)), sumOfUsersBalances); 
-        console.log("Sum of users' DOC balances:", sumOfUsersBalances);
-        console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
+        uint256 sumOfUsersKdoc;
+        for (uint256 i; i < users.length; ++i) {
+            sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
+        }        
+        assertEq(sumOfUsersDepositedDoc, sumOfUsersKdoc * 1E18 / mockKdocToken.exchangeRateStored()); 
+        // assertEq(mockDocToken.balanceOf(address(docTokenHandler)), DepositedDoc); 
+        // console.log("Sum of users' DOC balances:", DepositedDoc);
+        // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
     }
 
     function invariant_DocTokenHandlerRbtcBalanceNearlyEqualsSumOfAllUsers() public {
