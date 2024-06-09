@@ -27,7 +27,7 @@ contract DocLendingTest is DcaDappTest {
         uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
         super.depositDoc();
         uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), 2* DOC_TO_DEPOSIT * mockKdocToken.exchangeRateStored() / 1E18);
+        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), 2 * DOC_TO_DEPOSIT * mockKdocToken.exchangeRateStored() / 1E18);
         assertEq(postKdocBalance - prevKdocBalance, DOC_TO_DEPOSIT * mockKdocToken.exchangeRateStored() / 1E18);
     }
 
@@ -47,20 +47,23 @@ contract DocLendingTest is DcaDappTest {
         assertEq(prevKdocBalance - postKdocBalance, DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18);
     }
 
-    function testSeveralRbtcPurchasesRedeemKdoc() external {  // This just for one user, for many users this will get tested in invariant tests    
+    function testSeveralRbtcPurchasesRedeemKdoc() external {  // This just for one user, for many users this will get tested in invariant tests  
+        super.createSeveralDcaSchedules();    
         uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        super.makeSeveralPurchasesWithSeveralSchedules();
+        console.log("kDOC balance before purchases", prevKdocBalance);
+        uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules();
         uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18);
-        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), (DOC_TO_DEPOSIT - DOC_TO_SPEND) * mockKdocToken.exchangeRateStored() / 1E18);
+        console.log("kDOC balance after purchases", postKdocBalance);
+        assertEq(prevKdocBalance - postKdocBalance, NUM_OF_SCHEDULES * DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18);
+        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), (DOC_TO_DEPOSIT - NUM_OF_SCHEDULES * DOC_TO_SPEND) * mockKdocToken.exchangeRateStored() / 1E18);
     }
 
     function testRbtcBatchPurchaseRedeemsKdoc() external {// This just for one user, for many users this will get tested in invariant tests  
-        super.createSeveralDcaSchedules();  
+        super.createSeveralDcaSchedules(); // This creates NUM_OF_SCHEDULES schedules with purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES
         uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        super.makeBatchPurchasesOneUser();
+        super.makeBatchPurchasesOneUser(); // Batched purchases add up to an amount of DOC_TO_SPEND, this function makes two batch purchases
         uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18);
-        // assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), (DOC_TO_DEPOSIT - DOC_TO_SPEND) * mockKdocToken.exchangeRateStored() / 1E18);
+        assertEq(prevKdocBalance - postKdocBalance, 2 * DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18); 
+        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), (DOC_TO_DEPOSIT - 2 * DOC_TO_SPEND) * mockKdocToken.exchangeRateStored() / 1E18);
     }
 }

@@ -35,6 +35,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
     }
 
     function testWithdrawRbtcAfterSeveralPurchases() external {
+        super.createSeveralDcaSchedules();
         uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);

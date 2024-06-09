@@ -163,7 +163,9 @@ contract DcaDappTest is Test {
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
-        for (uint256 i = 1; i < NUM_OF_SCHEDULES; ++i) { // Start from 1 since schedule 0 is created in setUp
+        // Delete the schedule created in setUp to have all five schedules with the same amounts
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 0);
+        for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) { 
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
             uint256 userBalanceBeforeDeposit;
@@ -211,9 +213,10 @@ contract DcaDappTest is Test {
     }
 
     function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalDocSpent) {  
-        createSeveralDcaSchedules();
+        // createSeveralDcaSchedules();
 
         uint8 numOfPurchases = 5;
+        uint256 totalDocRedeemed;
 
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
             uint256 scheduleIndex = i;
@@ -242,12 +245,15 @@ contract DcaDappTest is Test {
                 assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
 
                 totalDocSpent += netPurchaseAmount;
+                totalDocRedeemed += schedulePurchaseAmount;
+                console.log("DOC redeemed", schedulePurchaseAmount);
 
                 vm.warp(block.timestamp + schedulePurchasePeriod);
             }
         }
+        console.log("Total DOC spent :", totalDocSpent);
+        console.log("Total DOC redeemed :", totalDocRedeemed);
         vm.prank(USER);
-        // assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
     }
 
@@ -255,8 +261,8 @@ contract DcaDappTest is Test {
         uint256 prevDocTokenHandlerBalance = address(docTokenHandler).balance;
         vm.prank(USER);
         uint256 userAccumulatedRbtcPrev = docTokenHandler.getAccumulatedRbtcBalance();
-        vm.prank(OWNER);
-        address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
+        // vm.prank(OWNER);
+        // address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
         // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(mockDocToken)).length;
         address[] memory users = new address[](NUM_OF_SCHEDULES);
         uint256[] memory scheduleIndexes = new uint256[](NUM_OF_SCHEDULES);
@@ -265,6 +271,7 @@ contract DcaDappTest is Test {
 
         uint256 totalNetPurchaseAmount;
 
+        // Create the arrays for the batch purchase (in production, this is done in the back end)
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
@@ -274,7 +281,7 @@ contract DcaDappTest is Test {
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
             
-            users[i] = user;
+            users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
             scheduleIndexes[i] = i;
             vm.startPrank(OWNER);
             purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchaseAmount;

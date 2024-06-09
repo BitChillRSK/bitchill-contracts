@@ -240,5 +240,4 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         bool transferSuccess = i_docToken.transfer(user, docInterestAmount);
         if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
     }
-
 }

@@ -73,6 +73,7 @@ contract RbtcPurchaseTest is DcaDappTest {
     }
 
     function testSeveralPurchasesWithSeveralSchedules() external {
+        super.createSeveralDcaSchedules();
         super.makeSeveralPurchasesWithSeveralSchedules();
     }
 

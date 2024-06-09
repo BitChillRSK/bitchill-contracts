@@ -105,7 +105,7 @@ contract InvariantTest is StdInvariant, Test {
             sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
         }        
         assertEq(sumOfUsersDepositedDoc, sumOfUsersKdoc * 1E18 / mockKdocToken.exchangeRateStored()); 
-        // assertEq(mockDocToken.balanceOf(address(docTokenHandler)), DepositedDoc); 
+        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // DOC deposited in Bitchill is immediately lent in Tropykus
         // console.log("Sum of users' DOC balances:", DepositedDoc);
         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
     }
