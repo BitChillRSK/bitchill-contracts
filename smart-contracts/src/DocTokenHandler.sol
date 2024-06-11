@@ -235,7 +235,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
         uint256 totalDocInDeposit = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
-        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules; // toDoc() es inventada, buscar función de conversión
+        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules; 
         _redeemDoc(user, docInterestAmount);
         bool transferSuccess = i_docToken.transfer(user, docInterestAmount);
         if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);

@@ -110,4 +110,20 @@ contract RbtcPurchaseTest is DcaDappTest {
         super.createSeveralDcaSchedules();
         super.makeBatchPurchasesOneUser();
     }
+
+    function testBatchPurchaseFailsIfArraysEmpty() external {
+        address[] memory emptyAddressArray;
+        uint256[] memory emptyUintArray;
+        vm.expectRevert(IDcaManager.DcaManager__EmptyBatchPurchaseArrays.selector);
+        vm.prank(OWNER);
+        dcaManager.batchBuyRbtc(emptyAddressArray, address(mockDocToken), emptyUintArray, emptyUintArray, emptyUintArray);
+    }
+
+    function testBatchPurchaseFailsIfArraysHaveDifferentLenghts() external {
+        address[] memory users = new address[](1);
+        uint256[] memory dummyUintArray = new uint256[](3);
+        vm.expectRevert(IDcaManager.DcaManager__BatchPurchaseArraysLengthMismatch.selector);
+        vm.prank(OWNER);
+        dcaManager.batchBuyRbtc(users, address(mockDocToken), dummyUintArray, dummyUintArray, dummyUintArray);
+    }
 }

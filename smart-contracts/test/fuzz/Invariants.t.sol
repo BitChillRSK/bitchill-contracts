@@ -86,8 +86,8 @@ contract InvariantTest is StdInvariant, Test {
         // targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
     }
 
-    function invariant_DcaContractDocBalanceEqualsSumOfAllUsers() public {
-        // get the total amount of DOC deposited in the contract
+    function invariant_kDocContractDocBalanceEqualsSumOfAllUsers() public {
+        // get the total amount of DOC deposited in the kDOC contract
         // compare it to the sum of all users' balances 
         vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();
@@ -100,12 +100,13 @@ contract InvariantTest is StdInvariant, Test {
             }
             vm.stopPrank();
         }
+        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // DOC deposited in Bitchill is immediately lent in Tropykus
+        // kDOC - DOC correspondence holds
         uint256 sumOfUsersKdoc;
         for (uint256 i; i < users.length; ++i) {
             sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
         }        
         assertEq(sumOfUsersDepositedDoc, sumOfUsersKdoc * 1E18 / mockKdocToken.exchangeRateStored()); 
-        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // DOC deposited in Bitchill is immediately lent in Tropykus
         // console.log("Sum of users' DOC balances:", DepositedDoc);
         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
     }
