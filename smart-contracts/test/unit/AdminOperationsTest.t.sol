@@ -51,7 +51,7 @@ contract AdminOperationsTest is DcaDappTest {
         vm.startBroadcast();
         DocTokenHandler newDocTokenHandler = 
                     new DocTokenHandler(address(dcaManager), address(mockDocToken), address(mockKdocToken), MIN_PURCHASE_AMOUNT, address(mockMocProxy),
-                    FEE_COLLECTOR, MIN_FEE_RATE, MAX_FEE_RATE, MIN_ANNUAL_AMOUNT, MAX_ANNUAL_AMOUNT);
+                    FEE_COLLECTOR, MIN_FEE_RATE, MAX_FEE_RATE, MIN_ANNUAL_AMOUNT, MAX_ANNUAL_AMOUNT, DOC_YIELDS_INTEREST);
         vm.stopBroadcast();
         assert(prevDocTokenHandler != address(newDocTokenHandler));
         vm.prank(OWNER);

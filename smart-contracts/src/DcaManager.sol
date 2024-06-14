@@ -50,8 +50,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     constructor(address adminOperationsAddress) Ownable(msg.sender) {
         s_adminOperations = AdminOperations(adminOperationsAddress);
-        // s_feeCalculator = FeeCalculator(feeCalculatorAddress);
-        // s_feeCollector = feeCollector;
     }
 
     fallback() external {

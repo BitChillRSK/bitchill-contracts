@@ -100,8 +100,10 @@ contract InvariantTest is StdInvariant, Test {
             }
             vm.stopPrank();
         }
-        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // DOC deposited in Bitchill is immediately lent in Tropykus
-        // kDOC - DOC correspondence holds
+        // DOC deposited in Bitchill is immediately lent in Tropykus
+        assertEq(mockDocToken.balanceOf(address(docTokenHandler)), 0); // No DOC in DocTokenHandler
+        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // All of the users's DOC in Tropykus
+        // kDOC to DOC correspondence holds
         uint256 sumOfUsersKdoc;
         for (uint256 i; i < users.length; ++i) {
             sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);

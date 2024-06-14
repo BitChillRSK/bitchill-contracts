@@ -13,3 +13,4 @@ uint256 constant MIN_ANNUAL_AMOUNT =  1000 ether; // 1000 DOC
 uint256 constant MAX_ANNUAL_AMOUNT = 100_000 ether; // 100,000 DOC
 uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; 
 uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
+bool constant DOC_YIELDS_INTEREST = true;

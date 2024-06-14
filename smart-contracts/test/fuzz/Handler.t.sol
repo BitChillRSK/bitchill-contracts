@@ -211,40 +211,6 @@ contract Handler is Test {
     }
 
     /**
-     * @notice In this test we make purchases for all users' first schedule. In a real use case the script running on the back-end should find out which schedules are due for a purchase    
-     */
-    // function batchBuyRbtc() external {
-    //     vm.prank(OWNER);
-    //     address[] memory users = dcaManager.getUsers();
-    //     if (users.length == 0) return;
-    //     uint256 numOfPurchases = users.length;
-    //     uint256[] memory scheduleIndexes = new uint256[](numOfPurchases);
-    //     uint256[] memory purchaseAmounts = new uint256[](numOfPurchases);
-    //     uint256[] memory purchasePeriods = new uint256[](numOfPurchases);
-    //     uint256 furthestNextPurchaseTimestamp;
-
-    //     for(uint256 i; i < numOfPurchases; ++i){
-    //         scheduleIndexes[i] = 0;
-    //         vm.prank(users[i]);
-    //         IDcaManager.DcaDetails memory dcaSchedule = dcaManager.getMyDcaSchedules(address(mockDocToken))[0]; // We're making the batch purchase for the first schedule of each user
-    //         purchaseAmounts[i] = dcaSchedule.purchaseAmount;
-    //         purchasePeriods[i] = dcaSchedule.purchasePeriod;
-    //         if(dcaSchedule.tokenBalance < dcaSchedule.purchaseAmount) return;
-    //         if(furthestNextPurchaseTimestamp < dcaSchedule.lastPurchaseTimestamp + dcaSchedule.purchasePeriod) {
-    //             furthestNextPurchaseTimestamp = dcaSchedule.lastPurchaseTimestamp + dcaSchedule.purchasePeriod;
-    //         }
-    //     }
-
-    //     // Make sure that all the schedules are due for a purchase
-    //     if(block.timestamp < furthestNextPurchaseTimestamp) {            
-    //         vm.warp(furthestNextPurchaseTimestamp);
-    //     }
-
-    //     vm.prank(OWNER);
-    //     dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
-    // }
-
-    /**
      * @notice In this test we make purchases for all schedules of all users. In a real use case the script running on the back-end should find out which schedules are due for a purchase    
      */
     function batchBuyRbtc() external {
@@ -266,7 +232,7 @@ contract Handler is Test {
             }
         }
 
-        // If all the users' in the array schedules have been deleted numOfPurchases == 0
+        // If all the users' schedules have been deleted numOfPurchases == 0
         if(numOfPurchases > 0) {
             address[] memory buyers = new address[](numOfPurchases);
             uint256[] memory scheduleIndexes = new uint256[](numOfPurchases);
@@ -333,6 +299,13 @@ contract Handler is Test {
             return;
         }
         dcaManager.withdrawAllAccmulatedRbtc();
+        vm.stopPrank();
+    }
+
+    function withdrawInterestFromDocTokenHandler(uint256 userSeed) external {
+        address user = s_users[userSeed % s_users.length];
+        vm.startPrank(user);
+        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken));
         vm.stopPrank();
     }
 }

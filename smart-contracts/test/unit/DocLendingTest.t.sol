@@ -51,7 +51,7 @@ contract DocLendingTest is DcaDappTest {
         super.createSeveralDcaSchedules();    
         uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
         console.log("kDOC balance before purchases", prevKdocBalance);
-        uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules();
+        super.makeSeveralPurchasesWithSeveralSchedules();
         uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
         console.log("kDOC balance after purchases", postKdocBalance);
         assertEq(prevKdocBalance - postKdocBalance, NUM_OF_SCHEDULES * DOC_TO_SPEND * mockKdocToken.exchangeRateStored() / 1E18);

@@ -25,7 +25,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
     uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
-    bool internal doDepositsYieldInterest; // Whether the token deposited will yield interest while waiting to be spent on DCA purchases
+    bool internal immutable i_yieldsInterest; // Whether the token deposited will yield interest while waiting to be spent on DCA purchases
 
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;
@@ -39,7 +39,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     }
 
     constructor(address dcaManagerAddress, address tokenAddress, uint256 minPurchaseAmount, address feeCollector, 
-                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) {
+                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount, bool yieldsInterest) {
         i_dcaManager = dcaManagerAddress;
         i_stableToken = tokenAddress;
         s_minPurchaseAmount = minPurchaseAmount;
@@ -49,6 +49,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         s_maxFeeRate = maxFeeRate;
         s_minAnnualAmount = minAnnualAmount;
         s_maxAnnualAmount = maxAnnualAmount;
+        i_yieldsInterest = yieldsInterest;
     }
 
 
@@ -104,20 +105,12 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         emit TokenHandler__rBtcWithdrawn(user, rbtcBalance);
     }
 
-    function getAccumulatedRbtcBalance() external view override returns (uint256) {
-        return s_usersAccumulatedRbtc[msg.sender];
-    }
-
     function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
         return interfaceID == type(ITokenHandler).interfaceId;
     }
 
     function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
         s_minPurchaseAmount = minPurchaseAmount;
-    }
-
-    function getMinPurchaseAmount() external view returns (uint256) {
-        return s_minPurchaseAmount;
     }
 
     function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external override onlyOwner {
@@ -147,8 +140,42 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         s_feeCollector = feeCollector; 
     }
 
+
+    
+    /*//////////////////////////////////////////////////////////////
+                                GETTERS
+    //////////////////////////////////////////////////////////////*/
+
+    function getMinPurchaseAmount() external view returns (uint256) {
+        return s_minPurchaseAmount;
+    }
+    
+    function getAccumulatedRbtcBalance() external view override returns (uint256) {
+        return s_usersAccumulatedRbtc[msg.sender];
+    }
+    
     function depositsYieldInterest() external view override returns (bool){
-        return doDepositsYieldInterest;
+        return i_yieldsInterest;
+    }
+
+    function getMinFeeRate() public view returns(uint256) {
+        return s_minFeeRate; 
+    }
+
+    function getMaxFeeRate() public view returns(uint256) {
+        return s_maxFeeRate; 
+    }
+
+    function getMinAnnualAmount() public view returns(uint256) {
+        return s_minAnnualAmount; 
+    }
+
+    function getMaxAnnualAmount() public view returns(uint256) {
+        return s_maxAnnualAmount; 
+    }
+
+    function getFeeCollectorAddress() external view returns(address) {
+        return s_feeCollector; 
     }
 
     /*//////////////////////////////////////////////////////////////

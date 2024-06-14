@@ -38,9 +38,9 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @param maxAnnualAmount the annual amount above which min fee is applied
      */
     constructor(address dcaManagerAddress, address docTokenAddress, address kDocTokenAddress, uint256 minPurchaseAmount,address feeCollector, address mocProxyAddress, 
-                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
+                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount, bool yieldsInterest)
         Ownable(msg.sender)
-        TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, minFeeRate, maxFeeRate, minAnnualAmount, maxAnnualAmount)
+        TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, minFeeRate, maxFeeRate, minAnnualAmount, maxAnnualAmount, yieldsInterest)
     {
         i_docToken = IERC20(docTokenAddress);
         i_kDocToken = IkDocToken(kDocTokenAddress);
@@ -234,7 +234,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     }
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
-        uint256 totalDocInDeposit = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
+        uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
         uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules; 
         _redeemDoc(user, docInterestAmount);
         bool transferSuccess = i_docToken.transfer(user, docInterestAmount);
