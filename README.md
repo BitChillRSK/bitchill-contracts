@@ -5,5 +5,4 @@ BitChill is an automated Dollar-Cost Averaging (DCA) protocol designed to simpli
 ## Features
 
 - **Automated DCA:** Deposit your DOC and BitChill will take care of the DCA process, automatically executing Bitcoin purchases for you.
-- **Integration with Tropykus Protocol:** Earn a 7% APY by lending your full DOC amount in the Tropykus protocol.
-- **Collateralized Borrowing:** Use accumulated rBTC as collateral for borrowing additional DOC.
+- **Integration with Tropykus Protocol:** Earn an APY by lending your full DOC amount in the Tropykus protocol.
