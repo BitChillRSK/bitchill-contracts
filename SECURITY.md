@@ -16,6 +16,7 @@ Security patches will be released for the latest version of the protocol. Critic
 | Version | Critical Security Fixes | Other Security Fixes |
 | ------- | ----------------------- | -------------------- |
 | 1.x     |    :white_check_mark:   |  :white_check_mark:  |
+
 Note as well that the Solidity language itself only guarantees security updates for the latest release.
 
 ## Legal
