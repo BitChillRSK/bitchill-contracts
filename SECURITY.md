@@ -16,6 +16,7 @@ Security patches will be released for the latest version of the protocol. Critic
 | Version | Critical Security Fixes | Other Security Fixes |
 | ------- | ----------------------- | -------------------- |
 | 1.x     |    :white_check_mark:   |  :white_check_mark:  |
+Note as well that the Solidity language itself only guarantees security updates for the latest release.
 
 ## Legal
 Smart contracts are a nascent technology and carry a high level of technical risk and uncertainty. The BitChill dApp is made available under the MIT License, which disclaims all warranties in relation to the project and limits the liability of those that contribute and maintain the project. Your use of the project is at your own risk.
