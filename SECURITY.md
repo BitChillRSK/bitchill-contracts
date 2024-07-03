@@ -22,7 +22,7 @@ Note as well that the Solidity language itself only guarantees security updates 
 ## Legal
 Smart contracts are a nascent technology and carry a high level of technical risk and uncertainty. The BitChill dApp is made available under the MIT License, which disclaims all warranties in relation to the project and limits the liability of those that contribute and maintain the project. Your use of the project is at your own risk.
 
---
+__
 For any further questions or issues, please contact the BitChill team at security@bitchill.com.
 
 
