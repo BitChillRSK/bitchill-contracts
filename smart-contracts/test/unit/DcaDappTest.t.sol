@@ -166,7 +166,8 @@ contract DcaDappTest is Test {
         uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
         // Delete the schedule created in setUp to have all five schedules with the same amounts
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 0);
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 0, scheduleId);
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
@@ -176,7 +177,7 @@ contract DcaDappTest is Test {
             } else {
                 userBalanceBeforeDeposit = 0;
             }
-            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+            scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
                 USER, address(mockDocToken), scheduleId, docToDeposit, purchaseAmount, purchasePeriod

@@ -36,7 +36,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     //////////////////////
     modifier validateIndex(address token, uint256 scheduleIndex) {
         if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) {
-            revert DcaManager__InexistentSchedule();
+            revert DcaManager__InexistentScheduleIndex();
         }
         _;
     }
@@ -154,7 +154,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     ) external override {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentSchedule();
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentScheduleIndex();
 
         DcaDetails memory dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
 
@@ -184,9 +184,15 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param scheduleIndex the index of the schedule
      */
 
-    function deleteDcaSchedule(address token, uint256 scheduleIndex) external override nonReentrant {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentSchedule();
+    function deleteDcaSchedule(address token, uint256 scheduleIndex, bytes32 scheduleId)
+        external
+        override
+        nonReentrant
+    {
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentScheduleIndex();
         DcaDetails memory schedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+
+        if (scheduleId != schedule.scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
 
         // Remove the schedule
         uint256 lastIndex = s_dcaSchedules[msg.sender][token].length - 1;

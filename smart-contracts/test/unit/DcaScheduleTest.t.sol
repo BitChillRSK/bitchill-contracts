@@ -60,7 +60,8 @@ contract DcaScheduleTest is DcaDappTest {
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
         dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1);
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 2);
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].tokenBalance, DOC_TO_DEPOSIT * 3);
         vm.stopPrank();
@@ -99,13 +100,13 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testCannotUpdateInexistentSchedule() external {
         vm.startPrank(USER);
-        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX + 1, DOC_TO_DEPOSIT);
-        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, DOC_TO_SPEND);
-        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1, MIN_PURCHASE_PERIOD);
-        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.updateDcaSchedule(address(mockDocToken), 1, 1, 1, 1);
         vm.stopPrank();
     }
@@ -122,8 +123,16 @@ contract DcaScheduleTest is DcaDappTest {
     }
 
     function testCannotDeleteInexistentSchedule() external {
-        vm.expectRevert(IDcaManager.DcaManager__InexistentSchedule.selector);
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+    }
+
+    function testScheduleIndexAndIdMismatchReverts() external {
+        bytes32 scheduleId = keccak256(abi.encodePacked("dummyStuff", block.timestamp));
+        vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
+        vm.prank(USER);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), 0, scheduleId);
     }
 }

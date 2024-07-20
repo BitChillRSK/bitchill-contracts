@@ -27,7 +27,13 @@ contract Handler is Test {
     // address USER = makeAddr("user");
     address[] public s_users;
 
-    constructor(AdminOperations _adminOperations, DocTokenHandler _docTokenHandler, DcaManager _dcaManager, MockDocToken _mockDocToken, address[] memory users ) {
+    constructor(
+        AdminOperations _adminOperations,
+        DocTokenHandler _docTokenHandler,
+        DcaManager _dcaManager,
+        MockDocToken _mockDocToken,
+        address[] memory users
+    ) {
         adminOperations = _adminOperations;
         docTokenHandler = _docTokenHandler;
         dcaManager = _dcaManager;
@@ -51,12 +57,14 @@ contract Handler is Test {
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
-            // We need to create a DCA schedule before depositing more DOC 
+            // We need to create a DCA schedule before depositing more DOC
             uint256 purchaseAmount = depositAmount / 10;
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             mockDocToken.approve(address(docTokenHandler), depositAmount);
             dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD);
-        } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        } else {
+            scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        }
 
         mockDocToken.approve(address(docTokenHandler), depositAmount);
         dcaManager.depositToken(address(mockDocToken), scheduleIndex, depositAmount);
@@ -69,7 +77,7 @@ contract Handler is Test {
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
-            // We need to create a DCA schedule before withdrawing DOC 
+            // We need to create a DCA schedule before withdrawing DOC
             withdrawalAmount = bound(withdrawalAmount, 20 ether, MAX_DEPOSIT_AMOUNT / 10);
             uint256 depositAmount = 10 * withdrawalAmount;
             uint256 purchaseAmount;
@@ -77,7 +85,9 @@ contract Handler is Test {
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docTokenHandler), depositAmount);
             dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
-        } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        } else {
+            scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        }
 
         uint256 maxWithdrawalAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
         withdrawalAmount = bound(withdrawalAmount, 0, maxWithdrawalAmount);
@@ -101,10 +111,13 @@ contract Handler is Test {
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docTokenHandler), depositAmount);
             dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
-        } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        } else {
+            scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        }
 
         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
-        if(maxPurchaseAmount < MIN_PURCHASE_AMOUNT) { // This can happen if the DOC balance left is less than 2 DOC
+        if (maxPurchaseAmount < MIN_PURCHASE_AMOUNT) {
+            // This can happen if the DOC balance left is less than 2 DOC
             vm.stopPrank();
             return;
         }
@@ -124,18 +137,22 @@ contract Handler is Test {
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         if (usersNumOfSchedules == 0) {
             scheduleIndex = 0;
-            uint depositAmount = 1000 ether;
-            uint purchaseAmount = 100 ether;
+            uint256 depositAmount = 1000 ether;
+            uint256 purchaseAmount = 100 ether;
             // We need to create a DCA schedule before modifying the purchase period
             mockDocToken.approve(address(docTokenHandler), depositAmount);
             dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
-        } else scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        } else {
+            scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
+        }
 
         dcaManager.setPurchasePeriod(address(mockDocToken), scheduleIndex, purchasePeriod);
         vm.stopPrank();
     }
 
-    function createDcaSchedule(uint256 userSeed, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
+    function createDcaSchedule(uint256 userSeed, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod)
+        public
+    {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         if (depositAmount < 2 * MIN_PURCHASE_AMOUNT) {
@@ -150,11 +167,18 @@ contract Handler is Test {
         vm.stopPrank();
     }
 
-    function updateDcaSchedule(uint256 userSeed, uint256 scheduleIndex, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod) public {
+    function updateDcaSchedule(
+        uint256 userSeed,
+        uint256 scheduleIndex,
+        uint256 depositAmount,
+        uint256 purchaseAmount,
+        uint256 purchasePeriod
+    ) public {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
-        if (usersNumOfSchedules == 0) { // If user has no schedules, update not possible
+        if (usersNumOfSchedules == 0) {
+            // If user has no schedules, update not possible
             vm.stopPrank();
             return;
         }
@@ -166,12 +190,14 @@ contract Handler is Test {
         uint256 prevTokenBalance = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
 
         // Schedule parameters that are 0 don't get updated
-        if(purchasePeriod < MIN_PURCHASE_PERIOD) purchasePeriod = 0; 
-        if(purchaseAmount < MIN_PURCHASE_AMOUNT) purchaseAmount = 0;
-        if(purchaseAmount > (prevTokenBalance + depositAmount) / 2) purchaseAmount = 0;
+        if (purchasePeriod < MIN_PURCHASE_PERIOD) purchasePeriod = 0;
+        if (purchaseAmount < MIN_PURCHASE_AMOUNT) purchaseAmount = 0;
+        if (purchaseAmount > (prevTokenBalance + depositAmount) / 2) purchaseAmount = 0;
 
         mockDocToken.approve(address(docTokenHandler), depositAmount);
-        dcaManager.updateDcaSchedule(address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod);
+        dcaManager.updateDcaSchedule(
+            address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
+        );
         vm.stopPrank();
     }
 
@@ -179,12 +205,14 @@ contract Handler is Test {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
-        if (usersNumOfSchedules == 0) { // If user has no schedules, update not possible
+        if (usersNumOfSchedules == 0) {
+            // If user has no schedules, update not possible
             vm.stopPrank();
             return;
         }
         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleIndex);
+        bytes32 scheduleId = keccak256(abi.encodePacked(user, block.timestamp));
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleIndex, scheduleId);
         vm.stopPrank();
     }
 
@@ -200,9 +228,10 @@ contract Handler is Test {
         if (usersNumOfSchedules == 0) return;
         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 
-        if(dcaDetails[scheduleIndex].tokenBalance < dcaDetails[scheduleIndex].purchaseAmount) return;
-        uint256 nextPurchaseTimestamp = dcaDetails[scheduleIndex].lastPurchaseTimestamp + dcaDetails[scheduleIndex].purchasePeriod;
-        if(block.timestamp < nextPurchaseTimestamp) {            
+        if (dcaDetails[scheduleIndex].tokenBalance < dcaDetails[scheduleIndex].purchaseAmount) return;
+        uint256 nextPurchaseTimestamp =
+            dcaDetails[scheduleIndex].lastPurchaseTimestamp + dcaDetails[scheduleIndex].purchasePeriod;
+        if (block.timestamp < nextPurchaseTimestamp) {
             vm.warp(nextPurchaseTimestamp);
         }
 
@@ -211,7 +240,7 @@ contract Handler is Test {
     }
 
     /**
-     * @notice In this test we make purchases for all schedules of all users. In a real use case the script running on the back-end should find out which schedules are due for a purchase    
+     * @notice In this test we make purchases for all schedules of all users. In a real use case the script running on the back-end should find out which schedules are due for a purchase
      */
     function batchBuyRbtc() external {
         vm.prank(OWNER);
@@ -233,32 +262,36 @@ contract Handler is Test {
         }
 
         // If all the users' schedules have been deleted numOfPurchases == 0
-        if(numOfPurchases > 0) {
+        if (numOfPurchases > 0) {
             address[] memory buyers = new address[](numOfPurchases);
             uint256[] memory scheduleIndexes = new uint256[](numOfPurchases);
             uint256[] memory purchaseAmounts = new uint256[](numOfPurchases);
             uint256[] memory purchasePeriods = new uint256[](numOfPurchases);
             uint256 furthestNextPurchaseTimestamp;
-            uint256 buyersIndex = 0; 
+            uint256 buyersIndex = 0;
 
-            for(uint256 i; i < users.length; ++i){
+            for (uint256 i; i < users.length; ++i) {
                 vm.prank(users[i]);
                 IDcaManager.DcaDetails[] memory dcaSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken));
-                for(uint256 j; j < dcaSchedules.length; ++j){
+                for (uint256 j; j < dcaSchedules.length; ++j) {
                     if (dcaSchedules[j].tokenBalance < dcaSchedules[j].purchaseAmount) continue;
                     buyers[buyersIndex] = users[i];
                     scheduleIndexes[buyersIndex] = j;
                     purchaseAmounts[buyersIndex] = dcaSchedules[j].purchaseAmount;
                     purchasePeriods[buyersIndex] = dcaSchedules[j].purchasePeriod;
-                    if(furthestNextPurchaseTimestamp < dcaSchedules[j].lastPurchaseTimestamp + dcaSchedules[j].purchasePeriod) {
-                        furthestNextPurchaseTimestamp = dcaSchedules[j].lastPurchaseTimestamp + dcaSchedules[j].purchasePeriod;
+                    if (
+                        furthestNextPurchaseTimestamp
+                            < dcaSchedules[j].lastPurchaseTimestamp + dcaSchedules[j].purchasePeriod
+                    ) {
+                        furthestNextPurchaseTimestamp =
+                            dcaSchedules[j].lastPurchaseTimestamp + dcaSchedules[j].purchasePeriod;
                     }
                     buyersIndex++;
                 }
             }
 
             // Make sure that all the schedules are due for a purchase
-            if(block.timestamp < furthestNextPurchaseTimestamp) {            
+            if (block.timestamp < furthestNextPurchaseTimestamp) {
                 vm.warp(furthestNextPurchaseTimestamp);
             }
 
@@ -270,10 +303,11 @@ contract Handler is Test {
     function withdrawRbtcFromTokenHandler(uint256 userSeed, uint256 tokenHandlerIndex) external {
         address user = s_users[userSeed % s_users.length];
         address[] memory depositedTokens = dcaManager.getUsersDepositedTokens(user);
-        if(depositedTokens.length == 0) return;
+        if (depositedTokens.length == 0) return;
         tokenHandlerIndex = bound(tokenHandlerIndex, 0, depositedTokens.length - 1);
         vm.startPrank(user);
-        uint256 rbtcBalance = ITokenHandler(adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex])).getAccumulatedRbtcBalance();
+        uint256 rbtcBalance = ITokenHandler(adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex]))
+            .getAccumulatedRbtcBalance();
         if (rbtcBalance == 0) {
             vm.stopPrank();
             return;
@@ -281,18 +315,19 @@ contract Handler is Test {
         dcaManager.withdrawRbtcFromTokenHandler(depositedTokens[tokenHandlerIndex]);
         vm.stopPrank();
     }
-    
+
     function withdrawAllRbtc(uint256 userSeed) external {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         address[] memory depositedTokens = dcaManager.getUsersDepositedTokens(user);
-        if(depositedTokens.length == 0) {
+        if (depositedTokens.length == 0) {
             vm.stopPrank();
             return;
         }
         uint256 rbtcBalance = 0;
-        for(uint256 i; i < depositedTokens.length; ++i){
-            rbtcBalance += ITokenHandler(adminOperations.getTokenHandler(depositedTokens[i])).getAccumulatedRbtcBalance();
+        for (uint256 i; i < depositedTokens.length; ++i) {
+            rbtcBalance +=
+                ITokenHandler(adminOperations.getTokenHandler(depositedTokens[i])).getAccumulatedRbtcBalance();
         }
         if (rbtcBalance == 0) {
             vm.stopPrank();
