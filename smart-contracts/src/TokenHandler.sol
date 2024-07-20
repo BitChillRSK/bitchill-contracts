@@ -3,15 +3,16 @@ pragma solidity 0.8.24;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-// import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title TokenHandler
  * @dev Base contract for handling various tokens.
  */
-abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
+abstract contract TokenHandler is ITokenHandler, Ownable {
+    using SafeERC20 for IERC20;
+
     //////////////////////
     // State variables ///
     //////////////////////
@@ -20,7 +21,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     address public immutable i_dcaManager; // The DCA manager contract
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
     uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
-    uint256 internal s_minFeeRate; // Minimum fee rate 
+    uint256 internal s_minFeeRate; // Minimum fee rate
     uint256 internal s_maxFeeRate; // Maximum fee rate
     uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
     uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
@@ -38,8 +39,17 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         _;
     }
 
-    constructor(address dcaManagerAddress, address tokenAddress, uint256 minPurchaseAmount, address feeCollector, 
-                uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount, bool yieldsInterest) {
+    constructor(
+        address dcaManagerAddress,
+        address tokenAddress,
+        uint256 minPurchaseAmount,
+        address feeCollector,
+        uint256 minFeeRate,
+        uint256 maxFeeRate,
+        uint256 minAnnualAmount,
+        uint256 maxAnnualAmount,
+        bool yieldsInterest
+    ) {
         i_dcaManager = dcaManagerAddress;
         i_stableToken = tokenAddress;
         s_minPurchaseAmount = minPurchaseAmount;
@@ -52,7 +62,6 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         i_yieldsInterest = yieldsInterest;
     }
 
-
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -64,16 +73,17 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @param user: the address of the user making the deposit
      * @param depositAmount: the amount to deposit
      */
-    function depositToken(address user, uint256 depositAmount) public override virtual onlyDcaManager {
-
+    function depositToken(address user, uint256 depositAmount) public virtual override onlyDcaManager {
         // Transfer the selected token from the user to this contract. The user must have called the token contract's
         // approve function with this contract's address and the amount approved
         if (IERC20(i_stableToken).allowance(user, address(this)) < depositAmount) {
             revert TokenHandler__InsufficientTokenAllowance(i_stableToken);
         }
 
-        bool depositSuccess = IERC20(i_stableToken).transferFrom(user, address(this), depositAmount);
-        if (!depositSuccess) revert TokenHandler__TokenDepositFailed(i_stableToken);
+        IERC20(i_stableToken).safeTransferFrom(user, address(this), depositAmount);
+
+        // bool depositSuccess = IERC20(i_stableToken).safeTransferFrom(user, address(this), depositAmount);
+        // if (!depositSuccess) revert TokenHandler__TokenDepositFailed(i_stableToken);
 
         emit TokenHandler__TokenDeposited(i_stableToken, user, depositAmount);
     }
@@ -82,11 +92,12 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
      * @notice withdraw some or all of the DOC previously deposited
      * @param withdrawalAmount: the amount of DOC to withdraw
      */
-    function withdrawToken(address user, uint256 withdrawalAmount) public override virtual onlyDcaManager {
-
+    function withdrawToken(address user, uint256 withdrawalAmount) public virtual override onlyDcaManager {
         // Transfer DOC from this contract back to the user
-        bool withdrawalSuccess = IERC20(i_stableToken).transfer(user, withdrawalAmount);
-        if (!withdrawalSuccess) revert TokenHandler__TokenWithdrawalFailed(i_stableToken);
+        IERC20(i_stableToken).safeTransfer(user, withdrawalAmount);
+
+        // bool withdrawalSuccess = IERC20(i_stableToken).safeTransfer(user, withdrawalAmount);
+        // if (!withdrawalSuccess) revert TokenHandler__TokenWithdrawalFailed(i_stableToken);
 
         emit TokenHandler__TokenWithdrawn(i_stableToken, user, withdrawalAmount);
     }
@@ -113,35 +124,37 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
         s_minPurchaseAmount = minPurchaseAmount;
     }
 
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount) external override onlyOwner {
-        if(s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
-        if(s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate); 
-        if(s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount); 
-        if(s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount); 
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
+        external
+        override
+        onlyOwner
+    {
+        if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
+        if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
+        if (s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount);
+        if (s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount);
     }
 
     function setMinFeeRate(uint256 minFeeRate) public override onlyOwner {
-        s_minFeeRate = minFeeRate; 
+        s_minFeeRate = minFeeRate;
     }
 
     function setMaxFeeRate(uint256 maxFeeRate) public override onlyOwner {
-        s_maxFeeRate = maxFeeRate; 
+        s_maxFeeRate = maxFeeRate;
     }
 
     function setMinAnnualAmount(uint256 minAnnualAmount) public override onlyOwner {
-        s_minAnnualAmount = minAnnualAmount; 
+        s_minAnnualAmount = minAnnualAmount;
     }
 
     function setMaxAnnualAmount(uint256 maxAnnualAmount) public override onlyOwner {
-        s_maxAnnualAmount = maxAnnualAmount; 
+        s_maxAnnualAmount = maxAnnualAmount;
     }
 
     function setFeeCollectorAddress(address feeCollector) external override onlyOwner {
-        s_feeCollector = feeCollector; 
+        s_feeCollector = feeCollector;
     }
 
-
-    
     /*//////////////////////////////////////////////////////////////
                                 GETTERS
     //////////////////////////////////////////////////////////////*/
@@ -149,33 +162,33 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
     function getMinPurchaseAmount() external view returns (uint256) {
         return s_minPurchaseAmount;
     }
-    
+
     function getAccumulatedRbtcBalance() external view override returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
     }
-    
-    function depositsYieldInterest() external view override returns (bool){
+
+    function depositsYieldInterest() external view override returns (bool) {
         return i_yieldsInterest;
     }
 
-    function getMinFeeRate() public view returns(uint256) {
-        return s_minFeeRate; 
+    function getMinFeeRate() public view returns (uint256) {
+        return s_minFeeRate;
     }
 
-    function getMaxFeeRate() public view returns(uint256) {
-        return s_maxFeeRate; 
+    function getMaxFeeRate() public view returns (uint256) {
+        return s_maxFeeRate;
     }
 
-    function getMinAnnualAmount() public view returns(uint256) {
-        return s_minAnnualAmount; 
+    function getMinAnnualAmount() public view returns (uint256) {
+        return s_minAnnualAmount;
     }
 
-    function getMaxAnnualAmount() public view returns(uint256) {
-        return s_maxAnnualAmount; 
+    function getMaxAnnualAmount() public view returns (uint256) {
+        return s_maxAnnualAmount;
     }
 
-    function getFeeCollectorAddress() external view returns(address) {
-        return s_feeCollector; 
+    function getFeeCollectorAddress() external view returns (address) {
+        return s_feeCollector;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -198,14 +211,18 @@ abstract contract TokenHandler is ITokenHandler, Ownable /*, IERC165*/ {
             feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate
-            feeRate = s_maxFeeRate - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate)) / (s_maxAnnualAmount - s_minAnnualAmount);
+            feeRate = s_maxFeeRate
+                - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
+                    / (s_maxAnnualAmount - s_minAnnualAmount);
         }
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
     // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {
     function _transferFee(uint256 fee) internal {
-        bool feeTransferSuccess = IERC20(i_stableToken).transfer(s_feeCollector, fee);
-        if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
+        IERC20(i_stableToken).safeTransfer(s_feeCollector, fee);
+
+        // bool feeTransferSuccess = IERC20(i_stableToken).safeTransfer(s_feeCollector, fee);
+        // if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
     }
 }
