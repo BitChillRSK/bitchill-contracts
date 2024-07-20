@@ -204,15 +204,15 @@ contract Handler is Test {
     function deleteDcaSchedule(uint256 userSeed, uint256 scheduleIndex) public {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
-        uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+        IDcaManager.DcaDetails[] memory usersSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken));
+        uint256 usersNumOfSchedules = usersSchedules.length;
         if (usersNumOfSchedules == 0) {
             // If user has no schedules, update not possible
             vm.stopPrank();
             return;
         }
         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
-        bytes32 scheduleId = keccak256(abi.encodePacked(user, block.timestamp));
-        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleIndex, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleIndex, usersSchedules[scheduleIndex].scheduleId);
         vm.stopPrank();
     }
 
