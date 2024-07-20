@@ -15,22 +15,29 @@ interface IDcaManager {
         uint256 purchaseAmount; // Stablecoin amount to spend periodically on rBTC
         uint256 purchasePeriod; // Time between purchases in seconds
         uint256 lastPurchaseTimestamp; // Timestamp of the latest purchase
+        bytes32 scheduleId; // Unique identifier of each DCA schedule
     }
 
     //////////////////////
     // Events ////////////
     //////////////////////
-    event DcaManager__TokenBalanceUpdated(address indexed token, uint256 indexed scheduleIndex, uint256 indexed amount);
+    event DcaManager__TokenBalanceUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed amount);
     event DcaManager__TokenWithdrawn(address indexed user, address indexed token, uint256 indexed amount);
     // event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 indexed amount);
-    event RbtcBought(address indexed user, uint256 indexed docAmount, uint256 indexed rbtcAmount);
-    event rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
-    event PurchaseAmountSet(address indexed user, uint256 indexed purchaseAmount);
-    event PurchasePeriodSet(address indexed user, uint256 indexed purchasePeriod);
+    event DcaManager__RbtcBought(
+        address indexed user, bytes32 indexed scheduleId, uint256 indexed tokenAmount, uint256 rbtcAmount
+    );
+    event DcaManager__rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
+    event DcaManager__PurchaseAmountSet(
+        address indexed user, bytes32 indexed scheduleId, uint256 indexed purchaseAmount
+    );
+    event DcaManager__PurchasePeriodSet(
+        address indexed user, bytes32 indexed scheduleId, uint256 indexed purchasePeriod
+    );
     event DcaManager__DcaScheduleCreated(
         address indexed user,
         address indexed token,
-        uint256 indexed scheduleIndex,
+        bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -38,7 +45,7 @@ interface IDcaManager {
     event DcaManager__DcaScheduleUpdated(
         address indexed user,
         address indexed token,
-        uint256 indexed scheduleIndex,
+        bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -54,17 +61,15 @@ interface IDcaManager {
     error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token);
     error DcaManager__PurchasePeriodMustBeGreaterThanMin();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
-    // error DcaManager__OnlyMocProxyCanSendRbtcToDcaContract();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
-    // error DcaManager__CannotDepositInTropykusMoreThanBalance();
-    // error DcaManager__DocApprovalForKdocContractFailed();
-    // error DcaManager__TropykusDepositFailed();
     error DcaManager__DcaScheduleDoesNotExist();
     error DcaManager__InexistentSchedule();
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
     error DcaManager__BatchPurchaseArraysLengthMismatch();
     error DcaManager__EmptyBatchPurchaseArrays();
-    event DcaManager__DcaScheduleDeleted(address user, address token, uint256 scheduleIndex, uint256 refundedAmount);
+
+    event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
+
     error DcaManager__TokenDoesNotYieldInterest(address token);
 
     /*//////////////////////////////////////////////////////////////
@@ -120,7 +125,7 @@ interface IDcaManager {
     /**
      * @dev function to delete a DCA schedule: cancels DCA and retrieves the funds
      * @param token the token used for DCA in the schedule to be deleted
-     * @param scheduleIndex the index of the schedule
+     * @param scheduleIndex the unique identifier of the schedule
      */
     function deleteDcaSchedule(address token, uint256 scheduleIndex) external;
 
@@ -162,7 +167,6 @@ interface IDcaManager {
      */
     function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external;
 
-
     //////////////////////
     // Getter functions //
     //////////////////////
@@ -174,7 +178,7 @@ interface IDcaManager {
     function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
     function getUsers() external view returns (address[] memory);
     function getTotalNumberOfDeposits() external view returns (uint256);
-    
+
     /**
      * @dev returns the minimum period that can be set for purchases
      */

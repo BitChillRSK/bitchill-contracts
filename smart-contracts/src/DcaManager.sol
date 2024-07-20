@@ -25,7 +25,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenIsDeposited; // User to token deposited flag
     mapping(address user => address[] depositedTokens) private s_usersDepositedTokens;
-    mapping(address user => mapping(address depositedTokens => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
+    mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
+    // mapping(address user => mapping(address tokenDeposited => mapping(bytes32 scheduleId => DcaDetails scheduleDetails))) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
     uint256 private s_minPurchasePeriod = 1 days; // At most one purchase each day
@@ -61,34 +62,48 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice deposit the full DOC amount for DCA on the contract
      * @param depositAmount: the amount of DOC to deposit
      */
-    function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount) external override nonReentrant validateIndex(token, scheduleIndex) {
+    function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount)
+        external
+        override
+        nonReentrant
+        validateIndex(token, scheduleIndex)
+    {
         _validateDeposit(token, depositAmount);
-        s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance += depositAmount;
+        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        dcaSchedule.tokenBalance += depositAmount;
         _handler(token).depositToken(msg.sender, depositAmount);
         // emit DcaManager__TokenDeposited(msg.sender, token, depositAmount);
-        emit DcaManager__TokenBalanceUpdated(
-            token, scheduleIndex, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
-        );
+        emit DcaManager__TokenBalanceUpdated(token, dcaSchedule.scheduleId, dcaSchedule.tokenBalance);
     }
 
     /**
      * @param purchaseAmount: the amount of DOC to swap periodically for rBTC
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
-    function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount) external override validateIndex(token, scheduleIndex) {
-        _validatePurchaseAmount(token, purchaseAmount, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance);
-        s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount = purchaseAmount;
-        emit PurchaseAmountSet(msg.sender, purchaseAmount);
+    function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount)
+        external
+        override
+        validateIndex(token, scheduleIndex)
+    {
+        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
+        dcaSchedule.purchaseAmount = purchaseAmount;
+        emit DcaManager__PurchaseAmountSet(msg.sender, dcaSchedule.scheduleId, purchaseAmount);
     }
 
     /**
      * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
      * @notice the period
      */
-    function setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod) external override validateIndex(token, scheduleIndex) {
-        _validatePurchasePeriod(purchasePeriod);        
-        s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod = purchasePeriod;
-        emit PurchasePeriodSet(msg.sender, purchasePeriod);
+    function setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod)
+        external
+        override
+        validateIndex(token, scheduleIndex)
+    {
+        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        _validatePurchasePeriod(purchasePeriod);
+        dcaSchedule.purchasePeriod = purchasePeriod;
+        emit DcaManager__PurchasePeriodSet(msg.sender, dcaSchedule.scheduleId, purchasePeriod);
     }
 
     /**
@@ -98,29 +113,29 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param purchaseAmount: the amount of stablecoin to swap periodically for rBTC
      * @param purchasePeriod: the time (in seconds) between rBTC purchases for each user
      */
-    function createDcaSchedule(
-        address token,
-        uint256 depositAmount,
-        uint256 purchaseAmount,
-        uint256 purchasePeriod
-    ) external override {
-        _validatePurchasePeriod(purchasePeriod);  
-        uint256 scheduleIndex = s_dcaSchedules[msg.sender][token].length;
+    function createDcaSchedule(address token, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod)
+        external
+        override
+    {
+        _validatePurchasePeriod(purchasePeriod);
         _validateDeposit(token, depositAmount);
         _handler(token).depositToken(msg.sender, depositAmount);
+
+        bytes32 scheduleId = keccak256(abi.encodePacked(msg.sender, block.timestamp));
 
         DcaDetails memory dcaSchedule = DcaDetails(
             depositAmount,
             purchaseAmount,
             purchasePeriod,
-            0 // lastPurchaseTimestamp
-        ); 
+            0, // lastPurchaseTimestamp
+            scheduleId
+        );
 
         _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
-               
+
         s_dcaSchedules[msg.sender][token].push(dcaSchedule);
         emit DcaManager__DcaScheduleCreated(
-            msg.sender, token, scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
+            msg.sender, token, scheduleId, depositAmount, purchaseAmount, purchasePeriod
         );
     }
 
@@ -160,7 +175,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_dcaSchedules[msg.sender][token][scheduleIndex] = dcaSchedule;
 
         emit DcaManager__DcaScheduleUpdated(
-            msg.sender, token, scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
+            msg.sender, token, dcaSchedule.scheduleId, depositAmount, purchaseAmount, purchasePeriod
         );
     }
     /**
@@ -168,10 +183,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token the token used for DCA in the schedule to be deleted
      * @param scheduleIndex the index of the schedule
      */
+
     function deleteDcaSchedule(address token, uint256 scheduleIndex) external override nonReentrant {
-        if(scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentSchedule();
+        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentSchedule();
         DcaDetails memory schedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
-                
+
         // Remove the schedule
         uint256 lastIndex = s_dcaSchedules[msg.sender][token].length - 1;
         if (scheduleIndex != lastIndex) {
@@ -180,11 +196,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         }
         // Remove the last schedule
         s_dcaSchedules[msg.sender][token].pop();
-        
+
         // Withdraw all balance
         _handler(token).withdrawToken(msg.sender, schedule.tokenBalance);
-        
-        emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleIndex, schedule.tokenBalance);
+
+        emit DcaManager__DcaScheduleDeleted(msg.sender, token, schedule.scheduleId, schedule.tokenBalance);
     }
 
     /**
@@ -202,11 +218,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         if (withdrawalAmount > tokenBalance) {
             revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);
         }
-        s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
+        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        dcaSchedule.tokenBalance -= withdrawalAmount;
+        // s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
         _handler(token).withdrawToken(msg.sender, withdrawalAmount);
         emit DcaManager__TokenWithdrawn(msg.sender, token, withdrawalAmount);
         emit DcaManager__TokenBalanceUpdated(
-            token, scheduleIndex, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
+            token, dcaSchedule.scheduleId, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
         );
     }
 
@@ -224,15 +242,24 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
      * @param purchasePeriods the purchase period that corresponds to each user's purchase
      */
-    function batchBuyRbtc(address[] memory buyers, address token, uint256[] memory scheduleIndexes, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods) external nonReentrant onlyOwner {
+    function batchBuyRbtc(
+        address[] memory buyers,
+        address token,
+        uint256[] memory scheduleIndexes,
+        uint256[] memory purchaseAmounts,
+        uint256[] memory purchasePeriods
+    ) external nonReentrant onlyOwner {
         uint256 numOfPurchases = buyers.length;
-        if(numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
-        if(numOfPurchases != scheduleIndexes.length || numOfPurchases != purchaseAmounts.length || numOfPurchases != purchasePeriods.length) revert DcaManager__BatchPurchaseArraysLengthMismatch();
-        for(uint256 i; i < numOfPurchases; ++i){
+        if (numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
+        if (
+            numOfPurchases != scheduleIndexes.length || numOfPurchases != purchaseAmounts.length
+                || numOfPurchases != purchasePeriods.length
+        ) revert DcaManager__BatchPurchaseArraysLengthMismatch();
+        for (uint256 i; i < numOfPurchases; ++i) {
             /**
              * @notice Update balances and timestamps, returned values are not needed here
              */
-            _rBtcPurchaseChecksEffects(buyers[i], token, scheduleIndexes[i]); 
+            _rBtcPurchaseChecksEffects(buyers[i], token, scheduleIndexes[i]);
         }
         _handler(token).batchBuyRbtc(buyers, purchaseAmounts, purchasePeriods);
     }
@@ -243,7 +270,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function withdrawRbtcFromTokenHandler(address token) external nonReentrant {
         _handler(token).withdrawAccumulatedRbtc(msg.sender);
-    }    
+    }
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
@@ -258,16 +285,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
      * @param token The address of the token to withdraw
      */
-     function withdrawInterestFromTokenHandler(address token) external nonReentrant {
+    function withdrawInterestFromTokenHandler(address token) external nonReentrant {
         ITokenHandler tokenHandler = _handler(token);
-        if(!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
+        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         uint256 lockedTokenAmount;
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
-        for(uint256 i; i < dcaSchedules.length; i++){
+        for (uint256 i; i < dcaSchedules.length; i++) {
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }
         tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
-     }
+    }
 
     /**
      * @notice update the token handler factory contract
@@ -335,7 +362,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         return ITokenHandler(tokenHandlerAddress);
     }
 
-    function _rBtcPurchaseChecksEffects(address buyer, address token, uint256 scheduleIndex) internal returns (uint256, uint256) {
+    function _rBtcPurchaseChecksEffects(address buyer, address token, uint256 scheduleIndex)
+        internal
+        returns (uint256, uint256)
+    {
         // If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
         uint256 lastPurchaseTimestamp = s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp;
         uint256 purchasePeriod = s_dcaSchedules[buyer][token][scheduleIndex].purchasePeriod;
@@ -353,7 +383,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_dcaSchedules[buyer][token][scheduleIndex].tokenBalance -= purchaseAmount;
         s_dcaSchedules[buyer][token][scheduleIndex].lastPurchaseTimestamp = block.timestamp;
 
-        return(purchaseAmount, purchasePeriod);
+        return (purchaseAmount, purchasePeriod);
     }
 
     // function _isTokenDeposited(address token) internal view returns (bool) {
@@ -402,18 +432,18 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function getTotalNumberOfDeposits() external view returns (uint256) {
         return s_users.length;
     }
-    
+
     function getAdminOperationsAddress() external view returns (address) {
         return address(s_adminOperations);
-    }        
+    }
 
     function getMinPurchasePeriod() external view returns (uint256) {
         return s_minPurchasePeriod;
-    }  
+    }
 
     function getUsersDepositedTokens(address user) external view returns (address[] memory) {
         return s_usersDepositedTokens[user];
-    }  
+    }
 
     // function getTokenHandlerAddress(address tokenAddress) external view returns (address) {
     //     return address(_handler(tokenAddress));

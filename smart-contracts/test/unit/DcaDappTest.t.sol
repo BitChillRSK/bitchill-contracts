@@ -17,7 +17,6 @@ import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import "../Constants.sol";
 import "./TestsHelper.t.sol";
 
-
 contract DcaDappTest is Test {
     DcaManager dcaManager;
     DocTokenHandler docTokenHandler;
@@ -46,11 +45,11 @@ contract DcaDappTest is Test {
 
     // DcaManager
     // event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 amount);
-    event DcaManager__TokenBalanceUpdated(address indexed token, uint256 indexed scheduleIndex, uint256 indexed amount);
+    event DcaManager__TokenBalanceUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed amount);
     event DcaManager__DcaScheduleCreated(
         address indexed user,
         address indexed token,
-        uint256 indexed scheduleIndex,
+        bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -58,7 +57,7 @@ contract DcaDappTest is Test {
     event DcaManager__DcaScheduleUpdated(
         address indexed user,
         address indexed token,
-        uint256 indexed scheduleIndex,
+        bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -67,8 +66,12 @@ contract DcaDappTest is Test {
     // TokenHandler
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
-    event TokenHandler__RbtcBought(address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent);
-    event TokenHandler__SuccessfulRbtcBatchPurchase(address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent);
+    event TokenHandler__RbtcBought(
+        address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent
+    );
+    event TokenHandler__SuccessfulRbtcBatchPurchase(
+        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
+    );
 
     // AdminOperations
     event AdminOperations__TokenHandlerUpdated(address indexed token, address newHandler);
@@ -79,9 +82,8 @@ contract DcaDappTest is Test {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    // Ownable    
+    // Ownable
     error OwnableUnauthorizedAccount(address account);
-
 
     /*//////////////////////////////////////////////////////////////
                             UNIT TESTS SETUP
@@ -91,7 +93,8 @@ contract DcaDappTest is Test {
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployContracts.run();
         // console.log("Test contract", address(this));
 
-        (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) = helperConfig.activeNetworkConfig();
+        (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
+            helperConfig.activeNetworkConfig();
 
         mockDocToken = MockDocToken(docTokenAddress);
         mockMocProxy = MockMocProxy(mocProxyAddress);
@@ -112,7 +115,7 @@ contract DcaDappTest is Test {
 
         // Give the MoC proxy contract allowance
         mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
-        
+
         // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
         vm.prank(address(docTokenHandler));
         mockDocToken.approve(mocProxyAddress, type(uint256).max);
@@ -123,29 +126,28 @@ contract DcaDappTest is Test {
         // Make the starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
-        dcaManager.createDcaSchedule(
-            address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
-        );
+        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         vm.stopPrank();
     }
-
 
     /*//////////////////////////////////////////////////////////////
                       UNIT TESTS COMMON FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function depositDoc() internal {
+    function depositDoc() internal returns (uint256, uint256) {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         vm.expectEmit(true, true, true, false);
         emit TokenHandler__TokenDeposited(address(mockDocToken), USER, DOC_TO_DEPOSIT);
         vm.expectEmit(true, true, true, false);
-        emit DcaManager__TokenBalanceUpdated(address(mockDocToken), SCHEDULE_INDEX, 2 * DOC_TO_DEPOSIT); // 2 *, since a previous deposit is made in the setup
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        emit DcaManager__TokenBalanceUpdated(address(mockDocToken), scheduleId, 2 * DOC_TO_DEPOSIT); // 2 *, since a previous deposit is made in the setup
         dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
         uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+        // assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
         vm.stopPrank();
+        return (userBalanceAfterDeposit, userBalanceBeforeDeposit);
     }
 
     function withdrawDoc() internal {
@@ -158,14 +160,14 @@ contract DcaDappTest is Test {
         vm.stopPrank();
     }
 
-    function createSeveralDcaSchedules() internal { 
+    function createSeveralDcaSchedules() internal {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
         uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
         // Delete the schedule created in setUp to have all five schedules with the same amounts
         dcaManager.deleteDcaSchedule(address(mockDocToken), 0);
-        for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) { 
+        for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
             uint256 userBalanceBeforeDeposit;
@@ -174,13 +176,12 @@ contract DcaDappTest is Test {
             } else {
                 userBalanceBeforeDeposit = 0;
             }
+            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
-                USER, address(mockDocToken), scheduleIndex, docToDeposit, purchaseAmount, purchasePeriod
+                USER, address(mockDocToken), scheduleId, docToDeposit, purchaseAmount, purchasePeriod
             );
-            dcaManager.createDcaSchedule(
-                address(mockDocToken), docToDeposit, purchaseAmount, purchasePeriod
-            );
+            dcaManager.createDcaSchedule(address(mockDocToken), docToDeposit, purchaseAmount, purchasePeriod);
             uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
             assertEq(docToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
             assertEq(purchaseAmount, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex));
@@ -194,7 +195,7 @@ contract DcaDappTest is Test {
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
-                      
+
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
@@ -212,13 +213,13 @@ contract DcaDappTest is Test {
         assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
     }
 
-    function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalDocSpent) {  
+    function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalDocSpent) {
         // createSeveralDcaSchedules();
 
         uint8 numOfPurchases = 5;
         uint256 totalDocRedeemed;
 
-        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -272,7 +273,7 @@ contract DcaDappTest is Test {
         uint256 totalNetPurchaseAmount;
 
         // Create the arrays for the batch purchase (in production, this is done in the back end)
-        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -280,7 +281,7 @@ contract DcaDappTest is Test {
             vm.stopPrank();
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
-            
+
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
             scheduleIndexes[i] = i;
             vm.startPrank(OWNER);
@@ -288,30 +289,32 @@ contract DcaDappTest is Test {
             purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchasePeriod;
             vm.stopPrank();
         }
-        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+        for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             vm.expectEmit(false, false, false, false);
             emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, 0); // Never mind the actual values on this test
         }
         vm.expectEmit(true, true, true, false);
-        emit TokenHandler__SuccessfulRbtcBatchPurchase(address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount);
+        emit TokenHandler__SuccessfulRbtcBatchPurchase(
+            address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount
+        );
         vm.prank(OWNER);
         dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
 
         uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
 
         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
-        assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
+        assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
 
         vm.prank(USER);
         uint256 userAccumulatedRbtcPost = docTokenHandler.getAccumulatedRbtcBalance();
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
-        assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE); 
+        assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
 
         vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
         vm.prank(OWNER);
         dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
         uint256 postDocTokenHandlerBalance2 = address(docTokenHandler).balance;
         // After a second purchase, we have the same increment
-        assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
+        assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
     }
 }

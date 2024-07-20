@@ -8,16 +8,16 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
 contract DocDepositTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     /////////////////////////
     /// DOC deposit tests ///
     /////////////////////////
     function testDocDeposit() external {
-        super.depositDoc();
+        (uint256 userBalanceAfterDeposit, uint256 userBalanceBeforeDeposit) = super.depositDoc();
+        assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
     }
 
     function testCannotDepositZeroDoc() external {

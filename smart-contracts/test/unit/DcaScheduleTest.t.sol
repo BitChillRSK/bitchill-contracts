@@ -8,26 +8,24 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
 contract DcaScheduleTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     /////////////////////////////////
     /// DcaSchedule tests  //////////
     /////////////////////////////////
 
     function testCreateDcaSchedule() external {
         vm.startPrank(USER);
-        uint scheduleIndex = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+        uint256 scheduleIndex = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
-            USER, address(mockDocToken), scheduleIndex, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
+            USER, address(mockDocToken), scheduleId, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
-        dcaManager.createDcaSchedule(
-            address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
-        );
+        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 scheduleBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
         assertEq(DOC_TO_DEPOSIT, scheduleBalanceAfterDeposit);
         assertEq(DOC_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex));
@@ -43,8 +41,9 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         mockDocToken.approve(address(docTokenHandler), extraDocToDeposit);
         vm.expectEmit(true, true, true, true);
+        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
         emit DcaManager__DcaScheduleUpdated(
-            USER, address(mockDocToken), SCHEDULE_INDEX, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
+            USER, address(mockDocToken), scheduleId, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
         );
         dcaManager.updateDcaSchedule(
             address(mockDocToken), SCHEDULE_INDEX, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
@@ -59,12 +58,8 @@ contract DcaScheduleTest is DcaDappTest {
     function testDeleteDcaSchedule() external {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
-        dcaManager.createDcaSchedule(
-            address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
-        );
-        dcaManager.createDcaSchedule(
-            address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
-        );
+        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         dcaManager.deleteDcaSchedule(address(mockDocToken), 1);
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 2);
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].tokenBalance, DOC_TO_DEPOSIT * 3);
