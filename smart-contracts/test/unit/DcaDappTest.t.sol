@@ -67,7 +67,11 @@ contract DcaDappTest is Test {
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__RbtcBought(
-        address indexed user, address indexed tokenSpent, uint256 indexed rBtcBought, uint256 amountSpent
+        address indexed user,
+        address indexed tokenSpent,
+        uint256 indexed rBtcBought,
+        bytes32 scheduleId,
+        uint256 amountSpent
     );
     event TokenHandler__SuccessfulRbtcBatchPurchase(
         address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
@@ -195,15 +199,22 @@ contract DcaDappTest is Test {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(mockDocToken));
         vm.stopPrank();
 
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
         vm.expectEmit(true, true, true, false);
-        emit TokenHandler__RbtcBought(USER, address(mockDocToken), netPurchaseAmount / BTC_PRICE, netPurchaseAmount);
+        emit TokenHandler__RbtcBought(
+            USER,
+            address(mockDocToken),
+            netPurchaseAmount / BTC_PRICE,
+            dcaDetails[SCHEDULE_INDEX].scheduleId,
+            netPurchaseAmount
+        );
         vm.prank(OWNER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
+        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
@@ -234,9 +245,10 @@ contract DcaDappTest is Test {
                 uint256 docBalanceBeforePurchase =
                     dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
                 uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+                bytes32 scheduleId = dcaManager.getScheduleId(address(mockDocToken), scheduleIndex);
                 vm.stopPrank();
                 vm.prank(OWNER);
-                dcaManager.buyRbtc(USER, address(mockDocToken), scheduleIndex);
+                dcaManager.buyRbtc(USER, address(mockDocToken), scheduleIndex, scheduleId);
                 vm.startPrank(USER);
                 uint256 docBalanceAfterPurchase =
                     dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
@@ -270,6 +282,7 @@ contract DcaDappTest is Test {
         uint256[] memory scheduleIndexes = new uint256[](NUM_OF_SCHEDULES);
         uint256[] memory purchaseAmounts = new uint256[](NUM_OF_SCHEDULES);
         uint256[] memory purchasePeriods = new uint256[](NUM_OF_SCHEDULES);
+        bytes32[] memory scheduleIds = new bytes32[](NUM_OF_SCHEDULES);
 
         uint256 totalNetPurchaseAmount;
 
@@ -288,18 +301,21 @@ contract DcaDappTest is Test {
             vm.startPrank(OWNER);
             purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchaseAmount;
             purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchasePeriod;
+            scheduleIds[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].scheduleId;
             vm.stopPrank();
         }
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             vm.expectEmit(false, false, false, false);
-            emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, 0); // Never mind the actual values on this test
+            emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, scheduleIds[i], 0); // Never mind the actual values on this test
         }
         vm.expectEmit(true, true, true, false);
         emit TokenHandler__SuccessfulRbtcBatchPurchase(
             address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount
         );
         vm.prank(OWNER);
-        dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
+        dcaManager.batchBuyRbtc(
+            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+        );
 
         uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
 
@@ -313,7 +329,9 @@ contract DcaDappTest is Test {
 
         vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
         vm.prank(OWNER);
-        dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
+        dcaManager.batchBuyRbtc(
+            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+        );
         uint256 postDocTokenHandlerBalance2 = address(docTokenHandler).balance;
         // After a second purchase, we have the same increment
         assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);

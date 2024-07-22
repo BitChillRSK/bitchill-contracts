@@ -9,23 +9,25 @@ import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import "../Constants.sol";
 
 contract RbtcWithdrawalTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     /////////////////////////////
     /// rBTC Withdrawal tests ///
     /////////////////////////////
 
     function testWithdrawRbtcAfterOnePurchase() external {
         // TODO: test this for multiple stablecoins/schedules
-        
+
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
+        vm.prank(USER);
+        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(mockDocToken));
+
         vm.prank(OWNER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
+        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);

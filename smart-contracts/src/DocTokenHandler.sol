@@ -108,7 +108,11 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external override onlyDcaManager {
+    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount, uint256 purchasePeriod)
+        external
+        override
+        onlyDcaManager
+    {
         // Redeem DOC (repaying kDOC)
         _redeemDoc(buyer, purchaseAmount);
 
@@ -138,17 +142,20 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
         if (balancePost > balancePrev) {
             s_usersAccumulatedRbtc[buyer] += (balancePost - balancePrev);
-            emit TokenHandler__RbtcBought(buyer, address(i_docToken), balancePost - balancePrev, netPurchaseAmount);
+            emit TokenHandler__RbtcBought(
+                buyer, address(i_docToken), balancePost - balancePrev, scheduleId, netPurchaseAmount
+            );
         } else {
             revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docToken));
         }
     }
 
-    function batchBuyRbtc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-        external
-        override
-        onlyDcaManager
-    {
+    function batchBuyRbtc(
+        address[] memory buyers,
+        bytes32[] memory scheduleIds,
+        uint256[] memory purchaseAmounts,
+        uint256[] memory purchasePeriods
+    ) external override onlyDcaManager {
         uint256 numOfPurchases = buyers.length;
 
         // Calculate net amounts
@@ -182,7 +189,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
                 uint256 usersPurchasedRbtc = totalPurchasedRbtc * netDocAmountsToSpend[i] / totalDocAmountToSpend;
                 s_usersAccumulatedRbtc[buyers[i]] += usersPurchasedRbtc;
                 emit TokenHandler__RbtcBought(
-                    buyers[i], address(i_docToken), usersPurchasedRbtc, netDocAmountsToSpend[i]
+                    buyers[i], address(i_docToken), usersPurchasedRbtc, scheduleIds[i], netDocAmountsToSpend[i]
                 );
             }
             emit TokenHandler__SuccessfulRbtcBatchPurchase(

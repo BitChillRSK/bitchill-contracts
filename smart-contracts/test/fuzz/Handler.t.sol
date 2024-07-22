@@ -236,7 +236,7 @@ contract Handler is Test {
         }
 
         vm.prank(OWNER);
-        dcaManager.buyRbtc(buyer, address(mockDocToken), scheduleIndex);
+        dcaManager.buyRbtc(buyer, address(mockDocToken), scheduleIndex, dcaDetails[scheduleIndex].scheduleId);
     }
 
     /**
@@ -267,6 +267,7 @@ contract Handler is Test {
             uint256[] memory scheduleIndexes = new uint256[](numOfPurchases);
             uint256[] memory purchaseAmounts = new uint256[](numOfPurchases);
             uint256[] memory purchasePeriods = new uint256[](numOfPurchases);
+            bytes32[] memory scheduleIds = new bytes32[](numOfPurchases);
             uint256 furthestNextPurchaseTimestamp;
             uint256 buyersIndex = 0;
 
@@ -279,6 +280,7 @@ contract Handler is Test {
                     scheduleIndexes[buyersIndex] = j;
                     purchaseAmounts[buyersIndex] = dcaSchedules[j].purchaseAmount;
                     purchasePeriods[buyersIndex] = dcaSchedules[j].purchasePeriod;
+                    scheduleIds[buyersIndex] = dcaSchedules[j].scheduleId;
                     if (
                         furthestNextPurchaseTimestamp
                             < dcaSchedules[j].lastPurchaseTimestamp + dcaSchedules[j].purchasePeriod
@@ -296,7 +298,9 @@ contract Handler is Test {
             }
 
             vm.prank(OWNER);
-            dcaManager.batchBuyRbtc(buyers, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
+            dcaManager.batchBuyRbtc(
+                buyers, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+            );
         }
     }
 
