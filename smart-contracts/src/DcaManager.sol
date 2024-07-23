@@ -272,6 +272,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
              * @notice Update balances and timestamps, returned values are not needed here
              */
             _rBtcPurchaseChecksEffects(buyers[i], token, scheduleIndexes[i], scheduleIds[i]);
+            // TODO: Add check that purchaseAmount and purchasePeriod match the schedule's?
         }
         _handler(token).batchBuyRbtc(buyers, scheduleIds, purchaseAmounts, purchasePeriods);
     }
