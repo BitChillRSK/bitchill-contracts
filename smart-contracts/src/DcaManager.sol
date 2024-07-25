@@ -153,9 +153,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
-    ) external override {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentScheduleIndex();
-
+    ) external override validateIndex(token, scheduleIndex) {
         DcaDetails memory dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
 
         if (purchasePeriod > 0) {
@@ -188,8 +186,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         external
         override
         nonReentrant
+        validateIndex(token, scheduleIndex)
     {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__InexistentScheduleIndex();
         DcaDetails memory schedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
 
         if (scheduleId != schedule.scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
@@ -416,18 +414,30 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         return s_dcaSchedules[msg.sender][token];
     }
 
-    function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+    function getScheduleTokenBalance(address token, uint256 scheduleIndex)
+        external
+        view
+        validateIndex(token, scheduleIndex)
+        returns (uint256)
+    {
         return s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
     }
 
-    function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+    function getSchedulePurchaseAmount(address token, uint256 scheduleIndex)
+        external
+        view
+        validateIndex(token, scheduleIndex)
+        returns (uint256)
+    {
         return s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount;
     }
 
-    function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256) {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) revert DcaManager__DcaScheduleDoesNotExist();
+    function getSchedulePurchasePeriod(address token, uint256 scheduleIndex)
+        external
+        view
+        validateIndex(token, scheduleIndex)
+        returns (uint256)
+    {
         return s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod;
     }
 

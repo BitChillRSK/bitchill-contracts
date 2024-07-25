@@ -62,7 +62,6 @@ interface IDcaManager {
     error DcaManager__PurchasePeriodMustBeGreaterThanMin();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
-    error DcaManager__DcaScheduleDoesNotExist();
     error DcaManager__InexistentScheduleIndex();
     error DcaManager__ScheduleIdAndIndexMismatch();
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);

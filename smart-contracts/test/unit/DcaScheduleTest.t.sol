@@ -113,11 +113,11 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testCannotConsultInexistentSchedule() external {
         vm.startPrank(USER);
-        vm.expectRevert(IDcaManager.DcaManager__DcaScheduleDoesNotExist.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX + 1);
-        vm.expectRevert(IDcaManager.DcaManager__DcaScheduleDoesNotExist.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.getSchedulePurchaseAmount(address(mockDocToken), SCHEDULE_INDEX + 1);
-        vm.expectRevert(IDcaManager.DcaManager__DcaScheduleDoesNotExist.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX + 1);
         vm.stopPrank();
     }
