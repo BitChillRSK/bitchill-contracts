@@ -474,7 +474,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         return s_usersDepositedTokens[user];
     }
 
-    // function getTokenHandlerAddress(address tokenAddress) external view returns (address) {
+    // function getTokenHandlerAddress(address token) external view returns (address) {
     //     return address(_handler(tokenAddress));
     // }
 }
