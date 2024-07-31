@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.24;
 
-interface IWrbtcToken {
+interface IWRBTC {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -25,6 +25,4 @@ interface IWrbtcToken {
     function approve(address guy, uint256 wad) external returns (bool);
     function transfer(address dst, uint256 wad) external returns (bool);
     function transferFrom(address src, address dst, uint256 wad) external returns (bool);
-    function mint(address _to, uint256 _value) external;
-    function burn(address _who, uint256 _value) external;
 }

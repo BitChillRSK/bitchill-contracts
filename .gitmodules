@@ -4,3 +4,9 @@
 [submodule "smart-contracts/lib/v3-periphery"]
 	path = smart-contracts/lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
+[submodule "lib/v3-periphery"]
+	path = lib/v3-periphery
+	url = https://github.com/Uniswap/v3-periphery
+[submodule "lib/swap-router-contracts"]
+	path = lib/swap-router-contracts
+	url = https://github.com/Uniswap/swap-router-contracts
