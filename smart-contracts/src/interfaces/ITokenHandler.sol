@@ -157,7 +157,7 @@ interface ITokenHandler {
     /**
      * @dev Withdraws the interest earned for a user.
      * @param user The address of the user withdrawing the interest.
-     * @param docLockedInDcaSchedules The amount of DOC locked in DCA schedules by the user.
+     * @param tokenLockedInDcaSchedules The amount of stablecoin locked in DCA schedules by the user.
      */
-    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external;
+    function withdrawInterest(address user, uint256 tokenLockedInDcaSchedules) external;
 }

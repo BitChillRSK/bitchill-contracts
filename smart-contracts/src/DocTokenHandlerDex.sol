@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {TokenHandler} from "./TokenHandler.sol";
-import {IDocTokenHandler} from "./interfaces/IDocTokenHandler.sol";
+import {IDocTokenHandlerDex} from "./interfaces/IDocTokenHandlerDex.sol";
 import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -15,9 +15,9 @@ import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
  * @title DocTokenHandler
- * @dev Implementation of the ITokenHandler interface for DOC.
+ * @dev Implementation of the IDocTokenHandlerDex interface.
  */
-contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
+contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -32,7 +32,6 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
     ICoinPairPrice public immutable i_MocOracle;
     uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
     uint256 constant PRECISION = 1e18;
-    address constant rUSDT = 0xef213441a85df4d7acbdae0cf78004e1e486bb96;
     bytes public s_swapPath;
 
     /**
@@ -42,7 +41,6 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
      * @param kDocTokenAddress the address of Tropykus' kDOC token contract
      * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
-     * @param mocProxyAddress the address of the MoC proxy contract on the blockchain of deployment
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param minFeeRate the lowest possible fee
      * @param maxFeeRate the highest possible fee
@@ -55,6 +53,8 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
         address kDocTokenAddress, // TODO: modify this to passing the interface
         IWRBTC wrBtcToken,
         ISwapRouter02 swapRouter02,
+        address[] memory swapIntermediateTokens,
+        uint24[] memory swappoolFeeRates,
         ICoinPairPrice mocOracle,
         address feeCollector,
         uint256 minPurchaseAmount,
@@ -82,6 +82,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
         i_swapRouter02 = swapRouter02;
         i_wrBtcToken = wrBtcToken;
         i_MocOracle = mocOracle;
+        setPurchasePath(swapIntermediateTokens, swappoolFeeRates);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -97,7 +98,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
         super.depositToken(user, depositAmount);
         if (i_docToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
             bool approvalSuccess = i_docToken.approve(address(i_kDocToken), depositAmount);
-            if (!approvalSuccess) revert DocTokenHandler__kDocApprovalFailed(user, depositAmount);
+            if (!approvalSuccess) revert DocTokenHandlerDex__kDocApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
         i_kDocToken.mint(depositAmount);
@@ -113,7 +114,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
     function withdrawToken(address user, uint256 withdrawalAmount) public override onlyDcaManager {
         uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
         if (docInTropykus < withdrawalAmount) {
-            revert DocTokenHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
+            revert DocTokenHandlerDex__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
         }
         _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
@@ -126,7 +127,11 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, uint256 purchaseAmount, uint256 purchasePeriod) external override onlyDcaManager {
+    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount, uint256 purchasePeriod)
+        external
+        override
+        onlyDcaManager
+    {
         // Redeem DOC (repaying kDOC)
         _redeemDoc(buyer, purchaseAmount);
 
@@ -136,21 +141,22 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
         _transferFee(fee);
 
         // Swap DOC for WRBTC
-        uint256 wrBtcPurchased = _swapDocForWrbtc(totalDocAmountToSpend);
+        uint256 wrBtcPurchased = _swapDocForWrbtc(netPurchaseAmount);
 
         if (wrBtcPurchased > 0) {
             s_usersAccumulatedRbtc[buyer] += wrBtcPurchased;
-            emit TokenHandler__RbtcBought(buyer, address(i_docToken), wrBtcPurchased, netPurchaseAmount);
+            emit TokenHandler__RbtcBought(buyer, address(i_docToken), wrBtcPurchased, scheduleId, netPurchaseAmount);
         } else {
             revert TokenHandler__RbtcPurchaseFailed(buyer, address(i_docToken));
         }
     }
 
-    function batchBuyRbtc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-        external
-        override
-        onlyDcaManager
-    {
+    function batchBuyRbtc(
+        address[] memory buyers,
+        bytes32[] memory scheduleIds,
+        uint256[] memory purchaseAmounts,
+        uint256[] memory purchasePeriods
+    ) external override onlyDcaManager {
         uint256 numOfPurchases = buyers.length;
 
         // Calculate net amounts
@@ -171,7 +177,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
                 uint256 usersPurchasedWrbtc = wrBtcPurchased * netDocAmountsToSpend[i] / totalDocAmountToSpend;
                 s_usersAccumulatedRbtc[buyers[i]] += usersPurchasedWrbtc;
                 emit TokenHandler__RbtcBought(
-                    buyers[i], address(i_docToken), usersPurchasedWrbtc, netDocAmountsToSpend[i]
+                    buyers[i], address(i_docToken), usersPurchasedWrbtc, scheduleIds[i], netDocAmountsToSpend[i]
                 );
             }
             emit TokenHandler__SuccessfulRbtcBatchPurchase(address(i_docToken), wrBtcPurchased, totalDocAmountToSpend);
@@ -213,21 +219,26 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
     /**
      * @notice Sets a new swap path.
      *  @param intermediateTokens The array of intermediate token addresses in the path.
-     * @param poolFees The array of pool fees for each swap step.
+     * @param poolFeeRates The array of pool fees for each swap step.
      */
-    function setPurchasePath(address[] memory intermediateTokens, uint24[] memory poolFees) external onlyOwner /* TODO: set another role for access control? */  {
-        require(intermediateTokens.length + 1 == poolFees.length, "Invalid path"); // TODO: cambiar a error personalizado
-
-        bytes memory newPath = abi.encodePacked(address(i_docToken));
-        for (uint i = 0; i < poolFees.length; i++) {
-            newPath = abi.encodePacked(newPath, poolFees[i], intermediateTokens[i]);
+    function setPurchasePath(address[] memory intermediateTokens, uint24[] memory poolFeeRates)
+        public
+        onlyOwner /* TODO: set another role for access control? */
+    {
+        if (poolFeeRates.length != intermediateTokens.length + 1) {
+            revert DocTokenHandlerDex__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
         }
 
-        newPath = abi.encodePacked(newPath, poolFees[poolFees.length - 1], address(i_wrBtcToken)));
+        bytes memory newPath = abi.encodePacked(address(i_docToken));
+        for (uint256 i = 0; i < intermediateTokens.length; i++) {
+            newPath = abi.encodePacked(newPath, poolFeeRates[i], intermediateTokens[i]);
+        }
 
-        path = newPath;
+        newPath = abi.encodePacked(newPath, poolFeeRates[poolFeeRates.length - 1], address(i_wrBtcToken));
+
+        s_swapPath = newPath;
+        emit DocTokenHandlerDex_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
     }
-
 
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
@@ -259,32 +270,34 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
         TransferHelper.safeApprove(address(i_docToken), address(i_swapRouter02), docAmountToSpend);
 
         // Set up the swap parameters
-        ISwapRouter02.ExactInputSingleParams memory params = ISwapRouter02.ExactInputSingleParams({
+        ISwapRouter02.ExactInputParams memory params = IV3SwapRouter.ExactInputParams({
             path: s_swapPath,
             recipient: address(this),
             amountIn: docAmountToSpend,
-            amountOutMinimum: _getAmountOutMinimum(docAmountToSpend), // TODO: HACE FALTA UN ORÁCULO!!!!!!!!!
+            amountOutMinimum: _getAmountOutMinimum(docAmountToSpend) // TODO: HACE FALTA UN ORÁCULO!!!!!!!!!
         });
 
-        amountOut = i_swapRouter02.exactInputSingle(params);
+        amountOut = i_swapRouter02.exactInput(params);
     }
 
-    function _getAmountOutMinimum(uint256 docAmountToSpend) internal returns (uint256 minimumRbtcAmount) {
+    function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
         minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: CHECK MATH!!!
     }
 
     function _redeemDoc(address user, uint256 docToRedeem) internal {
         (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if (docToRedeem > underlyingAmount) revert DocTokenHandler__RedeemAmountExceedsBalance(docToRedeem);
+        if (docToRedeem > underlyingAmount) revert DocTokenHandlerDex__DocRedeemAmountExceedsBalance(docToRedeem);
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
         if (kDocToRepay > usersKdocBalance) {
-            revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
+            revert DocTokenHandlerDex__KdocToRepayExceedsUsersBalance(
+                user, docToRedeem * exchangeRate, usersKdocBalance
+            );
         }
         s_kDocBalances[user] -= kDocToRepay;
         i_kDocToken.redeemUnderlying(docToRedeem);
-        emit DocTokenHandler__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
+        emit DocTokenHandlerDex__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
@@ -302,12 +315,11 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandler {
                 // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
                 uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
                 s_kDocBalances[users[i]] -= usersRepayedKdoc;
-                emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
+                emit DocTokenHandlerDex__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
             }
-            emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
+            emit DocTokenHandlerDex__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
         } else {
-            revert DocTokenHandler__BatchRedeemDocFailed();
+            revert DocTokenHandlerDex__BatchRedeemDocFailed();
         }
     }
-
 }

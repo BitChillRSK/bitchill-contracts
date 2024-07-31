@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+// import {ITokenHandler} from "./ITokenHandler.sol";
+
 /**
  * @title IDocTokenHandler
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the TokenHandler contract.
+ * @dev Interface for the DocTokenHandler contract.
  */
-interface IDocTokenHandler {
+interface IDocTokenHandler { /* is ITokenHandler */
     //////////////////////
     // Events ////////////
     //////////////////////
@@ -23,7 +25,7 @@ interface IDocTokenHandler {
     //////////////////////
     error DocTokenHandler__RedeemDocRequestFailed();
     error DocTokenHandler__RedeemFreeDocFailed();
-    error DocTokenHandler__RedeemAmountExceedsBalance(uint256 redeemAmount);
+    error DocTokenHandler__DocRedeemAmountExceedsBalance(uint256 redeemAmount);
     // error DocTokenHandler__InterestWithdrawalFailed(address user, uint256 interestAmount);
     error DocTokenHandler__kDocApprovalFailed(address user, uint256 depositAmount);
     error DocTokenHandler__WithdrawalAmountExceedsKdocBalance(address user, uint256 withdrawalAmount, uint256 balance);
@@ -31,14 +33,4 @@ interface IDocTokenHandler {
         address user, uint256 kDocAmountToRepay, uint256 kDocUserbalance
     );
     error DocTokenHandler__BatchRedeemDocFailed();
-
-    /*//////////////////////////////////////////////////////////////
-                               FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-    /**
-     * @notice deposit the full token amount for DCA on the contract
-     * @param user: the address of the user making the deposit
-     * @param depositAmount: the amount to deposit
-     */
-    // function depositDocAndLend(address user, uint256 depositAmount) external;
 }

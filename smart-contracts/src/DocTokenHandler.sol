@@ -11,7 +11,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title DocTokenHandler
- * @dev Implementation of the ITokenHandler interface for DOC.
+ * @dev Implementation of the IDocTokenHandler interface.
  */
 contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     using SafeERC20 for IERC20;
@@ -238,7 +238,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
     function _redeemDoc(address user, uint256 docToRedeem) internal {
         (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if (docToRedeem > underlyingAmount) revert DocTokenHandler__RedeemAmountExceedsBalance(docToRedeem);
+        if (docToRedeem > underlyingAmount) revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem);
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;

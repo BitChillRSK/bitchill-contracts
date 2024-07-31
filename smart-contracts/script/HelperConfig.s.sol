@@ -27,6 +27,7 @@ contract HelperConfig is Script {
         }
     }
 
+    // 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab WRBTC - RSK TESTNET
     function getRootstockTestnetConfig() public pure returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
         RootstockTestnetNetworkConfig = NetworkConfig({
             docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
@@ -55,4 +56,9 @@ contract HelperConfig is Script {
             kdocTokenAddress: address(mockKdocToken)
         });
     }
+
+    // MAINNET CONTRACTS
+    // DOC: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db
+    // rUSDT: 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96
+    // WRBTC: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d
 }

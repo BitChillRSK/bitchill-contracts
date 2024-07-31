@@ -106,7 +106,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      * @notice anyone can pay for the transaction to have the rBTC sent to the user
      */
-    function withdrawAccumulatedRbtc(address user) external override {
+    function withdrawAccumulatedRbtc(address user) external virtual override {
         uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
         if (rbtcBalance == 0) revert TokenHandler__NoAccumulatedRbtcToWithdraw();
 

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
+
 interface ICoinPairPrice {
     // getOracleOwnerAddress: Given an Oracle address return the Oracle Owner address.
     // Used during publication, the servers sign with the oracle address, but the list of selected oracles
@@ -129,12 +131,12 @@ interface ICoinPairPrice {
     function getEmergencyPublishingPeriodInBlocks() external view returns (uint256);
 
     // Public variable
-    function getOracleManager() external view returns (IOracleManager);
+    // function getOracleManager() external view returns (IOracleManager);
 
     // Public variable
     function getToken() external view returns (IERC20);
 
-    function getRegistry() external view returns (IRegistry);
+    // function getRegistry() external view returns (IRegistry);
 
     // Public value from Registry:
     //   The minimum count of oracles selected to participate each round
