@@ -53,7 +53,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         for (uint256 i; i < numOfPurchases; ++i) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
-            vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
+            vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         vm.prank(USER);
         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
@@ -65,7 +65,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         for (uint256 i; i < numOfPurchases; ++i) {
             vm.prank(OWNER);
             dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
-            vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
+            vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         // Attempt to purchase once more
         bytes memory encodedRevert = abi.encodeWithSelector(
