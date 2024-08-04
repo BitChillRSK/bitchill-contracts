@@ -10,18 +10,31 @@ interface ITokenHandler {
     //////////////////////
     // Events ////////////
     //////////////////////
-    event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
-    event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
-    event TokenHandler__rBtcWithdrawn(address indexed user, uint256 indexed amount);
+    event TokenHandler__TokenDeposited(
+        address indexed token,
+        address indexed user,
+        uint256 indexed amount
+    );
+    event TokenHandler__TokenWithdrawn(
+        address indexed token,
+        address indexed user,
+        uint256 indexed amount
+    );
+    event TokenHandler__rBtcWithdrawn(
+        address indexed user,
+        uint256 indexed amount
+    );
     event TokenHandler__RbtcBought(
         address indexed user,
         address indexed tokenSpent,
-        uint256 indexed rBtcBought,
-        bytes32 scheduleId,
+        bytes32 indexed scheduleId,
+        uint256 rBtcBought,
         uint256 amountSpent
     );
     event TokenHandler__SuccessfulRbtcBatchPurchase(
-        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
+        address indexed token,
+        uint256 indexed totalPurchasedRbtc,
+        uint256 indexed totalDocAmountSpent
     );
 
     //////////////////////
@@ -66,7 +79,12 @@ interface ITokenHandler {
      * @notice this function will be called periodically through a CRON job running on a web server
      * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount, uint256 purchasePeriod) external;
+    function buyRbtc(
+        address buyer,
+        bytes32 scheduleId,
+        uint256 purchaseAmount,
+        uint256 purchasePeriod
+    ) external;
 
     /**
      * @param buyers: the users on behalf of which the contract is making the rBTC purchases
@@ -115,8 +133,12 @@ interface ITokenHandler {
      * @param minAnnualAmount The minimum annual amount for fee calculations.
      * @param maxAnnualAmount The maximum annual amount for fee calculations.
      */
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
-        external;
+    function setFeeRateParams(
+        uint256 minFeeRate,
+        uint256 maxFeeRate,
+        uint256 minAnnualAmount,
+        uint256 maxAnnualAmount
+    ) external;
 
     /**
      * @dev Sets the minimum fee rate.
@@ -159,5 +181,8 @@ interface ITokenHandler {
      * @param user The address of the user withdrawing the interest.
      * @param docLockedInDcaSchedules The amount of DOC locked in DCA schedules by the user.
      */
-    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external;
+    function withdrawInterest(
+        address user,
+        uint256 docLockedInDcaSchedules
+    ) external;
 }
