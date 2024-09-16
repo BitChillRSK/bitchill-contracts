@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
@@ -45,10 +45,8 @@ contract InvariantTest is StdInvariant, Test {
         setUpTimestamp = block.timestamp;
         deployer = new DeployMocSwaps();
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
-
         (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
             helperConfig.activeNetworkConfig();
-
         mockDocToken = MockDocToken(docTokenAddress);
         mockKdocToken = MockKdocToken(kDocTokenAddress);
 
@@ -129,7 +127,6 @@ contract InvariantTest is StdInvariant, Test {
         for (uint256 i; i < users.length; ++i) {
             sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
         }
-
         console.log("Interest Factor: ", interestFactor);
         console.log("exchangeRateStored: ", mockKdocToken.exchangeRateStored());
         console.log("sumOfUsersDepositedDoc: ", sumOfUsersDepositedDoc);
