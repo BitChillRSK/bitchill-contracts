@@ -1,8 +1,10 @@
+//SPDX-License-Identifier: MIT
+
 // commit: f4aee58fb18703c2a2a536e01bd23c0ead0392db
 // git repo: https://github.com/DistributedCollective/Sovryn-smart-contracts
 // git file: https://github.com/DistributedCollective/Sovryn-smart-contracts/blob/f4aee58fb18703c2a2a536e01bd23c0ead0392db/contracts/testhelpers/TestWrbtc.sol
 
-pragma solidity 0.5.17;
+pragma solidity 0.8.24;
 
 contract MockWrbtcToken {
     string public name = "Wrapped BTC";
@@ -25,7 +27,7 @@ contract MockWrbtcToken {
     function withdraw(uint256 wad) public {
         require(balanceOf[msg.sender] >= wad);
         balanceOf[msg.sender] -= wad;
-        msg.sender.transfer(wad);
+        payable(msg.sender).transfer(wad);
         emit Withdrawal(msg.sender, wad);
     }
 
@@ -46,7 +48,7 @@ contract MockWrbtcToken {
     function transferFrom(address src, address dst, uint256 wad) public returns (bool) {
         require(balanceOf[src] >= wad);
 
-        if (src != msg.sender && allowance[src][msg.sender] != uint256(-1)) {
+        if (src != msg.sender /*&& allowance[src][msg.sender] != uint256(-1)*/ ) {
             require(allowance[src][msg.sender] >= wad);
             allowance[src][msg.sender] -= wad;
         }

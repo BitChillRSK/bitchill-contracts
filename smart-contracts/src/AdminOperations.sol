@@ -13,13 +13,12 @@ import {Test, console} from "forge-std/Test.sol";
  * @dev Contract to manage administrative tasks and token handlers
  */
 contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , InterfaceChecker */ {
-    
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    mapping(address token => address tokenHandlerContract) private s_tokenHandlers; 
+    mapping(address token => address tokenHandlerContract) private s_tokenHandlers;
 
     constructor() Ownable(msg.sender) {
         _grantRole(ADMIN_ROLE, msg.sender);
@@ -41,6 +40,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         } else {
             revert AdminOperations__ContractIsNotTokenHandler(handler);
         }
+
         // If a contract with no supportsInterface function is passed we will get an empty revert
 
         // This doesn't work because unhandled reverts (e. g., when the contract in the given address does not have the supportsInterface function) will not be caught
@@ -53,7 +53,6 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         //     console.log("Catch");
         //     revert AdminOperations__ContractIsNotTokenHandler(handler);
         // }
-
     }
 
     /**

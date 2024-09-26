@@ -9,8 +9,11 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+// import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+// import {ISwapRouter02} from "./interfaces/ISwapRouter02.sol";
 import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
+// import {IV3SwapRouter} from "./interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
@@ -54,10 +57,10 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         IWRBTC wrBtcToken,
         ISwapRouter02 swapRouter02,
         address[] memory swapIntermediateTokens,
-        uint24[] memory swappoolFeeRates,
+        uint24[] memory swapPoolFeeRates,
         ICoinPairPrice mocOracle,
-        address feeCollector,
         uint256 minPurchaseAmount,
+        address feeCollector,
         uint256 minFeeRate,
         uint256 maxFeeRate,
         uint256 minAnnualAmount,
@@ -82,7 +85,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         i_swapRouter02 = swapRouter02;
         i_wrBtcToken = wrBtcToken;
         i_MocOracle = mocOracle;
-        setPurchasePath(swapIntermediateTokens, swappoolFeeRates);
+        setPurchasePath(swapIntermediateTokens, swapPoolFeeRates);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -262,8 +265,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
     }
 
     /**
-     * @notice the guys at Money on Chain mistakenly named their functions as "redeem DOC", when it is rBTC that gets redeemed (by repaying DOC)
-     * @param docAmountToSpend the amount of DOC to repay to redeem rBTC
+     * @param docAmountToSpend the amount of DOC to swap for BTC
      */
     function _swapDocForWrbtc(uint256 docAmountToSpend) internal returns (uint256 amountOut) {
         // Approve the router to spend DOC.
@@ -274,14 +276,14 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
             path: s_swapPath,
             recipient: address(this),
             amountIn: docAmountToSpend,
-            amountOutMinimum: _getAmountOutMinimum(docAmountToSpend) // TODO: HACE FALTA UN ORÁCULO!!!!!!!!!
+            amountOutMinimum: _getAmountOutMinimum(docAmountToSpend)
         });
 
         amountOut = i_swapRouter02.exactInput(params);
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: CHECK MATH!!!
+        minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
     }
 
     function _redeemDoc(address user, uint256 docToRedeem) internal {

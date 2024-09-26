@@ -6,25 +6,29 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {DocTokenHandler} from "../../src/DocTokenHandler.sol";
+import {DocTokenHandlerDex} from "../../src/DocTokenHandlerDex.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
-import {HelperConfig} from "../../script/HelperConfig.s.sol";
-import {DeployContracts} from "../../script/DeployContracts.s.sol";
+import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
+import {DexHelperConfig} from "../../script/DexHelperConfig.s.sol";
+import {DeployDexSwaps} from "../../script/DeployDexSwaps.s.sol";
+import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
+import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
 import "../Constants.sol";
 import "./TestsHelper.t.sol";
 
 contract DcaDappTest is Test {
     DcaManager dcaManager;
     DocTokenHandler docTokenHandler;
+    MockMocProxy mockMocProxy;
+    DocTokenHandlerDex docTokenHandlerDex;
     AdminOperations adminOperations;
-    HelperConfig helperConfig;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
-    MockMocProxy mockMocProxy;
     FeeCalculator feeCalculator;
 
     address USER = makeAddr(USER_STRING);
@@ -90,49 +94,137 @@ contract DcaDappTest is Test {
     error OwnableUnauthorizedAccount(address account);
 
     /*//////////////////////////////////////////////////////////////
-                            UNIT TESTS SETUP
+                            UNIT TESTS SETUP (MoC purchases)
     //////////////////////////////////////////////////////////////*/
     function setUp() public virtual {
-        DeployContracts deployContracts = new DeployContracts();
-        (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployContracts.run();
-        // console.log("Test contract", address(this));
+        string memory deployEnv = vm.envString("TEST_ENV");
+        if (keccak256(abi.encodePacked(deployEnv)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            MocHelperConfig helperConfig;
+            DeployMocSwaps deployContracts = new DeployMocSwaps();
+            (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployContracts.run();
+            (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
+                helperConfig.activeNetworkConfig();
 
-        (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
-            helperConfig.activeNetworkConfig();
+            mockDocToken = MockDocToken(docTokenAddress);
+            mockMocProxy = MockMocProxy(mocProxyAddress);
+            mockKdocToken = MockKdocToken(kDocTokenAddress);
 
-        mockDocToken = MockDocToken(docTokenAddress);
-        mockMocProxy = MockMocProxy(mocProxyAddress);
-        mockKdocToken = MockKdocToken(kDocTokenAddress);
+            // FeeCalculator helper test contract
+            feeCalculator = new FeeCalculator();
 
-        // FeeCalculator helper test contract
-        feeCalculator = new FeeCalculator();
+            // Add tokenHandler
+            vm.expectEmit(true, true, false, false);
+            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandler));
+            vm.prank(OWNER);
+            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
 
-        // Add tokenHandler
-        vm.expectEmit(true, true, false, false);
-        emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandler));
-        vm.prank(OWNER);
-        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
+            // Deal rBTC funds to MoC contract and user
+            vm.deal(mocProxyAddress, 1000 ether);
+            vm.deal(USER, STARTING_RBTC_USER_BALANCE);
 
-        // Deal rBTC funds to mock contract and user
-        vm.deal(mocProxyAddress, 1000 ether);
-        vm.deal(USER, STARTING_RBTC_USER_BALANCE);
+            // Give the MoC proxy contract allowance
+            mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
 
-        // Give the MoC proxy contract allowance
-        mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
+            // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
+            vm.prank(address(docTokenHandler));
+            mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
-        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
-        vm.prank(address(docTokenHandler));
-        mockDocToken.approve(mocProxyAddress, type(uint256).max);
+            // Mint 10000 DOC for the user
+            mockDocToken.mint(USER, USER_TOTAL_DOC);
 
-        // Mint 10000 DOC for the user
-        mockDocToken.mint(USER, USER_TOTAL_DOC);
+            // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
+            vm.startPrank(USER);
+            mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+            dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+            vm.stopPrank();
+        } else if (keccak256(abi.encodePacked(deployEnv)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            DexHelperConfig helperConfig;
+            DeployDexSwaps deployContracts = new DeployDexSwaps();
+            (adminOperations, docTokenHandlerDex, dcaManager, helperConfig) = deployContracts.run();
+            DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
 
-        // Make the starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
-        vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
-        vm.stopPrank();
+            MockWrbtcToken mockWrBtcToken;
+
+            address docTokenAddress = networkConfig.docTokenAddress;
+            address kDocTokenAddress = networkConfig.kdocTokenAddress;
+            address wrBtcTokenAddress = networkConfig.wrbtcTokenAddress;
+            address swapRouter02 = networkConfig.swapRouter02Address;
+            address[] memory swapIntermediateTokens = networkConfig.swapIntermediateTokens;
+            uint24[] memory swapPoolFeeRates = networkConfig.swapPoolFeeRates;
+            address mocOracle = networkConfig.mocOracleAddress;
+
+            mockDocToken = MockDocToken(docTokenAddress);
+            mockKdocToken = MockKdocToken(kDocTokenAddress);
+            mockWrBtcToken = MockWrbtcToken(wrBtcTokenAddress);
+
+            // FeeCalculator helper test contract
+            feeCalculator = new FeeCalculator();
+
+            // Add tokenHandler
+            vm.expectEmit(true, true, false, false);
+            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandlerDex));
+            vm.prank(OWNER);
+            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandlerDex));
+
+            // TODO: Think through the setup for DEX swapping tests
+
+            // mockWrBtcToken.deposit{value: 1E18}();
+
+            // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
+            vm.startPrank(USER);
+            mockDocToken.approve(address(docTokenHandlerDex), DOC_TO_DEPOSIT);
+            dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+            vm.stopPrank();
+        } else {
+            revert("Invalid deploy environment");
+        }
     }
+
+    // /*//////////////////////////////////////////////////////////////
+    //                         UNIT TESTS SETUP (DEX purchases)
+    // //////////////////////////////////////////////////////////////*/
+    // function setUpDex() public virtual {
+    //     DeployContracts deployContracts = new DeployContracts();
+    //     (adminOperations, docTokenHandler, docTokenHandlerDex, dcaManager, helperConfig) = deployContracts.run();
+    //     // console.log("Test contract", address(this));
+
+    //     // (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) = helperConfig.activeNetworkConfig();
+
+    //     HelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
+
+    //     address docTokenAddress = networkConfig.docTokenAddress;
+    //     address kDocTokenAddress = networkConfig.kdocTokenAddress;
+    //     address wrBtcToken = networkConfig.wrbtcTokenAddress;
+    //     // address swapRouter02 = networkConfig.swapRouter02Address;
+    //     // address[] memory swapIntermediateTokens = networkConfig.swapIntermediateTokens;
+    //     // uint24[] memory swapPoolFeeRates = networkConfig.swapPoolFeeRates;
+    //     // address mocOracle = networkConfig.mocOracleAddress;
+
+    //     mockDocToken = MockDocToken(docTokenAddress);
+    //     mockKdocToken = MockKdocToken(kDocTokenAddress);
+
+    //     // FeeCalculator helper test contract
+    //     feeCalculator = new FeeCalculator();
+
+    //     // Add tokenHandler
+    //     vm.expectEmit(true, true, false, false);
+    //     emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandlerDex));
+    //     vm.prank(OWNER);
+    //     adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandlerDex));
+
+    //     // Deal rBTC funds to WRBTC contract and user
+    //     vm.deal(wrBtcToken, 1000 ether);
+    //     vm.deal(USER, STARTING_RBTC_USER_BALANCE);
+
+    //     // Mint 10000 DOC for the user
+    //     mockDocToken.mint(USER, USER_TOTAL_DOC);
+
+    //     // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
+    //     vm.startPrank(USER);
+    //     mockDocToken.approve(address(docTokenHandlerDex), DOC_TO_DEPOSIT);
+    //     dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+    //     vm.stopPrank();
+    // }
 
     /*//////////////////////////////////////////////////////////////
                       UNIT TESTS COMMON FUNCTIONS

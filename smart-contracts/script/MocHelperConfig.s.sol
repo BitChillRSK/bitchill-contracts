@@ -4,16 +4,20 @@ pragma solidity ^0.8.20;
 import {MockDocToken} from "../test/mocks/MockDocToken.sol";
 import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
+import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
+import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
+import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
+import "../test/Constants.sol";
 import {Script} from "forge-std/Script.sol";
 
-contract HelperConfig is Script {
-    NetworkConfig public activeNetworkConfig;
-
+contract MocHelperConfig is Script {
     struct NetworkConfig {
         address docTokenAddress;
         address mocProxyAddress;
         address kdocTokenAddress;
     }
+
+    NetworkConfig public activeNetworkConfig;
 
     event HelperConfig__CreatedMockDocToken(address docTokenAddress);
     event HelperConfig__CreatedMockMocProxy(address mocProxyAddress);
@@ -28,7 +32,15 @@ contract HelperConfig is Script {
     }
 
     // 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab WRBTC - RSK TESTNET
+    // 0x4D5a316D23eBE168d8f887b4447bf8DbFA4901CC rUSDT - RSK TESTNET
     function getRootstockTestnetConfig() public pure returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
+        address[] memory intermediateTokens = new address[](1);
+        intermediateTokens[0] = 0x4d5A316d23EBe168D8f887b4447BF8DBfA4901cc; // Address of the rUSDT token in Rootstock testnet
+
+        uint24[] memory poolFeeRates = new uint24[](2);
+        poolFeeRates[0] = 500;
+        poolFeeRates[1] = 500;
+
         RootstockTestnetNetworkConfig = NetworkConfig({
             docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
             mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
@@ -41,11 +53,13 @@ contract HelperConfig is Script {
         if (activeNetworkConfig.docTokenAddress != address(0)) {
             return activeNetworkConfig;
         }
+
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
         MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
         vm.stopBroadcast();
+
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));
         emit HelperConfig__CreatedMockMocProxy(address(mockMocProxy));
         emit HelperConfig__CreatedMockKdocToken(address(mockKdocToken));
@@ -55,6 +69,10 @@ contract HelperConfig is Script {
             mocProxyAddress: address(mockMocProxy),
             kdocTokenAddress: address(mockKdocToken)
         });
+    }
+
+    function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
+        return activeNetworkConfig;
     }
 
     // MAINNET CONTRACTS

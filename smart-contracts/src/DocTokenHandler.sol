@@ -200,6 +200,23 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         }
     }
 
+    function getUsersKdocBalance(address user) external view returns (uint256) {
+        return s_kDocBalances[user];
+    }
+
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
+        uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules;
+        _redeemDoc(user, docInterestAmount);
+        i_docToken.safeTransfer(user, docInterestAmount);
+
+        // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
+        // if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                           INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
     function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
         internal
         view
@@ -271,19 +288,5 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         } else {
             revert DocTokenHandler__BatchRedeemDocFailed();
         }
-    }
-
-    function getUsersKdocBalance(address user) external view returns (uint256) {
-        return s_kDocBalances[user];
-    }
-
-    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
-        uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
-        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules;
-        _redeemDoc(user, docInterestAmount);
-        i_docToken.safeTransfer(user, docInterestAmount);
-
-        // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
-        // if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
     }
 }

@@ -9,36 +9,35 @@ import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import "../Constants.sol";
 
 contract DocTokenHandlerTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     ////////////////////////////
     ///// Settings tests ///////
     ////////////////////////////
 
-    function testSupportsInterface() external {
+    function testDTHSupportsInterface() external {
         assertEq(docTokenHandler.supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
-    function testModifyMinPurchaseAmount() external {
+    function testDTHModifyMinPurchaseAmount() external {
         vm.prank(OWNER);
         docTokenHandler.modifyMinPurchaseAmount(1000);
         uint256 newPurchaseAmount = docTokenHandler.getMinPurchaseAmount();
         assertEq(newPurchaseAmount, 1000);
     }
 
-    function testSetFeeRateParams() external {
+    function testDTHSetFeeRateParams() external {
         vm.prank(OWNER);
-        docTokenHandler.setFeeRateParams(5,5,5,5);
+        docTokenHandler.setFeeRateParams(5, 5, 5, 5);
         assertEq(docTokenHandler.getMinFeeRate(), 5);
         assertEq(docTokenHandler.getMaxFeeRate(), 5);
         assertEq(docTokenHandler.getMinAnnualAmount(), 5);
         assertEq(docTokenHandler.getMaxAnnualAmount(), 5);
     }
 
-    function testSetFeeCollectorAddress() external {
+    function testDTHSetFeeCollectorAddress() external {
         address newFeeCollector = makeAddr("newFeeCollector");
         vm.prank(OWNER);
         docTokenHandler.setFeeCollectorAddress(newFeeCollector);
