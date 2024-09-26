@@ -9,9 +9,10 @@ pragma solidity 0.8.24;
  * @dev Interface for the DocTokenHandler contract.
  */
 interface IDocTokenHandler { /* is ITokenHandler */
-    //////////////////////
-    // Events ////////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
     event DocTokenHandler__SuccessfulDocRedemption(
         address indexed user, uint256 indexed docRedeemed, uint256 indexed kDocRepayed
     );
@@ -20,9 +21,10 @@ interface IDocTokenHandler { /* is ITokenHandler */
         address indexed user, uint256 docRedeemed, uint256 indexed kDocRepayed
     );
 
-    //////////////////////
-    // Errors ////////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
     error DocTokenHandler__RedeemDocRequestFailed();
     error DocTokenHandler__RedeemFreeDocFailed();
     error DocTokenHandler__DocRedeemAmountExceedsBalance(uint256 redeemAmount);
@@ -33,4 +35,14 @@ interface IDocTokenHandler { /* is ITokenHandler */
         address user, uint256 kDocAmountToRepay, uint256 kDocUserbalance
     );
     error DocTokenHandler__BatchRedeemDocFailed();
+
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Gets the kDOC balance of the user
+     * @param user The user whose balance is checked
+     */
+    function getUsersKdocBalance(address user) external returns (uint256);
 }

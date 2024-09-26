@@ -9,9 +9,10 @@ pragma solidity 0.8.24;
  * @dev Interface for the DocTokenHandlerDex contract.
  */
 interface IDocTokenHandlerDex { /* is ITokenHandler */
-    //////////////////////
-    // Events ////////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
     event DocTokenHandlerDex__SuccessfulDocRedemption(
         address indexed user, uint256 indexed docRedeemed, uint256 indexed kDocRepayed
     );
@@ -23,9 +24,10 @@ interface IDocTokenHandlerDex { /* is ITokenHandler */
         address[] indexed intermediateTokens, uint24[] indexed poolFeeRates, bytes indexed newPath
     );
 
-    //////////////////////
-    // Errors ////////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
     error DocTokenHandlerDex__kDocApprovalFailed(address user, uint256 depositAmount);
     error DocTokenHandlerDex__WithdrawalAmountExceedsKdocBalance(
         address user, uint256 withdrawalAmount, uint256 balance
@@ -38,4 +40,21 @@ interface IDocTokenHandlerDex { /* is ITokenHandler */
     );
     error DocTokenHandlerDex__DocRedeemAmountExceedsBalance(uint256 redeemAmount);
     error DocTokenHandlerDex__BatchRedeemDocFailed();
+
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice Gets the kDOC balance of the user
+     * @param user The user whose balance is checked
+     */
+    function getUsersKdocBalance(address user) external returns (uint256);
+
+    /**
+     * @notice Sets a new swap path.
+     *  @param intermediateTokens The array of intermediate token addresses in the path.
+     * @param poolFeeRates The array of pool fees for each swap step.
+     */
+    function setPurchasePath(address[] memory intermediateTokens, uint24[] memory poolFeeRates) external;
 }

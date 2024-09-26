@@ -189,15 +189,26 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         }
     }
 
-    function getUsersKdocBalance(address user) external view returns (uint256) {
+    function getUsersKdocBalance(address user) external view override returns (uint256) {
         return s_kDocBalances[user];
     }
 
-    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
         uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules;
         _redeemDoc(user, docInterestAmount);
         i_docToken.safeTransfer(user, docInterestAmount);
+    }
+
+    function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
+        external
+        view
+        override
+        onlyDcaManager
+        returns (uint256 docInterestAmount)
+    {
+        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
     /**
@@ -226,6 +237,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
      */
     function setPurchasePath(address[] memory intermediateTokens, uint24[] memory poolFeeRates)
         public
+        override
         onlyOwner /* TODO: set another role for access control? */
     {
         if (poolFeeRates.length != intermediateTokens.length + 1) {

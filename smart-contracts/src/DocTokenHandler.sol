@@ -200,18 +200,29 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         }
     }
 
-    function getUsersKdocBalance(address user) external view returns (uint256) {
+    function getUsersKdocBalance(address user) external view override returns (uint256) {
         return s_kDocBalances[user];
     }
 
-    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external onlyDcaManager {
-        uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
-        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules;
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
+        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         _redeemDoc(user, docInterestAmount);
         i_docToken.safeTransfer(user, docInterestAmount);
 
         // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
         // if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
+    }
+
+    function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
+        external
+        view
+        override
+        onlyDcaManager
+        returns (uint256 docInterestAmount)
+    {
+        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
     /*//////////////////////////////////////////////////////////////

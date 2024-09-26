@@ -234,6 +234,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function buyRbtc(address buyer, address token, uint256 scheduleIndex, bytes32 scheduleId)
         external
+        override
         nonReentrant
         onlyOwner
     {
@@ -258,7 +259,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
         uint256[] memory purchasePeriods
-    ) external nonReentrant onlyOwner {
+    ) external override nonReentrant onlyOwner {
         uint256 numOfPurchases = buyers.length;
         if (numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
         if (
@@ -279,14 +280,14 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice Users can withdraw the rBtc accumulated through all the DCA strategies created using a given stablecoin
      * @param token The token address of the stablecoin
      */
-    function withdrawRbtcFromTokenHandler(address token) external nonReentrant {
+    function withdrawRbtcFromTokenHandler(address token) external override nonReentrant {
         _handler(token).withdrawAccumulatedRbtc(msg.sender);
     }
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
      */
-    function withdrawAllAccmulatedRbtc() external nonReentrant {
+    function withdrawAllAccmulatedRbtc() external override nonReentrant {
         for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; ++i) {
             _handler(s_usersDepositedTokens[msg.sender][i]).withdrawAccumulatedRbtc(msg.sender);
         }
@@ -296,7 +297,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
      * @param token The address of the token to withdraw
      */
-    function withdrawInterestFromTokenHandler(address token) external nonReentrant {
+    function withdrawInterestFromTokenHandler(address token) external override nonReentrant {
         ITokenHandler tokenHandler = _handler(token);
         if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         uint256 lockedTokenAmount;
@@ -319,7 +320,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice modify the minimum period between purchases
      * @param minPurchasePeriod: the new period
      */
-    function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external onlyOwner {
+    function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external override onlyOwner {
         s_minPurchasePeriod = minPurchasePeriod;
     }
 
@@ -410,13 +411,14 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     // Getter functions //
     //////////////////////
 
-    function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory) {
+    function getMyDcaSchedules(address token) external view override returns (DcaDetails[] memory) {
         return s_dcaSchedules[msg.sender][token];
     }
 
     function getScheduleTokenBalance(address token, uint256 scheduleIndex)
         external
         view
+        override
         validateIndex(token, scheduleIndex)
         returns (uint256)
     {
@@ -426,6 +428,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function getSchedulePurchaseAmount(address token, uint256 scheduleIndex)
         external
         view
+        override
         validateIndex(token, scheduleIndex)
         returns (uint256)
     {
@@ -435,43 +438,56 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function getSchedulePurchasePeriod(address token, uint256 scheduleIndex)
         external
         view
+        override
         validateIndex(token, scheduleIndex)
         returns (uint256)
     {
         return s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod;
     }
 
-    function getScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32) {
+    function getScheduleId(address token, uint256 scheduleIndex) external view override returns (bytes32) {
         return s_dcaSchedules[msg.sender][token][scheduleIndex].scheduleId;
     }
 
     function ownerGetUsersDcaSchedules(address user, address token)
         external
         view
+        override
         onlyOwner
         returns (DcaDetails[] memory)
     {
         return s_dcaSchedules[user][token];
     }
 
-    function getUsers() external view onlyOwner returns (address[] memory) {
+    function getUsers() external view override onlyOwner returns (address[] memory) {
         return s_users;
     }
 
-    function getTotalNumberOfDeposits() external view returns (uint256) {
+    function getTotalNumberOfDeposits() external view override returns (uint256) {
         return s_users.length;
     }
 
-    function getAdminOperationsAddress() external view returns (address) {
+    function getAdminOperationsAddress() external view override returns (address) {
         return address(s_adminOperations);
     }
 
-    function getMinPurchasePeriod() external view returns (uint256) {
+    function getMinPurchasePeriod() external view override returns (uint256) {
         return s_minPurchasePeriod;
     }
 
-    function getUsersDepositedTokens(address user) external view returns (address[] memory) {
+    function getUsersDepositedTokens(address user) external view override returns (address[] memory) {
         return s_usersDepositedTokens[user];
+    }
+
+    function getInterestAccruedByUser(address user, address token) external override returns (uint256) {
+        ITokenHandler tokenHandler = _handler(token);
+        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
+        uint256 lockedTokenAmount;
+        DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
+        for (uint256 i; i < dcaSchedules.length; i++) {
+            lockedTokenAmount += dcaSchedules[i].tokenBalance;
+        }
+        return tokenHandler.getAccruedInterest(user, lockedTokenAmount);
     }
 
     // function getTokenHandlerAddress(address token) external view returns (address) {

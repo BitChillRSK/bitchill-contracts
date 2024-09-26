@@ -149,6 +149,39 @@ interface IDcaManager {
     function setAdminOperations(address tokenHandlerFactoryAddress) external;
 
     /**
+     * @param buyer The address of the user on behalf of whom rBTC is going to be bought
+     * @param token the stablecoin that all users in the array will spend to purchase rBTC
+     * @param scheduleIndex the index of the DCA schedule
+     * @param scheduleId the ID of the schedule to which the purchase corresponds
+     */
+    function buyRbtc(address buyer, address token, uint256 scheduleIndex, bytes32 scheduleId) external;
+
+    /**
+     * @param buyers the array of addresses of the users on behalf of whom rBTC is going to be bought
+     * @notice a buyer may be featured more than once in the buyers array if two or more their schedules are due for a purchase
+     * @notice we need to take extra care in the back end to not mismatch a user's address with a wrong DCA schedule
+     * @param token the stablecoin that all users in the array will spend to purchase rBTC
+     * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
+     * @param scheduleIds the IDs of the DCA schedules that correspond to each user's purchase
+     * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
+     * @param purchasePeriods the purchase period that corresponds to each user's purchase
+     */
+    function batchBuyRbtc(
+        address[] memory buyers,
+        address token,
+        uint256[] memory scheduleIndexes,
+        bytes32[] memory scheduleIds,
+        uint256[] memory purchaseAmounts,
+        uint256[] memory purchasePeriods
+    ) external;
+
+    /**
+     * @notice Withdraw the token accumulated by a user as interest through all the DCA strategies using that token
+     * @param token The token address
+     */
+    function withdrawInterestFromTokenHandler(address token) external;
+
+    /**
      * @notice Withdraw the rBtc accumulated by a user through all the DCA strategies created using a given stablecoin
      * @param token The token address of the stablecoin
      */
@@ -171,10 +204,14 @@ interface IDcaManager {
     function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory);
     function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256);
     function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256);
+    function getScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32);
     function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256);
     function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
+    function getAdminOperationsAddress() external view returns (address);
+    function getUsersDepositedTokens(address user) external view returns (address[] memory);
     function getUsers() external view returns (address[] memory);
     function getTotalNumberOfDeposits() external view returns (uint256);
+    function getInterestAccruedByUser(address user, address token) external returns (uint256);
 
     /**
      * @dev returns the minimum period that can be set for purchases
