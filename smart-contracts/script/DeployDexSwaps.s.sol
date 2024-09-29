@@ -5,7 +5,6 @@ import {Script} from "forge-std/Script.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {DocTokenHandlerDex} from "../src/DocTokenHandlerDex.sol";
-import {DocTokenHandler} from "../src/DocTokenHandler.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";

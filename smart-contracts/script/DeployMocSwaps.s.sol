@@ -4,12 +4,8 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {DocTokenHandlerDex} from "../src/DocTokenHandlerDex.sol";
 import {DocTokenHandler} from "../src/DocTokenHandler.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
-import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
-import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
