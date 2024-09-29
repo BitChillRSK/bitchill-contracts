@@ -8,11 +8,11 @@ import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-// import {TransferHelper} from "./libraries/TransferHelper.sol";
-import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-// import {ISwapRouter02} from "./interfaces/ISwapRouter02.sol";
-import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
+// import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
+import {TransferHelper} from "./libraries/TransferHelper.sol";
+// import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+import {ISwapRouter02} from "./interfaces/ISwapRouter02.sol";
+// import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 // import {IV3SwapRouter} from "./interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
@@ -284,7 +284,8 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         TransferHelper.safeApprove(address(i_docToken), address(i_swapRouter02), docAmountToSpend);
 
         // Set up the swap parameters
-        ISwapRouter02.ExactInputParams memory params = IV3SwapRouter.ExactInputParams({
+        ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
+            // IV3SwapRouter.ExactInputParams memory params = IV3SwapRouter.ExactInputParams({
             path: s_swapPath,
             recipient: address(this),
             amountIn: docAmountToSpend,
@@ -292,6 +293,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         });
 
         amountOut = i_swapRouter02.exactInput(params);
+        // amountOut = IV3SwapRouter(address(i_swapRouter02)).exactInput(params);
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
