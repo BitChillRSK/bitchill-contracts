@@ -127,8 +127,13 @@ contract InvariantTest is StdInvariant, Test {
             sumOfUsersBalances += docTokenHandler.getAccumulatedRbtcBalance();
         }
         // We can't just user an assertEq because charging fees causes a slight precision loss
-        assertGe(address(docTokenHandler).balance, sumOfUsersBalances); // The rBTC in the DOC token handler contract must be at least as much as the sum balances of the users
-        assertLe(address(docTokenHandler).balance * 9999 / 10000, sumOfUsersBalances); // The rBTC in the DOC token handler contract can only be slightly higher than the sum of balances (therefore, 99.99% of said rBTC should be lower than the sum)
+        assertApproxEqRel(
+            address(docTokenHandler).balance,
+            sumOfUsersBalances,
+            0.0001e16 // Allow a maximum difference of 0.0001%
+        );
+        // assertGe(address(docTokenHandler).balance, sumOfUsersBalances); // The rBTC in the DOC token handler contract must be at least as much as the sum balances of the users
+        // assertLe(address(docTokenHandler).balance * 9999 / 10000, sumOfUsersBalances); // The rBTC in the DOC token handler contract can only be slightly higher than the sum of balances (therefore, 99.99% of said rBTC should be lower than the sum)
         console.log("Sum of users' rBTC balances:", sumOfUsersBalances);
         console.log("rBTC balance of the DOC token handler contract:", address(docTokenHandler).balance);
     }

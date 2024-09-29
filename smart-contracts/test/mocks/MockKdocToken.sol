@@ -56,9 +56,9 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     }
 
     function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
-        console.log("getSupplierSnapshotStored: balance = ", balanceOf(user));
+        // console.log("getSupplierSnapshotStored: balance = ", balanceOf(user));
         uint256 underlyingAmount = balanceOf(user) * exchangeRateStored() / DECIMALS;
-        console.log("getSupplierSnapshotStored: underlyingAmount = ", underlyingAmount);
+        // console.log("getSupplierSnapshotStored: underlyingAmount = ", underlyingAmount);
         return (0, underlyingAmount, 0, 0);
     }
 }

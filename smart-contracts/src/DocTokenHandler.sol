@@ -205,7 +205,8 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     }
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
-        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        // uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        uint256 totalDocInLending = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS; // TODO: check this!!
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         _redeemDoc(user, docInterestAmount);
         i_docToken.safeTransfer(user, docInterestAmount);
@@ -266,10 +267,13 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
     function _redeemDoc(address user, uint256 docToRedeem) internal {
         (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if (docToRedeem > underlyingAmount) revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem);
+        if (docToRedeem > underlyingAmount) {
+            revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem, underlyingAmount);
+        }
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
+        // uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
+        uint256 kDocToRepay = docToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate; // TODO: HABLAR DE ESTO CON EL EQUIPO!!
         if (kDocToRepay > usersKdocBalance) {
             revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
         }
@@ -281,23 +285,44 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
     {
-        // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
-        uint256 kDocBalancePrev = i_kDocToken.balanceOf(address(this));
-        i_kDocToken.redeemUnderlying(totalDocToRedeem);
-        uint256 kDocBalancePost = i_kDocToken.balanceOf(address(this));
-
-        if (kDocBalancePrev - kDocBalancePost > 0) {
-            uint256 totalKdocRepayed = kDocBalancePrev - kDocBalancePost;
-            uint256 numOfPurchases = users.length;
-            for (uint256 i; i < numOfPurchases; ++i) {
-                // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
-                uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
-                s_kDocBalances[users[i]] -= usersRepayedKdoc;
-                emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
-            }
-            emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
-        } else {
-            revert DocTokenHandler__BatchRedeemDocFailed();
+        (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
+        if (totalDocToRedeem > underlyingAmount) {
+            revert DocTokenHandler__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
+        uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
+        uint256 totalKdocToRepay = totalDocToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate;
+
+        // TODO: delete this commented code after further testing (we realised this could be done following CEI)
+        // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
+        // uint256 kDocBalancePrev = i_kDocToken.balanceOf(address(this));
+        // i_kDocToken.redeemUnderlying(totalDocToRedeem);
+        // uint256 kDocBalancePost = i_kDocToken.balanceOf(address(this));
+
+        // if (kDocToRepay != kDocBalancePrev - kDocBalancePost) revert("PERO QUE COJONES");
+
+        // if (kDocBalancePrev - kDocBalancePost > 0) {
+        //     uint256 totalKdocRepayed = kDocBalancePrev - kDocBalancePost;
+        //     uint256 numOfPurchases = users.length;
+        //     for (uint256 i; i < numOfPurchases; ++i) {
+        //         // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
+        //         uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
+        //         s_kDocBalances[users[i]] -= usersRepayedKdoc;
+        //         emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
+        //     }
+        //     emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
+        // } else {
+        //     revert DocTokenHandler__BatchRedeemDocFailed();
+        // }
+
+        uint256 numOfPurchases = users.length;
+        for (uint256 i; i < numOfPurchases; ++i) {
+            // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
+            uint256 usersRepayedKdoc = totalKdocToRepay * purchaseAmounts[i] / totalDocToRedeem;
+            s_kDocBalances[users[i]] -= usersRepayedKdoc;
+            emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
+        }
+
+        i_kDocToken.redeemUnderlying(totalDocToRedeem);
+        emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
     }
 }

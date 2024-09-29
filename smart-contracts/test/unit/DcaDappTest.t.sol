@@ -352,7 +352,7 @@ contract DcaDappTest is Test {
 
                 totalDocSpent += netPurchaseAmount;
                 totalDocRedeemed += schedulePurchaseAmount;
-                console.log("DOC redeemed", schedulePurchaseAmount);
+                // console.log("DOC redeemed", schedulePurchaseAmount);
 
                 vm.warp(block.timestamp + schedulePurchasePeriod);
             }

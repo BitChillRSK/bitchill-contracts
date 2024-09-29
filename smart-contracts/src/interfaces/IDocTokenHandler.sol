@@ -27,7 +27,7 @@ interface IDocTokenHandler { /* is ITokenHandler */
 
     error DocTokenHandler__RedeemDocRequestFailed();
     error DocTokenHandler__RedeemFreeDocFailed();
-    error DocTokenHandler__DocRedeemAmountExceedsBalance(uint256 redeemAmount);
+    error DocTokenHandler__DocRedeemAmountExceedsBalance(uint256 redeemAmount, uint256 balance);
     // error DocTokenHandler__InterestWithdrawalFailed(address user, uint256 interestAmount);
     error DocTokenHandler__kDocApprovalFailed(address user, uint256 depositAmount);
     error DocTokenHandler__WithdrawalAmountExceedsKdocBalance(address user, uint256 withdrawalAmount, uint256 balance);
