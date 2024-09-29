@@ -7,7 +7,7 @@ import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {DcaManager} from "src/DcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {DocTokenHandler} from "src/DocTokenHandler.sol";
-import {DocTokenHandlerDex} from "../../src/DocTokenHandlerDex.sol";
+// import {DocTokenHandlerDex} from "../../src/DocTokenHandlerDex.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
@@ -21,7 +21,7 @@ contract InvariantTest is StdInvariant, Test {
     DcaManager dcaManager;
     AdminOperations adminOperations;
     DocTokenHandler docTokenHandler;
-    DocTokenHandlerDex docTokenHandlerDex;
+    // DocTokenHandlerDex docTokenHandlerDex;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
     MockMocProxy mockMocProxy;
