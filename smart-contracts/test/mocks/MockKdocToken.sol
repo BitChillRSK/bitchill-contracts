@@ -50,9 +50,9 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
         // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
         // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
-        uint256 rateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
+        uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
 
-        return STARTING_EXCHANGE_RATE + rateIncrease; // Current exchange rate
+        return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
     }
 
     function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {

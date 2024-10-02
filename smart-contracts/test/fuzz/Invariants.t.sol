@@ -37,8 +37,10 @@ contract InvariantTest is StdInvariant, Test {
     uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
     uint256 constant INITIAL_PURCHASE_PERIOD = 1 weeks;
     uint256 constant MOC_START_RBTC_BALANCE = 500 ether;
+    uint256 setUpTimestamp;
 
     function setUp() external {
+        setUpTimestamp = block.timestamp;
         deployer = new DeployMocSwaps();
         (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
 
@@ -90,7 +92,7 @@ contract InvariantTest is StdInvariant, Test {
         // targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
     }
 
-    function invariant_kDocContractDocBalanceEqualsSumOfAllUsers() public {
+    function invariant_kDocContractDocBalanceGreaterOrEqualsSumOfAllUsers() public {
         // get the total amount of DOC deposited in the kDOC contract
         // compare it to the sum of all users' balances
         vm.prank(OWNER);
@@ -106,13 +108,33 @@ contract InvariantTest is StdInvariant, Test {
         }
         // DOC deposited in Bitchill is immediately lent in Tropykus
         assertEq(mockDocToken.balanceOf(address(docTokenHandler)), 0); // No DOC in DocTokenHandler
-        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // All of the users's DOC in Tropykus
+
+        // Update the amount of DOC in the mock kDOC contract according to the interest that has been generated
+        uint256 interestFactor = 1e18 + (block.timestamp - setUpTimestamp) * 5 * 1e18 / (100 * 31536000); // 1 + timeInYears * yearlyIncrease
+        uint256 currentDocBalanceInTropykus = mockDocToken.balanceOf(address(mockKdocToken));
+        uint256 docToAdd = currentDocBalanceInTropykus * interestFactor / 1e18 - currentDocBalanceInTropykus;
+        mockDocToken.mint(address(mockKdocToken), docToAdd);
+
+        assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // All of the users's deposited DOC is in Tropykus
         // kDOC to DOC correspondence holds
         uint256 sumOfUsersKdoc;
         for (uint256 i; i < users.length; ++i) {
             sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
         }
-        assertEq(sumOfUsersDepositedDoc, sumOfUsersKdoc * 1e18 / mockKdocToken.exchangeRateStored());
+
+        console.log("Interest Factor: ", interestFactor);
+        console.log("exchangeRateStored: ", mockKdocToken.exchangeRateStored());
+        console.log("sumOfUsersDepositedDoc: ", sumOfUsersDepositedDoc);
+        console.log("sumOfUsersKdoc: ", sumOfUsersKdoc);
+        console.log(
+            "Total DOC in Tropykus: ", sumOfUsersKdoc * mockKdocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS
+        );
+
+        assertGe(
+            sumOfUsersKdoc * mockKdocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS,
+            // sumOfUsersDepositedDoc * interestFactor / 1e18
+            sumOfUsersDepositedDoc
+        );
         // console.log("Sum of users' DOC balances:", DepositedDoc);
         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
     }

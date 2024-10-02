@@ -120,12 +120,15 @@ contract DocLendingTest is DcaDappTest {
     }
 
     function testWithdrawInterest() external {
+        vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
         uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
-        console.log("withdrawableInterest:", withdrawableInterest);
-        // assertEq(withdrawableInterest, 0);
+        uint256 userDocBalanceBeforeInterest = mockDocToken.balanceOf(USER);
+        assertGt(withdrawableInterest, 0);
         vm.prank(USER);
         dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken));
         withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
+        uint256 userDocBalanceAfterInterest = mockDocToken.balanceOf(USER);
         assertEq(withdrawableInterest, 0);
+        assertEq(userDocBalanceAfterInterest - userDocBalanceBeforeInterest, withdrawableInterest);
     }
 }

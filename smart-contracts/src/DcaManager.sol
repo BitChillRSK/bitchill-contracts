@@ -302,7 +302,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         uint256 lockedTokenAmount;
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
-        for (uint256 i; i < dcaSchedules.length; i++) {
+        for (uint256 i; i < dcaSchedules.length; ++i) {
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }
         tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
@@ -484,7 +484,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         uint256 lockedTokenAmount;
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
-        for (uint256 i; i < dcaSchedules.length; i++) {
+        for (uint256 i; i < dcaSchedules.length; ++i) {
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }
         return tokenHandler.getAccruedInterest(user, lockedTokenAmount);

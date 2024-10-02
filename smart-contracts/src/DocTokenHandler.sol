@@ -205,11 +205,17 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     }
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
-        // uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
-        uint256 totalDocInLending = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS; // TODO: check this!!
+        uint256 exchangeRate = i_kDocToken.exchangeRateStored();
+        uint256 totalDocInLending = s_kDocBalances[user] * exchangeRate / EXCHANGE_RATE_DECIMALS;
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        _redeemDoc(user, docInterestAmount);
+        uint256 kDocToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
+        // _redeemDoc(user, docInterestAmount);
+        s_kDocBalances[user] -= kDocToRepay;
+        uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
+        if (result == 0) emit DocTokenHandler__SuccessfulDocRedemption(user, docInterestAmount, kDocToRepay);
+        else revert DocTokenHandler__RedeemUnderlyingFailed(result);
         i_docToken.safeTransfer(user, docInterestAmount);
+        emit DocTokenHandler__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
 
         // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
         // if (!transferSuccess) revert DocTokenHandler__InterestWithdrawalFailed(user, docInterestAmount);
@@ -222,7 +228,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
-        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        uint256 totalDocInLending = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
         docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
@@ -266,20 +272,20 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
     }
 
     function _redeemDoc(address user, uint256 docToRedeem) internal {
-        (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if (docToRedeem > underlyingAmount) {
-            revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem, underlyingAmount);
-        }
+        // (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
+        // if (docToRedeem > underlyingAmount) {
+        //     revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem, underlyingAmount);
+        // } // NO SÉ SI ESTO TIENE MUCHO SENTIDO
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
-        // uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
-        uint256 kDocToRepay = docToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate; // TODO: HABLAR DE ESTO CON EL EQUIPO!!
+        uint256 kDocToRepay = docToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate;
         if (kDocToRepay > usersKdocBalance) {
             revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
         }
         s_kDocBalances[user] -= kDocToRepay;
-        i_kDocToken.redeemUnderlying(docToRedeem);
-        emit DocTokenHandler__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
+        uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
+        if (result == 0) emit DocTokenHandler__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
+        else revert DocTokenHandler__RedeemUnderlyingFailed(result);
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
@@ -321,8 +327,8 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
             s_kDocBalances[users[i]] -= usersRepayedKdoc;
             emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
         }
-
-        i_kDocToken.redeemUnderlying(totalDocToRedeem);
-        emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
+        uint256 result = i_kDocToken.redeemUnderlying(totalDocToRedeem);
+        if (result == 0) emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
+        else revert DocTokenHandler__BatchRedeemDocFailed();
     }
 }

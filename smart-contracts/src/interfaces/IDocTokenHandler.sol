@@ -20,6 +20,9 @@ interface IDocTokenHandler { /* is ITokenHandler */
     event DocTokenHandler__DocRedeemedKdocRepayed(
         address indexed user, uint256 docRedeemed, uint256 indexed kDocRepayed
     );
+    event DocTokenHandler__SuccessfulInterestWithdrawal(
+        address indexed user, uint256 indexed docRedeemed, uint256 indexed kDocRepayed
+    );
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
@@ -34,6 +37,7 @@ interface IDocTokenHandler { /* is ITokenHandler */
     error DocTokenHandler__KdocToRepayExceedsUsersBalance(
         address user, uint256 kDocAmountToRepay, uint256 kDocUserbalance
     );
+    error DocTokenHandler__RedeemUnderlyingFailed(uint256 errorCode);
     error DocTokenHandler__BatchRedeemDocFailed();
 
     /*//////////////////////////////////////////////////////////////
