@@ -71,6 +71,7 @@ interface IDcaManager {
     event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
 
     error DcaManager__TokenDoesNotYieldInterest(address token);
+    error DcaManager__UnauthorizedSwapper(address sender);
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS

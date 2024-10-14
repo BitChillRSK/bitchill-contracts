@@ -58,13 +58,23 @@ contract DcaScheduleTest is DcaDappTest {
     function testDeleteDcaSchedule() external {
         vm.startPrank(USER);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
+        // Create two schedules
         dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        console.log("scheduleId is", vm.toString(scheduleId));
+        // Delete one
         dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        // Check that there are two (the one created in setUp() and one of the two created in this test)
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 2);
+        // Check that the deleted one was the first one created in this test
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].tokenBalance, DOC_TO_DEPOSIT * 3);
         vm.stopPrank();
+    }
+
+    function testDeleteTwoDcaSchedules() external {
+        this.testDeleteDcaSchedule();
+        this.testDeleteDcaSchedule();
     }
 
     function testCreateSeveralDcaSchedules() external {

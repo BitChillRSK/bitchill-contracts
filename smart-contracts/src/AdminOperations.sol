@@ -16,12 +16,15 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
+    bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER");
 
-    mapping(address token => address tokenHandlerContract) private s_tokenHandlers;
+    mapping(address token => address tokenHandlerContract) private s_tokenHandler;
+    // mapping(address token => address swapper) private s_swapper;
 
     constructor() Ownable(msg.sender) {
-        _grantRole(ADMIN_ROLE, msg.sender);
+        // _grantRole(ADMIN_ROLE, msg.sender);
+        // _grantRole(SWAPPER_ROLE, msg.sender);
     }
 
     /**
@@ -29,13 +32,13 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      * @param token The address of the token.
      * @param handler The address of the TokenHandler.
      */
-    function assignOrUpdateTokenHandler(address token, address handler) public /*onlyRole(ADMIN_ROLE)*/ onlyOwner {
+    function assignOrUpdateTokenHandler(address token, address handler) external onlyRole(ADMIN_ROLE) /*onlyOwner*/ {
         if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
 
         ITokenHandler tokenHandler = ITokenHandler(handler);
 
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
-            s_tokenHandlers[token] = handler;
+            s_tokenHandler[token] = handler;
             emit AdminOperations__TokenHandlerUpdated(token, handler);
         } else {
             revert AdminOperations__ContractIsNotTokenHandler(handler);
@@ -46,7 +49,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         // This doesn't work because unhandled reverts (e. g., when the contract in the given address does not have the supportsInterface function) will not be caught
         // try tokenHandler.supportsInterface(type(ITokenHandler).interfaceId) returns (bool contractIsTokenHandler) {
         //     if(contractIsTokenHandler){
-        //         s_tokenHandlers[token] = handler;
+        //         s_tokenHandler[token] = handler;
         //         emit AdminOperations__TokenHandlerUpdated(token, handler);
         //     } else revert AdminOperations__ContractIsNotTokenHandler(handler);
         // } catch {
@@ -56,13 +59,38 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     }
 
     /**
+     * @dev Assigns a new address to the swapper role.
+     * @param swapper The swapper address.
+     */
+    function setSwapperRole(address swapper) public onlyOwner {
+        _grantRole(SWAPPER_ROLE, swapper);
+    }
+
+    /**
+     * @dev Assigns a new address to the admin role.
+     * @param admin The admin address.
+     */
+    function setAdminRole(address admin) public onlyOwner {
+        _grantRole(ADMIN_ROLE, admin);
+    }
+
+    /**
      * @dev Retrieves the handler for a given token.
      * @param token The address of the token.
      * @return The address of the TokenHandler. If address(0) is returned, the token is not accepted by the dApp.
      */
     function getTokenHandler(address token) public view returns (address) {
-        return s_tokenHandlers[token];
+        return s_tokenHandler[token];
     }
+
+    /**
+     * @dev Retrieves the swapper for a given token.
+     * @param token The address of the token.
+     * @return The swapper address for the given token. If address(0) is returned, the token has no assigned swapper.
+     */
+    // function getSwapper(address token) public view returns (address) {
+    //     return s_swapper[token];
+    // }
 
     /**
      * @dev Checks if a given address has a smart contract

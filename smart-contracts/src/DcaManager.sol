@@ -6,7 +6,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {AdminOperations} from "./AdminOperations.sol";
-import {console} from "forge-std/Test.sol";
 
 /**
  * @title DCA Manager
@@ -41,6 +40,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier onlySwapper() {
+        if (!s_adminOperations.hasRole(s_adminOperations.SWAPPER_ROLE(), msg.sender)) {
+            revert DcaManager__UnauthorizedSwapper(msg.sender);
+        }
+        _;
+    }
+
     //////////////////////
     // Functions /////////
     //////////////////////
@@ -51,11 +57,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     constructor(address adminOperationsAddress) Ownable(msg.sender) {
         s_adminOperations = AdminOperations(adminOperationsAddress);
-    }
-
-    fallback() external {
-        console.log("Fallback called");
-        revert("Call failed");
     }
 
     /**
@@ -236,7 +237,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         external
         override
         nonReentrant
-        onlyOwner
+        // onlyOwner
+        onlySwapper
     {
         (uint256 purchaseAmount, uint256 purchasePeriod) =
             _rBtcPurchaseChecksEffects(buyer, token, scheduleIndex, scheduleId);
@@ -259,7 +261,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
         uint256[] memory purchasePeriods
-    ) external override nonReentrant onlyOwner {
+    ) external override nonReentrant /*onlyOwner*/ onlySwapper {
         uint256 numOfPurchases = buyers.length;
         if (numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
         if (
@@ -309,8 +311,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice update the token handler factory contract
-     * @param adminOperationsAddress: the address of token handler factory
+     * @notice update the admin operations contract
+     * @param adminOperationsAddress: the address of admin operations
      */
     function setAdminOperations(address adminOperationsAddress) external override onlyOwner {
         s_adminOperations = AdminOperations(adminOperationsAddress);

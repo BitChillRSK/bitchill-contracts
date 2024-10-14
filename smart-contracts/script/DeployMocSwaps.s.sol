@@ -38,8 +38,10 @@ contract DeployMocSwaps is Script {
 
         // For local tests:
         if (block.chainid == 31337) {
-            dcaManager.transferOwnership(OWNER); // Only for tests!!!
+            adminOperations.setAdminRole(OWNER); // Only for tests!!!
+            adminOperations.setSwapperRole(OWNER); // Only for tests!!!
             adminOperations.transferOwnership(OWNER); // Only for tests!!!
+            dcaManager.transferOwnership(OWNER); // Only for tests!!!
             docTokenHandler.transferOwnership(OWNER); // Only for tests!!!
         }
 
