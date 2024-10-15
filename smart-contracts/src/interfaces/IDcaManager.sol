@@ -183,6 +183,14 @@ interface IDcaManager {
     function withdrawInterestFromTokenHandler(address token) external;
 
     /**
+     * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
+     * @param token The token address of the stablecoin to deposit.
+     * @param scheduleIndex The index of the DCA schedule
+     * @param withdrawalAmount The amount of the stablecoin to withdraw.
+     */
+    function withdrawTokenAndInterest(address token, uint256 scheduleIndex, uint256 withdrawalAmount) external;
+
+    /**
      * @notice Withdraw the rBtc accumulated by a user through all the DCA strategies created using a given stablecoin
      * @param token The token address of the stablecoin
      */

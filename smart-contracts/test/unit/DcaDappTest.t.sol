@@ -33,6 +33,8 @@ contract DcaDappTest is Test {
 
     address USER = makeAddr(USER_STRING);
     address OWNER = makeAddr(OWNER_STRING);
+    address ADMIN = makeAddr(ADMIN_STRING);
+    address SWAPPER = makeAddr(SWAPPER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
     uint256 constant USER_TOTAL_DOC = 10_000 ether; // 10000 DOC owned by the user in total
@@ -109,13 +111,19 @@ contract DcaDappTest is Test {
             mockMocProxy = MockMocProxy(mocProxyAddress);
             mockKdocToken = MockKdocToken(kDocTokenAddress);
 
+            vm.prank(OWNER);
+            adminOperations.setAdminRole(ADMIN);
+            vm.prank(ADMIN);
+            adminOperations.setSwapperRole(SWAPPER);
+
             // FeeCalculator helper test contract
             feeCalculator = new FeeCalculator();
 
             // Add tokenHandler
             vm.expectEmit(true, true, false, false);
             emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandler));
-            vm.prank(OWNER);
+            // vm.prank(OWNER);
+            vm.prank(ADMIN);
             adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
 
             // Deal rBTC funds to MoC contract and user
@@ -234,10 +242,12 @@ contract DcaDappTest is Test {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        bytes32 scheduleId = keccak256(
+            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
+        );
         vm.expectEmit(true, true, true, false);
         emit TokenHandler__TokenDeposited(address(mockDocToken), USER, DOC_TO_DEPOSIT);
         vm.expectEmit(true, true, true, false);
-        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
         emit DcaManager__TokenBalanceUpdated(address(mockDocToken), scheduleId, 2 * DOC_TO_DEPOSIT); // 2 *, since a previous deposit is made in the setup
         dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
         uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
@@ -262,7 +272,9 @@ contract DcaDappTest is Test {
         uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
         // Delete the schedule created in setUp to have all five schedules with the same amounts
-        bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+        bytes32 scheduleId = keccak256(
+            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
+        );
         dcaManager.deleteDcaSchedule(address(mockDocToken), 0, scheduleId);
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
@@ -273,7 +285,10 @@ contract DcaDappTest is Test {
             } else {
                 userBalanceBeforeDeposit = 0;
             }
-            scheduleId = keccak256(abi.encodePacked(USER, block.timestamp));
+            scheduleId = keccak256(
+                abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
+            );
+            // console.log("scheduleId is", vm.toString(scheduleId));
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
                 USER, address(mockDocToken), scheduleId, docToDeposit, purchaseAmount, purchasePeriod
@@ -305,7 +320,8 @@ contract DcaDappTest is Test {
             dcaDetails[SCHEDULE_INDEX].scheduleId,
             netPurchaseAmount
         );
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(SWAPPER);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         vm.startPrank(USER);
@@ -339,7 +355,8 @@ contract DcaDappTest is Test {
                 uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
                 bytes32 scheduleId = dcaManager.getScheduleId(address(mockDocToken), scheduleIndex);
                 vm.stopPrank();
-                vm.prank(OWNER);
+                // vm.prank(OWNER);
+                vm.prank(SWAPPER);
                 dcaManager.buyRbtc(USER, address(mockDocToken), scheduleIndex, scheduleId);
                 vm.startPrank(USER);
                 uint256 docBalanceAfterPurchase =
@@ -404,7 +421,8 @@ contract DcaDappTest is Test {
         emit TokenHandler__SuccessfulRbtcBatchPurchase(
             address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount
         );
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
             users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
         );
@@ -420,7 +438,8 @@ contract DcaDappTest is Test {
         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
 
         vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
             users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
         );

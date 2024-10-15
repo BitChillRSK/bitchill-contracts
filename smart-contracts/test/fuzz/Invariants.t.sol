@@ -32,6 +32,8 @@ contract InvariantTest is StdInvariant, Test {
     address[] public s_users;
     // address USER = makeAddr("user");
     address OWNER = makeAddr(OWNER_STRING);
+    address ADMIN = makeAddr(ADMIN_STRING);
+    address SWAPPER = makeAddr(SWAPPER_STRING);
     uint256 constant USER_TOTAL_DOC = 1_000_000 ether; // 1 million DOC owned by each user in total
     uint256 constant INITIAL_DOC_DEPOSIT = 1000 ether;
     uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
@@ -50,8 +52,14 @@ contract InvariantTest is StdInvariant, Test {
         mockDocToken = MockDocToken(docTokenAddress);
         mockKdocToken = MockKdocToken(kDocTokenAddress);
 
-        // Assign DOC token handler
         vm.prank(OWNER);
+        adminOperations.setAdminRole(ADMIN);
+        vm.prank(ADMIN);
+        adminOperations.setSwapperRole(SWAPPER);
+
+        // Assign DOC token handler
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
 
         // Initialize users and distribute 10000 DOC tokens

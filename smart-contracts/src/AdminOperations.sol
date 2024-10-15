@@ -62,7 +62,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      * @dev Assigns a new address to the swapper role.
      * @param swapper The swapper address.
      */
-    function setSwapperRole(address swapper) public onlyOwner {
+    function setSwapperRole(address swapper) external onlyRole(ADMIN_ROLE) {
         _grantRole(SWAPPER_ROLE, swapper);
     }
 
@@ -70,7 +70,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      * @dev Assigns a new address to the admin role.
      * @param admin The admin address.
      */
-    function setAdminRole(address admin) public onlyOwner {
+    function setAdminRole(address admin) external onlyOwner {
         _grantRole(ADMIN_ROLE, admin);
     }
 

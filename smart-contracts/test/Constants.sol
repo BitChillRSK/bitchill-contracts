@@ -6,6 +6,8 @@ pragma solidity ^0.8.24;
 
 string constant OWNER_STRING = "owner";
 string constant USER_STRING = "user";
+string constant ADMIN_STRING = "ADMIN";
+string constant SWAPPER_STRING = "SWAPPER";
 string constant FEE_COLLECTOR_STRING = "feeCollector";
 uint256 constant MIN_FEE_RATE = 100;
 uint256 constant MAX_FEE_RATE = 200;

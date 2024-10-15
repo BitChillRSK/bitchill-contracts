@@ -27,11 +27,13 @@ contract AdminOperationsTest is DcaDappTest {
         );
 
         vm.expectRevert(encodedRevert);
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(dummyERC165Contract));
 
         vm.expectRevert();
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(dcaManager));
     }
 
@@ -40,7 +42,8 @@ contract AdminOperationsTest is DcaDappTest {
         bytes memory encodedRevert =
             abi.encodeWithSelector(IAdminOperations.AdminOperations__EoaCannotBeHandler.selector, dummyAddress);
         vm.expectRevert(encodedRevert);
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), dummyAddress);
     }
 
@@ -62,7 +65,8 @@ contract AdminOperationsTest is DcaDappTest {
         );
         vm.stopBroadcast();
         assert(prevDocTokenHandler != address(newDocTokenHandler));
-        vm.prank(OWNER);
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(newDocTokenHandler));
         assertEq(adminOperations.getTokenHandler(address(mockDocToken)), address(newDocTokenHandler));
     }

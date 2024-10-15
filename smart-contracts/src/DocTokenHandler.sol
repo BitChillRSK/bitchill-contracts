@@ -93,7 +93,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
      * @param withdrawalAmount: the amount to withdraw
      */
     function withdrawToken(address user, uint256 withdrawalAmount) public override onlyDcaManager {
-        uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
+        uint256 docInTropykus = _kdocToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
         if (docInTropykus < withdrawalAmount) {
             revert DocTokenHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
         }
@@ -206,7 +206,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_kDocToken.exchangeRateStored();
-        uint256 totalDocInLending = s_kDocBalances[user] * exchangeRate / EXCHANGE_RATE_DECIMALS;
+        uint256 totalDocInLending = _kdocToDoc(s_kDocBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         uint256 kDocToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
         // _redeemDoc(user, docInterestAmount);
@@ -228,7 +228,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
-        uint256 totalDocInLending = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
+        uint256 totalDocInLending = _kdocToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
         docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
@@ -278,7 +278,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         // } // NO SÉ SI ESTO TIENE MUCHO SENTIDO
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = docToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate;
+        uint256 kDocToRepay = _docToKdoc(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
             revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
         }
@@ -295,8 +295,7 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         if (totalDocToRedeem > underlyingAmount) {
             revert DocTokenHandler__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
-        uint256 totalKdocToRepay = totalDocToRedeem * EXCHANGE_RATE_DECIMALS / exchangeRate;
+        uint256 totalKdocToRepay = _docToKdoc(totalDocToRedeem, i_kDocToken.exchangeRateStored());
 
         // TODO: delete this commented code after further testing (we realised this could be done following CEI)
         // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
@@ -330,5 +329,13 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         uint256 result = i_kDocToken.redeemUnderlying(totalDocToRedeem);
         if (result == 0) emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
         else revert DocTokenHandler__BatchRedeemDocFailed();
+    }
+
+    function _docToKdoc(uint256 docAmount, uint256 exchangeRate) internal pure returns (uint256 kDocAmount) {
+        kDocAmount = docAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
+    }
+
+    function _kdocToDoc(uint256 kDocAmount, uint256 exchangeRate) internal pure returns (uint256 docAmount) {
+        docAmount = kDocAmount * exchangeRate / EXCHANGE_RATE_DECIMALS;
     }
 }

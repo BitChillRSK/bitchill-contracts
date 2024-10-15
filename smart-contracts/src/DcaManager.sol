@@ -122,7 +122,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _validateDeposit(token, depositAmount);
         _handler(token).depositToken(msg.sender, depositAmount);
 
-        bytes32 scheduleId = keccak256(abi.encodePacked(msg.sender, block.timestamp));
+        bytes32 scheduleId =
+            keccak256(abi.encodePacked(msg.sender, block.timestamp, s_dcaSchedules[msg.sender][token].length));
 
         DcaDetails memory dcaSchedule = DcaDetails(
             depositAmount,
@@ -189,27 +190,32 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         nonReentrant
         validateIndex(token, scheduleIndex)
     {
-        DcaDetails memory schedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
 
-        if (scheduleId != schedule.scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
+        // Check the scheduleId matches before proceeding
+        if (scheduleId != schedules[scheduleIndex].scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
+
+        // Store the balance and scheduleId before modifying the array
+        uint256 tokenBalance = schedules[scheduleIndex].tokenBalance;
+        bytes32 storedScheduleId = schedules[scheduleIndex].scheduleId;
 
         // Remove the schedule
-        uint256 lastIndex = s_dcaSchedules[msg.sender][token].length - 1;
+        uint256 lastIndex = schedules.length - 1;
         if (scheduleIndex != lastIndex) {
             // Overwrite the schedule getting deleted with the one in the last index
-            s_dcaSchedules[msg.sender][token][scheduleIndex] = s_dcaSchedules[msg.sender][token][lastIndex];
+            schedules[scheduleIndex] = schedules[lastIndex];
         }
         // Remove the last schedule
-        s_dcaSchedules[msg.sender][token].pop();
+        schedules.pop();
 
         // Withdraw all balance
-        _handler(token).withdrawToken(msg.sender, schedule.tokenBalance);
+        _handler(token).withdrawToken(msg.sender, tokenBalance);
 
-        emit DcaManager__DcaScheduleDeleted(msg.sender, token, schedule.scheduleId, schedule.tokenBalance);
+        emit DcaManager__DcaScheduleDeleted(msg.sender, token, storedScheduleId, tokenBalance);
     }
 
     /**
-     * @notice withdraw amount for DCA on the contract
+     * @notice withdraw amount for DCA from the contract
      * @param token: the token to withdraw
      * @param withdrawalAmount: the amount to withdraw
      */
@@ -218,19 +224,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         override
         nonReentrant
     {
-        if (withdrawalAmount <= 0) revert DcaManager__WithdrawalAmountMustBeGreaterThanZero();
-        uint256 tokenBalance = s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
-        if (withdrawalAmount > tokenBalance) {
-            revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);
-        }
-        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
-        dcaSchedule.tokenBalance -= withdrawalAmount;
-        // s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
-        _handler(token).withdrawToken(msg.sender, withdrawalAmount);
-        emit DcaManager__TokenWithdrawn(msg.sender, token, withdrawalAmount);
-        emit DcaManager__TokenBalanceUpdated(
-            token, dcaSchedule.scheduleId, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
-        );
+        _withdrawToken(token, scheduleIndex, withdrawalAmount);
     }
 
     function buyRbtc(address buyer, address token, uint256 scheduleIndex, bytes32 scheduleId)
@@ -296,18 +290,25 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
+     * @notice withdraw amount for DCA from the contract, as well as the yield generated across all DCA schedules
+     * @param token: the token of which to withdraw the specified amount and yield
+     * @param withdrawalAmount: the amount to withdraw
+     */
+    function withdrawTokenAndInterest(address token, uint256 scheduleIndex, uint256 withdrawalAmount)
+        external
+        override
+        nonReentrant
+    {
+        _withdrawToken(token, scheduleIndex, withdrawalAmount);
+        _withdrawInterest(token);
+    }
+
+    /**
      * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
      * @param token The address of the token to withdraw
      */
     function withdrawInterestFromTokenHandler(address token) external override nonReentrant {
-        ITokenHandler tokenHandler = _handler(token);
-        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
-        uint256 lockedTokenAmount;
-        DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
-        for (uint256 i; i < dcaSchedules.length; ++i) {
-            lockedTokenAmount += dcaSchedules[i].tokenBalance;
-        }
-        tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
+        _withdrawInterest(token);
     }
 
     /**
@@ -400,6 +401,33 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         dcaSchedule.lastPurchaseTimestamp = block.timestamp;
 
         return (dcaSchedule.purchaseAmount, purchasePeriod);
+    }
+
+    function _withdrawToken(address token, uint256 scheduleIndex, uint256 withdrawalAmount) internal {
+        if (withdrawalAmount <= 0) revert DcaManager__WithdrawalAmountMustBeGreaterThanZero();
+        uint256 tokenBalance = s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
+        if (withdrawalAmount > tokenBalance) {
+            revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);
+        }
+        DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        dcaSchedule.tokenBalance -= withdrawalAmount;
+        // s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance -= withdrawalAmount;
+        _handler(token).withdrawToken(msg.sender, withdrawalAmount);
+        emit DcaManager__TokenWithdrawn(msg.sender, token, withdrawalAmount);
+        emit DcaManager__TokenBalanceUpdated(
+            token, dcaSchedule.scheduleId, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
+        );
+    }
+
+    function _withdrawInterest(address token) internal {
+        ITokenHandler tokenHandler = _handler(token);
+        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
+        uint256 lockedTokenAmount;
+        DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
+        for (uint256 i; i < dcaSchedules.length; ++i) {
+            lockedTokenAmount += dcaSchedules[i].tokenBalance;
+        }
+        tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
     }
 
     // function _isTokenDeposited(address token) internal view returns (bool) {
