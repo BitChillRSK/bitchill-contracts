@@ -9,6 +9,7 @@ string constant USER_STRING = "user";
 string constant ADMIN_STRING = "ADMIN";
 string constant SWAPPER_STRING = "SWAPPER";
 string constant FEE_COLLECTOR_STRING = "feeCollector";
+uint256 constant MIN_PURCHASE_AMOUNT = 25 ether; // at least 25 DOC on each purchase
 uint256 constant MIN_FEE_RATE = 100;
 uint256 constant MAX_FEE_RATE = 200;
 uint256 constant MIN_ANNUAL_AMOUNT = 1000 ether; // 1000 DOC

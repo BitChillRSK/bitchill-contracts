@@ -6,13 +6,13 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import "../Constants.sol";
 
 contract DcaConfigurationTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     ///////////////////////////////
     /// DCA configuration tests ///
     ///////////////////////////////
@@ -38,8 +38,7 @@ contract DcaConfigurationTest is DcaDappTest {
 
     function testPurchaseAmountMustBeGreaterThanMin() external {
         bytes memory encodedRevert = abi.encodeWithSelector(
-            IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanMinimum.selector,
-            address(mockDocToken)
+            IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanMinimum.selector, address(mockDocToken)
         );
         vm.expectRevert(encodedRevert);
         vm.prank(USER);

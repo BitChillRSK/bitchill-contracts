@@ -178,26 +178,26 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             msg.sender, token, dcaSchedule.scheduleId, depositAmount, purchaseAmount, purchasePeriod
         );
     }
-    /**
-     * @dev function to delete a DCA schedule: cancels DCA and retrieves the funds
-     * @param token the token used for DCA in the schedule to be deleted
-     * @param scheduleIndex the index of the schedule
-     */
 
-    function deleteDcaSchedule(address token, uint256 scheduleIndex, bytes32 scheduleId)
-        external
-        override
-        nonReentrant
-        validateIndex(token, scheduleIndex)
-    {
+    function deleteDcaSchedule(address token, bytes32 scheduleId) external nonReentrant {
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
 
-        // Check the scheduleId matches before proceeding
-        if (scheduleId != schedules[scheduleIndex].scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
+        uint256 scheduleIndex;
+        bool found = false;
+
+        // Find the schedule by scheduleId
+        for (uint256 i = 0; i < schedules.length; i++) {
+            if (schedules[i].scheduleId == scheduleId) {
+                scheduleIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) revert DcaManager__InexistentScheduleId();
 
         // Store the balance and scheduleId before modifying the array
         uint256 tokenBalance = schedules[scheduleIndex].tokenBalance;
-        bytes32 storedScheduleId = schedules[scheduleIndex].scheduleId;
 
         // Remove the schedule
         uint256 lastIndex = schedules.length - 1;
@@ -211,7 +211,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         // Withdraw all balance
         _handler(token).withdrawToken(msg.sender, tokenBalance);
 
-        emit DcaManager__DcaScheduleDeleted(msg.sender, token, storedScheduleId, tokenBalance);
+        // Emit event
+        emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleId, tokenBalance);
     }
 
     /**

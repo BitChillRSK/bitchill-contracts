@@ -63,6 +63,7 @@ interface IDcaManager {
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
     error DcaManager__InexistentScheduleIndex();
+    error DcaManager__InexistentScheduleId();
     error DcaManager__ScheduleIdAndIndexMismatch();
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
     error DcaManager__BatchPurchaseArraysLengthMismatch();
@@ -122,10 +123,9 @@ interface IDcaManager {
     /**
      * @dev function to delete a DCA schedule: cancels DCA and retrieves the funds
      * @param token the token used for DCA in the schedule to be deleted
-     * @param scheduleIndex the unique identifier of the schedule to be deleted
      * @param scheduleId the unique identifier of the schedule to be deleted
      */
-    function deleteDcaSchedule(address token, uint256 scheduleIndex, bytes32 scheduleId) external;
+    function deleteDcaSchedule(address token, bytes32 scheduleId) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract.

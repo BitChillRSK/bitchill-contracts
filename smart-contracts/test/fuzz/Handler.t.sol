@@ -20,7 +20,6 @@ contract Handler is Test {
     // MockMocProxy public mockMocProxy;
     uint256 constant USER_TOTAL_DOC = 1_000_000 ether; // 1 million DOC owned by each user in total
     uint256 constant MAX_DEPOSIT_AMOUNT = 10_000 ether; // at most 10.000 DOC per deposit
-    uint256 constant MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC in each periodic purchase
     uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at least one purchase every 10 years
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     address OWNER = makeAddr(OWNER_STRING);
@@ -212,7 +211,7 @@ contract Handler is Test {
             return;
         }
         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleIndex, usersSchedules[scheduleIndex].scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), usersSchedules[scheduleIndex].scheduleId);
         vm.stopPrank();
     }
 

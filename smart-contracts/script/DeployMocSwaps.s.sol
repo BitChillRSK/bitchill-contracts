@@ -12,7 +12,6 @@ import "../test/Constants.sol";
 contract DeployMocSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
-    uint256 MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
 
     function run() external returns (AdminOperations, DocTokenHandler, DcaManager, MocHelperConfig) {
         MocHelperConfig helperConfig = new MocHelperConfig();

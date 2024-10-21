@@ -100,7 +100,7 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log("scheduleId2 is", vm.toString(scheduleId2));
         // Delete one
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         // Check that there are two (the one created in setUp() and the second one created in this test)
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 2);
         // Check that the deleted one was the first one created in this test and its place was taken by the second one
@@ -126,21 +126,28 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId 2 is", vm.toString(scheduleId2));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(mockDocToken))[2].scheduleId));
         // Delete one
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         // Delete the second one passing the same index, since the first one was already deleted
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId2);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId2);
         // Check only the schedule created in setUp() remains
         assertEq(dcaManager.getMyDcaSchedules(address(mockDocToken)).length, 1);
-        // dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        // dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         vm.stopPrank();
     }
 
+    /**
+     * @notice This was just a test to compare options in terms of gas consumptio
+     */
     function testDeleteSeveraldcaSchedules() external {
         super.createSeveralDcaSchedules();
         vm.startPrank(USER);
-        for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
-            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, NUM_OF_SCHEDULES - 1 - i));
-            dcaManager.deleteDcaSchedule(address(mockDocToken), NUM_OF_SCHEDULES - 1 - i, scheduleId);
+        // for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
+        //     bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, NUM_OF_SCHEDULES - 1 - i));
+        //     dcaManager.deleteDcaSchedule(address(mockDocToken), NUM_OF_SCHEDULES - 1 - i, scheduleId);
+        // }
+        for (uint256 i = NUM_OF_SCHEDULES; i > 0; --i) {
+            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, i - 1));
+            dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         }
         vm.stopPrank();
     }
@@ -167,10 +174,9 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId 2 is", vm.toString(scheduleId2));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(mockDocToken))[2].scheduleId));
         // Delete one
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         // Deleting the second one fails, because when the first one was deleted, the second one was moved to its index
-        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 2, scheduleId2);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId2);
         vm.stopPrank();
     }
 
@@ -231,19 +237,19 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testCannotDeleteInexistentSchedule() external {
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
+            abi.encodePacked(USER, block.timestamp + 1, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleId.selector);
         vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 1, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
     }
 
-    function testScheduleIndexAndIdMismatchReverts() external {
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
-        );
-        vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
-        vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 0, scheduleId);
-    }
+    // function testScheduleIndexAndIdMismatchReverts() external {
+    //     bytes32 scheduleId = keccak256(
+    //         abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
+    //     );
+    //     vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
+    //     vm.prank(USER);
+    //     dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
+    // }
 }

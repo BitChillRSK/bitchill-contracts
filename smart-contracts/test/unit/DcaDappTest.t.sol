@@ -37,10 +37,9 @@ contract DcaDappTest is Test {
     address SWAPPER = makeAddr(SWAPPER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
-    uint256 constant USER_TOTAL_DOC = 10_000 ether; // 10000 DOC owned by the user in total
-    uint256 constant DOC_TO_DEPOSIT = 1000 ether; // 1000 DOC
-    uint256 constant DOC_TO_SPEND = 100 ether; // 100 DOC for periodical purchases
-    uint256 constant MIN_PURCHASE_AMOUNT = 10 ether; // at least 10 DOC on each purchase
+    uint256 constant USER_TOTAL_DOC = 20_000 ether; // 20000 DOC owned by the user in total
+    uint256 constant DOC_TO_DEPOSIT = 2000 ether; // 2000 DOC
+    uint256 constant DOC_TO_SPEND = 200 ether; // 200 DOC for periodical purchases
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant NUM_OF_SCHEDULES = 5;
@@ -275,7 +274,7 @@ contract DcaDappTest is Test {
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
         );
-        dcaManager.deleteDcaSchedule(address(mockDocToken), 0, scheduleId);
+        dcaManager.deleteDcaSchedule(address(mockDocToken), scheduleId);
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
