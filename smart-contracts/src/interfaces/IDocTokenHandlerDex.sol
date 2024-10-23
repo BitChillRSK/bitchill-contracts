@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.24;
 
 // import {ITokenHandler} from "./ITokenHandler.sol";
+import {IWRBTC} from "./IWRBTC.sol";
+import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+import {ICoinPairPrice} from "./ICoinPairPrice.sol";
 
 /**
  * @title IDocTokenHandlerDex
@@ -9,6 +12,17 @@ pragma solidity 0.8.24;
  * @dev Interface for the DocTokenHandlerDex contract.
  */
 interface IDocTokenHandlerDex { /* is ITokenHandler */
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
+    struct UniswapSettings {
+        IWRBTC wrBtcToken;
+        ISwapRouter02 swapRouter02;
+        address[] swapIntermediateTokens;
+        uint24[] swapPoolFeeRates;
+        ICoinPairPrice mocOracle;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/

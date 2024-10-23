@@ -5,10 +5,10 @@ import {Script} from "forge-std/Script.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {DocTokenHandler} from "../src/DocTokenHandler.sol";
-import {DocTokenHandlerDex} from "../src/DocTokenHandlerDex.sol";
 import {IWRBTC} from "../src//interfaces/IWRBTC.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
-import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
+import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
+import {ITokenHandler} from "../src/interfaces/ITokenHandler.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
@@ -31,28 +31,12 @@ contract DeployMocSwaps is Script {
             MIN_PURCHASE_AMOUNT,
             FEE_COLLECTOR,
             mocProxy,
-            MIN_FEE_RATE,
-            MAX_FEE_RATE,
-            MIN_ANNUAL_AMOUNT,
-            MAX_ANNUAL_AMOUNT,
-            DOC_YIELDS_INTEREST
-        );
-
-        DocTokenHandlerDex docTokenHandlerDex = new DocTokenHandlerDex(
-            address(dcaManager),
-            docToken,
-            kDocToken,
-            wrBtcToken,
-            swapRouter02,
-            swapIntermediateTokens,
-            swapPoolFeeRates,
-            ICoinPairPrice(mocOracle),
-            FEE_COLLECTOR,
-            MIN_PURCHASE_AMOUNT,
-            MIN_FEE_RATE,
-            MAX_FEE_RATE,
-            MIN_ANNUAL_AMOUNT,
-            MAX_ANNUAL_AMOUNT,
+            ITokenHandler.FeeSettings({
+                minFeeRate: MIN_FEE_RATE,
+                maxFeeRate: MAX_FEE_RATE,
+                minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                maxAnnualAmount: MAX_ANNUAL_AMOUNT
+            }),
             DOC_YIELDS_INTEREST
         );
 

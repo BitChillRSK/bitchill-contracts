@@ -57,10 +57,12 @@ contract AdminOperationsTest is DcaDappTest {
             MIN_PURCHASE_AMOUNT,
             address(mockMocProxy),
             FEE_COLLECTOR,
-            MIN_FEE_RATE,
-            MAX_FEE_RATE,
-            MIN_ANNUAL_AMOUNT,
-            MAX_ANNUAL_AMOUNT,
+            ITokenHandler.FeeSettings({
+                minFeeRate: MIN_FEE_RATE,
+                maxFeeRate: MAX_FEE_RATE,
+                minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                maxAnnualAmount: MAX_ANNUAL_AMOUNT
+            }),
             DOC_YIELDS_INTEREST
         );
         vm.stopBroadcast();

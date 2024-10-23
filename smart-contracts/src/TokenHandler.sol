@@ -44,21 +44,17 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         address tokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        uint256 minFeeRate,
-        uint256 maxFeeRate,
-        uint256 minAnnualAmount,
-        uint256 maxAnnualAmount,
+        FeeSettings memory feeSettings,
         bool yieldsInterest
     ) {
         i_dcaManager = dcaManagerAddress;
         i_stableToken = tokenAddress;
         s_minPurchaseAmount = minPurchaseAmount;
         s_feeCollector = feeCollector;
-        s_minFeeRate = minFeeRate;
-        s_feeCollector = feeCollector;
-        s_maxFeeRate = maxFeeRate;
-        s_minAnnualAmount = minAnnualAmount;
-        s_maxAnnualAmount = maxAnnualAmount;
+        s_minFeeRate = feeSettings.minFeeRate;
+        s_maxFeeRate = feeSettings.maxFeeRate;
+        s_minAnnualAmount = feeSettings.minAnnualAmount;
+        s_maxAnnualAmount = feeSettings.maxAnnualAmount;
         i_yieldsInterest = yieldsInterest;
     }
 

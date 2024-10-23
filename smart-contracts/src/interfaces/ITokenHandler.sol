@@ -7,6 +7,16 @@ pragma solidity 0.8.24;
  * @dev Interface for the TokenHandler contract.
  */
 interface ITokenHandler {
+    ////////////////////////
+    // Type declarations ///
+    ////////////////////////
+    struct FeeSettings {
+        uint256 minFeeRate; // the lowest possible fee
+        uint256 maxFeeRate; // the highest possible fee
+        uint256 minAnnualAmount; // the annual amount below which max fee is applied
+        uint256 maxAnnualAmount; // the annual amount above which min fee is applied
+    }
+
     //////////////////////
     // Events ////////////
     //////////////////////
