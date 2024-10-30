@@ -4,12 +4,11 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {IDcaManager} from "../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../src/interfaces/ITokenHandler.sol";
-import {IDocTokenHandler} from "../src/interfaces/IDocTokenHandler.sol";
+import {IDocHandlerMoc} from "../src/interfaces/IDocHandlerMoc.sol";
 import {IAdminOperations} from "../src/interfaces/IAdminOperations.sol";
 import {console} from "forge-std/Test.sol";
 
 contract ErrorLogger is Script {
-
     function run() external {
         // Array of all error selectors in the IDcaManager interface
         bytes4[] memory errorSelectors = new bytes4[](14);

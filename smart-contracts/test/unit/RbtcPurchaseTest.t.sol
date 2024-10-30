@@ -23,7 +23,7 @@ contract RbtcPurchaseTest is DcaDappTest {
 
     function testCannotBuyIfPeriodNotElapsed() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT);
         dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_SPEND);
         dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         // bytes32 scheduleId = dcaManager.getScheduleId(address(mockDocToken), SCHEDULE_INDEX);
@@ -63,7 +63,7 @@ contract RbtcPurchaseTest is DcaDappTest {
             vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         vm.prank(USER);
-        assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+        assertEq(docHandlerMoc.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
     }
 
     function testRevertPurchasetIfDocRunsOut() external {
@@ -95,7 +95,7 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testOnlySwapperCanCallDcaManagerToPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceBeforePurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         // bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
         bytes memory encodedRevert = abi.encodeWithSelector(IDcaManager.DcaManager__UnauthorizedSwapper.selector, USER);
         bytes32 scheduleId = keccak256(
@@ -104,7 +104,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceAfterPurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
@@ -114,14 +114,14 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testOnlyDcaManagerCanPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceBeforePurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
         );
         vm.expectRevert(ITokenHandler.TokenHandler__OnlyDcaManagerCanCall.selector);
-        docTokenHandler.buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT, MIN_PURCHASE_PERIOD);
+        docHandlerMoc.buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT, MIN_PURCHASE_PERIOD);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceAfterPurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
@@ -164,7 +164,7 @@ contract RbtcPurchaseTest is DcaDappTest {
 
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceBeforePurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         vm.stopPrank();
 
         vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
@@ -174,7 +174,7 @@ contract RbtcPurchaseTest is DcaDappTest {
 
         vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceAfterPurchase = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceAfterPurchase = docHandlerMoc.getAccumulatedRbtcBalance();
         vm.stopPrank();
 
         // Check that there are no changes in balances
@@ -189,9 +189,9 @@ contract RbtcPurchaseTest is DcaDappTest {
             abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
 
-        uint256 prevDocTokenHandlerBalance = address(docTokenHandler).balance;
+        uint256 prevDocHandlerMocBalance = address(docHandlerMoc).balance;
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPrev = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPrev = docHandlerMoc.getAccumulatedRbtcBalance();
         // vm.prank(OWNER);
         // address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
         // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(mockDocToken)).length;
@@ -228,13 +228,13 @@ contract RbtcPurchaseTest is DcaDappTest {
             users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
         );
 
-        uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
+        uint256 postDocHandlerMocBalance = address(docHandlerMoc).balance;
 
         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
-        assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, 0);
+        assertEq(postDocHandlerMocBalance - prevDocHandlerMocBalance, 0);
 
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPost = docTokenHandler.getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPost = docHandlerMoc.getAccumulatedRbtcBalance();
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, 0);
     }

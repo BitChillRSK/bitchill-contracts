@@ -6,8 +6,8 @@ import {Test, console} from "forge-std/Test.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {DcaManager} from "src/DcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
-import {DocTokenHandler} from "src/DocTokenHandler.sol";
-// import {DocTokenHandlerDex} from "../../src/DocTokenHandlerDex.sol";
+import {DocHandlerMoc} from "src/DocHandlerMoc.sol";
+// import {DocHandlerMocDex} from "../../src/DocHandlerMocDex.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
@@ -20,8 +20,8 @@ import "../Constants.sol";
 contract InvariantTest is StdInvariant, Test {
     DcaManager dcaManager;
     AdminOperations adminOperations;
-    DocTokenHandler docTokenHandler;
-    // DocTokenHandlerDex docTokenHandlerDex;
+    DocHandlerMoc docHandlerMoc;
+    // DocHandlerMocDex docHandlerMocDex;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
     MockMocProxy mockMocProxy;
@@ -44,7 +44,7 @@ contract InvariantTest is StdInvariant, Test {
     function setUp() external {
         setUpTimestamp = block.timestamp;
         deployer = new DeployMocSwaps();
-        (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployer.run();
+        (adminOperations, docHandlerMoc, dcaManager, helperConfig) = deployer.run();
 
         (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
             helperConfig.activeNetworkConfig();
@@ -60,7 +60,7 @@ contract InvariantTest is StdInvariant, Test {
         // Assign DOC token handler
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
+        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docHandlerMoc));
 
         // Initialize users and distribute 10000 DOC tokens
         for (uint256 i = 0; i < NUM_USERS; i++) {
@@ -80,17 +80,17 @@ contract InvariantTest is StdInvariant, Test {
         // Deal rBTC to MoC proxy contract
         vm.deal(mocProxyAddress, MOC_START_RBTC_BALANCE);
 
-        // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour -> check that such approval is not necessary in production)
-        vm.prank(address(docTokenHandler));
+        // Give the MoC proxy contract allowance to move DOC from docHandlerMoc (this is mocking behaviour -> check that such approval is not necessary in production)
+        vm.prank(address(docHandlerMoc));
         mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
         // Deploy the invariant tests handler contract and set it as target contract for the tests
-        handler = new Handler(adminOperations, docTokenHandler, dcaManager, mockDocToken, s_users);
+        handler = new Handler(adminOperations, docHandlerMoc, dcaManager, mockDocToken, s_users);
         targetContract(address(handler));
 
         // vm.startPrank(USER);
         // // Here we make the starting point of the invariant tests that the user has created a DCA schedule depositing 1000 DOC to spend 100 DOC every week
-        // mockDocToken.approve(address(docTokenHandler), USER_TOTAL_DOC);
+        // mockDocToken.approve(address(docHandlerMoc), USER_TOTAL_DOC);
         // dcaManager.createOrUpdateDcaSchedule(docTokenAddress, 0, INITIAL_DOC_DEPOSIT, INITIAL_PURCHASE_AMOUNT, INITIAL_PURCHASE_PERIOD);
         // vm.stopPrank();
 
@@ -115,7 +115,7 @@ contract InvariantTest is StdInvariant, Test {
             vm.stopPrank();
         }
         // DOC deposited in Bitchill is immediately lent in Tropykus
-        assertEq(mockDocToken.balanceOf(address(docTokenHandler)), 0); // No DOC in DocTokenHandler
+        assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in DocHandlerMoc
 
         // Update the amount of DOC in the mock kDOC contract according to the interest that has been generated
         uint256 interestFactor = 1e18 + (block.timestamp - setUpTimestamp) * 5 * 1e18 / (100 * 31536000); // 1 + timeInYears * yearlyIncrease
@@ -127,7 +127,7 @@ contract InvariantTest is StdInvariant, Test {
         // kDOC to DOC correspondence holds
         uint256 sumOfUsersKdoc;
         for (uint256 i; i < users.length; ++i) {
-            sumOfUsersKdoc += docTokenHandler.getUsersKdocBalance(users[i]);
+            sumOfUsersKdoc += docHandlerMoc.getUsersKdocBalance(users[i]);
         }
 
         console.log("Interest Factor: ", interestFactor);
@@ -144,28 +144,28 @@ contract InvariantTest is StdInvariant, Test {
             sumOfUsersDepositedDoc
         );
         // console.log("Sum of users' DOC balances:", DepositedDoc);
-        // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docTokenHandler)));
+        // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docHandlerMoc)));
     }
 
-    function invariant_DocTokenHandlerRbtcBalanceNearlyEqualsSumOfAllUsers() public {
+    function invariant_DocHandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {
         // get the contract's rBTC balance and compare it to the sum of all users' balances
         vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();
         uint256 sumOfUsersBalances;
         for (uint256 i = 0; i < users.length; i++) {
             vm.prank(users[i]);
-            sumOfUsersBalances += docTokenHandler.getAccumulatedRbtcBalance();
+            sumOfUsersBalances += docHandlerMoc.getAccumulatedRbtcBalance();
         }
         // We can't just user an assertEq because charging fees causes a slight precision loss
         assertApproxEqRel(
-            address(docTokenHandler).balance,
+            address(docHandlerMoc).balance,
             sumOfUsersBalances,
             0.0001e16 // Allow a maximum difference of 0.0001%
         );
-        // assertGe(address(docTokenHandler).balance, sumOfUsersBalances); // The rBTC in the DOC token handler contract must be at least as much as the sum balances of the users
-        // assertLe(address(docTokenHandler).balance * 9999 / 10000, sumOfUsersBalances); // The rBTC in the DOC token handler contract can only be slightly higher than the sum of balances (therefore, 99.99% of said rBTC should be lower than the sum)
+        // assertGe(address(docHandlerMoc).balance, sumOfUsersBalances); // The rBTC in the DOC token handler contract must be at least as much as the sum balances of the users
+        // assertLe(address(docHandlerMoc).balance * 9999 / 10000, sumOfUsersBalances); // The rBTC in the DOC token handler contract can only be slightly higher than the sum of balances (therefore, 99.99% of said rBTC should be lower than the sum)
         console.log("Sum of users' rBTC balances:", sumOfUsersBalances);
-        console.log("rBTC balance of the DOC token handler contract:", address(docTokenHandler).balance);
+        console.log("rBTC balance of the DOC token handler contract:", address(docHandlerMoc).balance);
     }
 
     // function invariant_gettersCantRevert() public {
