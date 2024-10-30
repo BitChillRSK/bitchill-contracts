@@ -173,6 +173,13 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         return s_kDocBalances[user];
     }
 
+    function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
+        uint256 totalDocInDeposit = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
+        uint256 docInterestAmount = totalDocInDeposit - docLockedInDcaSchedules;
+        _redeemDoc(user, docInterestAmount);
+        i_docToken.safeTransfer(user, docInterestAmount);
+    }
+
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
         external
         view

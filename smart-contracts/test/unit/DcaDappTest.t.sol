@@ -8,6 +8,7 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {DocTokenHandler} from "../../src/DocTokenHandler.sol";
 import {DocTokenHandlerDex} from "../../../src/DocTokenHandlerDex.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {ITestDocTokenHandler} from "../../test/interfaces/ITestDocTokenHandler.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
@@ -23,9 +24,9 @@ import "./TestsHelper.t.sol";
 
 contract DcaDappTest is Test {
     DcaManager dcaManager;
-    DocTokenHandler docTokenHandler;
     MockMocProxy mockMocProxy;
-    DocTokenHandlerDex docTokenHandlerDex;
+    ITestDocTokenHandler docTokenHandler;
+    // DocTokenHandlerDex docTokenHandlerDex;
     AdminOperations adminOperations;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
@@ -110,6 +111,7 @@ contract DcaDappTest is Test {
             mockMocProxy = MockMocProxy(mocProxyAddress);
             mockKdocToken = MockKdocToken(kDocTokenAddress);
 
+            // Set roles
             vm.prank(OWNER);
             adminOperations.setAdminRole(ADMIN);
             vm.prank(ADMIN);
@@ -136,7 +138,7 @@ contract DcaDappTest is Test {
             vm.prank(address(docTokenHandler));
             mockDocToken.approve(mocProxyAddress, type(uint256).max);
 
-            // Mint 10000 DOC for the user
+            // Mint DOC for the user
             mockDocToken.mint(USER, USER_TOTAL_DOC);
 
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
@@ -147,7 +149,7 @@ contract DcaDappTest is Test {
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             DexHelperConfig helperConfig;
             DeployDexSwaps deployContracts = new DeployDexSwaps();
-            (adminOperations, docTokenHandlerDex, dcaManager, helperConfig) = deployContracts.run();
+            (adminOperations, docTokenHandler, dcaManager, helperConfig) = deployContracts.run();
             DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
 
             MockWrbtcToken mockWrBtcToken;
@@ -167,71 +169,33 @@ contract DcaDappTest is Test {
             // FeeCalculator helper test contract
             feeCalculator = new FeeCalculator();
 
+            // Set roles
+            vm.prank(OWNER);
+            adminOperations.setAdminRole(ADMIN);
+            vm.prank(ADMIN);
+            adminOperations.setSwapperRole(SWAPPER);
+
             // Add tokenHandler
             vm.expectEmit(true, true, false, false);
-            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandlerDex));
-            vm.prank(OWNER);
-            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandlerDex));
+            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandler));
+            vm.prank(ADMIN);
+            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandler));
 
             // TODO: Think through the setup for DEX swapping tests
 
+            // Mint DOC for the user
+            mockDocToken.mint(USER, USER_TOTAL_DOC);
             // mockWrBtcToken.deposit{value: 1E18}();
 
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
             vm.startPrank(USER);
-            mockDocToken.approve(address(docTokenHandlerDex), DOC_TO_DEPOSIT);
+            mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
             dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
             vm.stopPrank();
         } else {
             revert("Invalid deploy environment");
         }
     }
-
-    // /*//////////////////////////////////////////////////////////////
-    //                         UNIT TESTS SETUP (DEX purchases)
-    // //////////////////////////////////////////////////////////////*/
-    // function setUpDex() public virtual {
-    //     DeployContracts deployContracts = new DeployContracts();
-    //     (adminOperations, docTokenHandler, docTokenHandlerDex, dcaManager, helperConfig) = deployContracts.run();
-    //     // console.log("Test contract", address(this));
-
-    //     // (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) = helperConfig.activeNetworkConfig();
-
-    //     HelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
-
-    //     address docTokenAddress = networkConfig.docTokenAddress;
-    //     address kDocTokenAddress = networkConfig.kdocTokenAddress;
-    //     address wrBtcToken = networkConfig.wrbtcTokenAddress;
-    //     // address swapRouter02 = networkConfig.swapRouter02Address;
-    //     // address[] memory swapIntermediateTokens = networkConfig.swapIntermediateTokens;
-    //     // uint24[] memory swapPoolFeeRates = networkConfig.swapPoolFeeRates;
-    //     // address mocOracle = networkConfig.mocOracleAddress;
-
-    //     mockDocToken = MockDocToken(docTokenAddress);
-    //     mockKdocToken = MockKdocToken(kDocTokenAddress);
-
-    //     // FeeCalculator helper test contract
-    //     feeCalculator = new FeeCalculator();
-
-    //     // Add tokenHandler
-    //     vm.expectEmit(true, true, false, false);
-    //     emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docTokenHandlerDex));
-    //     vm.prank(OWNER);
-    //     adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docTokenHandlerDex));
-
-    //     // Deal rBTC funds to WRBTC contract and user
-    //     vm.deal(wrBtcToken, 1000 ether);
-    //     vm.deal(USER, STARTING_RBTC_USER_BALANCE);
-
-    //     // Mint 10000 DOC for the user
-    //     mockDocToken.mint(USER, USER_TOTAL_DOC);
-
-    //     // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
-    //     vm.startPrank(USER);
-    //     mockDocToken.approve(address(docTokenHandlerDex), DOC_TO_DEPOSIT);
-    //     dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
-    //     vm.stopPrank();
-    // }
 
     /*//////////////////////////////////////////////////////////////
                       UNIT TESTS COMMON FUNCTIONS

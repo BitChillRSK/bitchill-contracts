@@ -18,7 +18,7 @@ contract DocLendingTest is DcaDappTest {
     ////////////////////////////
     ///// DOC Lending tests ////
     ////////////////////////////
-    function testDocDepositedIsLent() external {
+    function testDepositedDocIsLent() external {
         super.depositDoc();
         assertEq(mockDocToken.balanceOf(address(docTokenHandler)), 0); // DOC balance in handler contract is 0 because DOC is lent to Tropykus
         assertEq(mockDocToken.balanceOf(address(mockKdocToken)), 2 * DOC_TO_DEPOSIT); // Twice the DOC to deposit since a schedule is created in setUp()
