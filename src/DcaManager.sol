@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import {IDcaManager} from "./interfaces/IDcaManager.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {AdminOperations} from "./AdminOperations.sol";
 
@@ -55,7 +55,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      */
-    constructor(address adminOperationsAddress) Ownable(msg.sender) {
+    constructor(address adminOperationsAddress) {
         s_adminOperations = AdminOperations(adminOperationsAddress);
     }
 

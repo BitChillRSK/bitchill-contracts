@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
@@ -11,8 +11,6 @@ import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
-import {DexHelperConfig} from "../../script/DexHelperConfig.s.sol";
-// import {DeployDexSwaps} from "../../script/DeployDexSwaps.s.sol";
 import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";

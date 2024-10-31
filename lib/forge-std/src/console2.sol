@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.22 <0.9.0;
+pragma solidity ^0.8.19;
 
 /// @dev The original console.sol uses `int` and `uint` for computing function selectors, but it should
 /// use `int256` and `uint256`. This modified version fixes that. This version is recommended

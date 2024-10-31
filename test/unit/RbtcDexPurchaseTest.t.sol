@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24; // ESTO LO DEJAMOS PARA MÁS ADELANTE, CUANDO CONTINUEMOS CON LA INTEGRACIÓN DE COMPRAS EN UNISWAP
+pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
 // import {DcaDappTest} from "./DcaDappTest.t.sol";

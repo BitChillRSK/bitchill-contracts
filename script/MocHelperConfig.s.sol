@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import {MockDocToken} from "../test/mocks/MockDocToken.sol";
 import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
@@ -67,7 +67,7 @@ contract MocHelperConfig is Script {
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
-        MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
+        MockKdocToken mockKdocToken = new MockKdocToken(address(mockDocToken));
         vm.stopBroadcast();
 
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity ^0.8.19;
 
 import {MockERC721, IERC721TokenReceiver} from "../../src/mocks/MockERC721.sol";
 import {StdCheats} from "../../src/StdCheats.sol";

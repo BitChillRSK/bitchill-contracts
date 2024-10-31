@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import {TokenHandler} from "./TokenHandler.sol";
 import {IDocTokenHandler} from "./interfaces/IDocTokenHandler.sol";
@@ -52,7 +52,6 @@ contract DocTokenHandler is TokenHandler, IDocTokenHandler {
         uint256 maxAnnualAmount,
         bool yieldsInterest
     )
-        Ownable(msg.sender)
         TokenHandler(
             dcaManagerAddress,
             docTokenAddress,

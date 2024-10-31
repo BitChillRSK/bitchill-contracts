@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import {IDocToken} from "../../src/interfaces/IDocToken.sol";
 import {console} from "forge-std/Test.sol";
 
@@ -17,9 +17,8 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each kDOC token increase by 5% annually (mocking behaviour)
     uint256 constant YEAR_IN_SECONDS = 31536000;
 
-    constructor(address initialOwner, address docTokenAddress)
+    constructor(address docTokenAddress)
         ERC20("Tropykus kDOC", "kDOC")
-        Ownable(initialOwner)
         ERC20Permit("Tropykus kDOC")
     {
         i_docToken = IDocToken(docTokenAddress);
