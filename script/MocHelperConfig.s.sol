@@ -53,8 +53,8 @@ contract MocHelperConfig is Script {
     function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
         RootstockMainnetNetworkConfig = NetworkConfig({
             docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // DOC
-            mocProxyAddress: 0xF773B590Af754d597770937fa8ea7aBdF2668370, // MOC
-            kdocTokenAddress: 0x544eB90E766b405134B3b3F62b6B4c23Fcd5fDA2  // kDOC
+            mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // MOC
+            kdocTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2  // kDOC
         });
     }
 

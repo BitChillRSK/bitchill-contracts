@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.0;
 
 import {TokenHandler} from "./TokenHandler.sol";
 import {IDocTokenHandler} from "./interfaces/IDocTokenHandler.sol";
