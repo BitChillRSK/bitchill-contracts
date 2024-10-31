@@ -77,46 +77,6 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice deposit the full token amount for DCA on the contract
-     * @param user: the address of the user making the deposit
-     * @param depositAmount: the amount to deposit
-     */
-    function depositToken(address user, uint256 depositAmount)
-        public
-        override(DocHandler, ITokenHandler)
-        onlyDcaManager
-    {
-        super.depositToken(user, depositAmount);
-        if (i_docToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
-            bool approvalSuccess = i_docToken.approve(address(i_kDocToken), depositAmount);
-            if (!approvalSuccess) revert DocHandler__kDocApprovalFailed(user, depositAmount);
-        }
-        uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
-        i_kDocToken.mint(depositAmount);
-        uint256 postKdocBalance = i_kDocToken.balanceOf(address(this));
-        s_kDocBalances[user] += postKdocBalance - prevKdocBalance;
-    }
-
-    /**
-     * @notice withdraw the token amount sending it back to the user's address
-     * @param user: the address of the user making the withdrawal
-     * @param withdrawalAmount: the amount to withdraw
-     */
-    function withdrawToken(address user, uint256 withdrawalAmount)
-        public
-        override(DocHandler, ITokenHandler)
-        onlyDcaManager
-    {
-        uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
-        if (docInTropykus < withdrawalAmount) {
-            revert DocHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
-        }
-        _redeemDoc(user, withdrawalAmount);
-        super.withdrawToken(user, withdrawalAmount);
-    }
-
     /**
      * @param buyer: the user on behalf of which the contract is making the rBTC purchase
      * @param purchaseAmount: the amount to spend on rBTC
@@ -181,21 +141,6 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
         } else {
             revert TokenHandler__RbtcBatchPurchaseFailed(address(i_docToken));
         }
-    }
-
-    function getUsersKdocBalance(address user) external view override(DocHandler, IDocHandler) returns (uint256) {
-        return s_kDocBalances[user];
-    }
-
-    function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
-        external
-        view
-        override(DocHandler, ITokenHandler)
-        onlyDcaManager
-        returns (uint256 docInterestAmount)
-    {
-        uint256 totalDocInLending = s_kDocBalances[user] * EXCHANGE_RATE_DECIMALS / i_kDocToken.exchangeRateStored();
-        docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
     /**

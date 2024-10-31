@@ -168,23 +168,23 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         return i_yieldsInterest;
     }
 
-    function getMinFeeRate() public view returns (uint256) {
+    function getMinFeeRate() public view override returns (uint256) {
         return s_minFeeRate;
     }
 
-    function getMaxFeeRate() public view returns (uint256) {
+    function getMaxFeeRate() public view override returns (uint256) {
         return s_maxFeeRate;
     }
 
-    function getMinAnnualAmount() public view returns (uint256) {
+    function getMinAnnualAmount() public view override returns (uint256) {
         return s_minAnnualAmount;
     }
 
-    function getMaxAnnualAmount() public view returns (uint256) {
+    function getMaxAnnualAmount() public view override returns (uint256) {
         return s_maxAnnualAmount;
     }
 
-    function getFeeCollectorAddress() external view returns (address) {
+    function getFeeCollectorAddress() external view override returns (address) {
         return s_feeCollector;
     }
 

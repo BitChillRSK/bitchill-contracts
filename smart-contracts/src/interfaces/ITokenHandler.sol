@@ -179,4 +179,29 @@ interface ITokenHandler {
      * @param tokenLockedInDcaSchedules The amount of stablecoin locked in DCA schedules by the user in total.
      */
     function getAccruedInterest(address user, uint256 tokenLockedInDcaSchedules) external returns (uint256);
+
+    /**
+     * @dev Gets the minimum fee rate that may be charged for each purchases
+     */
+    function getMinFeeRate() external returns (uint256);
+
+    /**
+     * @dev Gets the maximum fee rate that may be charged for each purchases
+     */
+    function getMaxFeeRate() external returns (uint256);
+
+    /**
+     * @dev Gets the annual (periodic purchase * number of purchases in a year) amount below which the max fee rate is charged
+     */
+    function getMinAnnualAmount() external returns (uint256);
+
+    /**
+     * @dev Gets the annual (periodic purchase * number of purchases in a year) amount above which the min fee rate is charged
+     */
+    function getMaxAnnualAmount() external returns (uint256);
+
+    /**
+     * @dev Gets the fee collector address
+     */
+    function getFeeCollectorAddress() external returns (address);
 }
