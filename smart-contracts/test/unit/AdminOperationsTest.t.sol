@@ -6,7 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {DocTokenHandler} from "../../src/DocTokenHandler.sol";
+import {DocHandlerMoc} from "../../src/DocHandlerMoc.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import "./TestsHelper.t.sol";
 
@@ -48,9 +48,9 @@ contract AdminOperationsTest is DcaDappTest {
     }
 
     function testTokenHandlerUpdated() external {
-        address prevDocTokenHandler = adminOperations.getTokenHandler(address(mockDocToken));
+        address prevDocHandlerMoc = adminOperations.getTokenHandler(address(mockDocToken));
         vm.startBroadcast();
-        DocTokenHandler newDocTokenHandler = new DocTokenHandler(
+        DocHandlerMoc newDocHandlerMoc = new DocHandlerMoc(
             address(dcaManager),
             address(mockDocToken),
             address(mockKdocToken),
@@ -66,10 +66,10 @@ contract AdminOperationsTest is DcaDappTest {
             DOC_YIELDS_INTEREST
         );
         vm.stopBroadcast();
-        assert(prevDocTokenHandler != address(newDocTokenHandler));
+        assert(prevDocHandlerMoc != address(newDocHandlerMoc));
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(newDocTokenHandler));
-        assertEq(adminOperations.getTokenHandler(address(mockDocToken)), address(newDocTokenHandler));
+        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(newDocHandlerMoc));
+        assertEq(adminOperations.getTokenHandler(address(mockDocToken)), address(newDocHandlerMoc));
     }
 }

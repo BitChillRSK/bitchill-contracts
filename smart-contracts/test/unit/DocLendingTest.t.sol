@@ -20,38 +20,38 @@ contract DocLendingTest is DcaDappTest {
     ////////////////////////////
     function testDepositedDocIsLent() external {
         super.depositDoc();
-        assertEq(mockDocToken.balanceOf(address(docTokenHandler)), 0); // DOC balance in handler contract is 0 because DOC is lent to Tropykus
+        assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // DOC balance in handler contract is 0 because DOC is lent to Tropykus
         assertEq(mockDocToken.balanceOf(address(mockKdocToken)), 2 * DOC_TO_DEPOSIT); // Twice the DOC to deposit since a schedule is created in setUp()
     }
 
     function testDocDepositIncreasesKdocBalance() external {
-        uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 prevKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         super.depositDoc();
-        uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 postKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         assertEq(
-            mockKdocToken.balanceOf(address(docTokenHandler)),
+            mockKdocToken.balanceOf(address(docHandlerMoc)),
             2 * DOC_TO_DEPOSIT * 1e18 / mockKdocToken.exchangeRateStored()
         );
         assertEq(postKdocBalance - prevKdocBalance, DOC_TO_DEPOSIT * 1e18 / mockKdocToken.exchangeRateStored());
     }
 
     function testDocWithdrawalRedeemsKdoc() external {
-        uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 prevKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         super.withdrawDoc();
-        uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
-        assertEq(mockKdocToken.balanceOf(address(docTokenHandler)), 0);
+        uint256 postKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
+        assertEq(mockKdocToken.balanceOf(address(docHandlerMoc)), 0);
         assertEq(prevKdocBalance - postKdocBalance, DOC_TO_DEPOSIT * 1e18 / mockKdocToken.exchangeRateStored());
     }
 
     function testRbtcPurchaseRedeemsKdoc() external {
-        uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 prevKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         console.log("prevKdocBalance:", prevKdocBalance);
         super.makeSinglePurchase();
-        uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 postKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         console.log("postKdocBalance:", postKdocBalance);
         console.log("diff:", prevKdocBalance - postKdocBalance);
         assertEq(
-            mockKdocToken.balanceOf(address(docTokenHandler)),
+            mockKdocToken.balanceOf(address(docHandlerMoc)),
             (
                 DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                     - DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored()
@@ -63,10 +63,10 @@ contract DocLendingTest is DcaDappTest {
     function testSeveralRbtcPurchasesRedeemKdoc() external {
         // This just for one user, for many users this will get tested in invariant tests
         super.createSeveralDcaSchedules();
-        uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 prevKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         console.log("kDOC balance before purchases", prevKdocBalance);
         super.makeSeveralPurchasesWithSeveralSchedules();
-        uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 postKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         console.log("kDOC balance after purchases", postKdocBalance);
         // @notice In this test we don't use assertEq because calculating the exact number on the right hand side would be too much hassle
         // However, we check that the kDOC spent to redeem DOC to make the rBTC purchases is lower than the amount we would have
@@ -84,12 +84,12 @@ contract DocLendingTest is DcaDappTest {
         // than it would have been if the redemptions had been made at the highest exchange rate but greater than
         // if the redemptions had been made at the starting exchange rate
         assertLe(
-            mockKdocToken.balanceOf(address(docTokenHandler)),
+            mockKdocToken.balanceOf(address(docHandlerMoc)),
             DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                 - NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored()
         );
         assertGe(
-            mockKdocToken.balanceOf(address(docTokenHandler)),
+            mockKdocToken.balanceOf(address(docHandlerMoc)),
             DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                 - NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE
         );
@@ -98,9 +98,9 @@ contract DocLendingTest is DcaDappTest {
     function testRbtcBatchPurchaseRedeemsKdoc() external {
         // This just for one user, for many users this will get tested in invariant tests
         super.createSeveralDcaSchedules(); // This creates NUM_OF_SCHEDULES schedules with purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES
-        uint256 prevKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 prevKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         super.makeBatchPurchasesOneUser(); // Batched purchases add up to an amount of DOC_TO_SPEND, this function makes two batch purchases
-        uint256 postKdocBalance = docTokenHandler.getUsersKdocBalance(USER);
+        uint256 postKdocBalance = docHandlerMoc.getUsersKdocBalance(USER);
         // assertEq(
         //     prevKdocBalance - postKdocBalance,
         //     (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE) + (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored()) // First batch purchase in makeBatchPurchasesOneUser is done with the starting exchange rate, the second after some time has passed
@@ -112,7 +112,7 @@ contract DocLendingTest is DcaDappTest {
             0.0001e16 // Allow a maximum difference of 0.0001%
         );
         assertEq(
-            mockKdocToken.balanceOf(address(docTokenHandler)),
+            mockKdocToken.balanceOf(address(docHandlerMoc)),
             DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
                 - (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored())
         );

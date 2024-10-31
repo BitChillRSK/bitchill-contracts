@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
+
+import {IDocHandler} from "./IDocHandler.sol";
+
+/**
+ * @title IDocHandlerMoc
+ * @author BitChill team: Antonio Rodríguez-Ynyesto
+ * @dev Interface for the DocHandler contract.
+ */
+interface IDocHandlerMoc is IDocHandler {
+    /*//////////////////////////////////////////////////////////////
+                                 EVENTS
+    //////////////////////////////////////////////////////////////*/
+
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+
+    error DocHandler__RedeemDocRequestFailed();
+    error DocHandler__RedeemFreeDocFailed();
+
+    /*//////////////////////////////////////////////////////////////
+                           EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+}

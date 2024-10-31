@@ -1,33 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
-
-import {IDocTokenHandlerBase} from "./IDocTokenHandlerBase.sol";
-import {IWRBTC} from "./IWRBTC.sol";
-import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-import {ICoinPairPrice} from "./ICoinPairPrice.sol";
+pragma solidity 0.8.24;
 
 /**
- * @title IDocTokenHandlerDex
+ * @title IDexSwaps
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the DocTokenHandlerDex contract.
+ * @dev Interface for DEX swapping
  */
-interface IDocTokenHandlerDex is IDocTokenHandlerBase {
-    /*//////////////////////////////////////////////////////////////
-                           TYPE DECLARATIONS
-    //////////////////////////////////////////////////////////////*/
-    struct UniswapSettings {
-        IWRBTC wrBtcToken;
-        ISwapRouter02 swapRouter02;
-        address[] swapIntermediateTokens;
-        uint24[] swapPoolFeeRates;
-        ICoinPairPrice mocOracle;
-    }
-
+interface IDexSwaps {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event DocTokenHandlerDex_NewPathSet(
+    event DexSwaps_NewPathSet(
         address[] indexed intermediateTokens, uint24[] indexed poolFeeRates, bytes indexed newPath
     );
 
@@ -35,9 +19,7 @@ interface IDocTokenHandlerDex is IDocTokenHandlerBase {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error DocTokenHandlerDex__WrongNumberOfTokensOrFeeRates(
-        uint256 numberOfIntermediateTokens, uint256 numberOfFeeRates
-    );
+    error DexSwaps__WrongNumberOfTokensOrFeeRates(uint256 numberOfIntermediateTokens, uint256 numberOfFeeRates);
 
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS

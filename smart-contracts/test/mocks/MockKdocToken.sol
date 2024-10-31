@@ -29,7 +29,7 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function mint(uint256 amount) public returns (uint256) {
         require(i_docToken.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
         i_docToken.transferFrom(msg.sender, address(this), amount); // Deposit DOC into Tropykus
-        _mint(msg.sender, amount * DECIMALS / exchangeRateStored()); //  Mint kDOC to user that deposited DOC (in our case, the DocTokenHandler contract)
+        _mint(msg.sender, amount * DECIMALS / exchangeRateStored()); //  Mint kDOC to user that deposited DOC (in our case, the DocHandler contract)
         return 0;
     }
 

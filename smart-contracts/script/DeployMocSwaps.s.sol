@@ -4,8 +4,7 @@ pragma solidity ^0.8.24;
 import {Script} from "forge-std/Script.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {DocTokenHandler} from "../src/DocTokenHandler.sol";
-import {IWRBTC} from "../src//interfaces/IWRBTC.sol";
+import {DocHandlerMoc} from "../src/DocHandlerMoc.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {ITokenHandler} from "../src/interfaces/ITokenHandler.sol";
@@ -16,7 +15,7 @@ contract DeployMocSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
 
-    function run() external returns (AdminOperations, DocTokenHandler, DcaManager, MocHelperConfig) {
+    function run() external returns (AdminOperations, DocHandlerMoc, DcaManager, MocHelperConfig) {
         MocHelperConfig helperConfig = new MocHelperConfig();
         (address docToken, address mocProxy, address kDocToken) = helperConfig.activeNetworkConfig();
 
@@ -24,7 +23,7 @@ contract DeployMocSwaps is Script {
         // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        DocTokenHandler docTokenHandler = new DocTokenHandler(
+        DocHandlerMoc docHandlerMoc = new DocHandlerMoc(
             address(dcaManager),
             docToken,
             kDocToken,
@@ -46,7 +45,7 @@ contract DeployMocSwaps is Script {
             // adminOperations.setSwapperRole(SWAPPER); // Only for tests!!!
             adminOperations.transferOwnership(OWNER); // Only for tests!!!
             dcaManager.transferOwnership(OWNER); // Only for tests!!!
-            docTokenHandler.transferOwnership(OWNER); // Only for tests!!!
+            docHandlerMoc.transferOwnership(OWNER); // Only for tests!!!
         }
 
         // For back-end and front-end devs to test:
@@ -54,6 +53,6 @@ contract DeployMocSwaps is Script {
         // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
 
         vm.stopBroadcast();
-        return (adminOperations, docTokenHandler, dcaManager, helperConfig);
+        return (adminOperations, docHandlerMoc, dcaManager, helperConfig);
     }
 }

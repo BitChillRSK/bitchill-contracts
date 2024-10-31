@@ -19,7 +19,7 @@ contract DcaScheduleTest is DcaDappTest {
     function testCreateDcaSchedule() external {
         vm.startPrank(USER);
         uint256 scheduleIndex = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
@@ -37,7 +37,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDcaScheduleIdsDontCollide() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
@@ -66,7 +66,7 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 extraDocToDeposit = DOC_TO_DEPOSIT / 3;
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
-        mockDocToken.approve(address(docTokenHandler), extraDocToDeposit);
+        mockDocToken.approve(address(docHandlerMoc), extraDocToDeposit);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
         );
@@ -86,7 +86,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDeleteDcaSchedule() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
@@ -110,7 +110,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDeleteTwoDcaSchedules() public {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
@@ -158,7 +158,7 @@ contract DcaScheduleTest is DcaDappTest {
      */
     function testCannotDeleteLastDcaScheduleInTheSameBlock() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT * 5);
+        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
@@ -182,7 +182,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testCreateSeveralDcaSchedules() external {
         // vm.startPrank(USER);
-        // mockDocToken.approve(address(docTokenHandler), DOC_TO_DEPOSIT);
+        // mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT);
         // uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
         // uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
         // for (uint256 i = 1; i < NUM_OF_SCHEDULES; ++i) { // Start from 1 since schedule 0 is created in setUp
