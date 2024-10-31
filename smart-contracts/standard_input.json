@@ -1,0 +1,15 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "src/DcaManager.sol": {
+      "urls": ["file://src/DcaManager.sol"]
+    }
+  },
+  "settings": {
+    "outputSelection": {
+      "*": {
+        "*": ["abi", "evm.bytecode", "evm.deployedBytecode", "metadata"]
+      }
+    }
+  }
+}

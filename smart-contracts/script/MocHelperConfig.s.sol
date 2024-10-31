@@ -26,6 +26,8 @@ contract MocHelperConfig is Script {
     constructor() {
         if (block.chainid == 31) {
             activeNetworkConfig = getRootstockTestnetConfig();
+        } else if (block.chainid == 30) {
+            activeNetworkConfig = getRootstockMainnetConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilConfig();
         }
@@ -45,6 +47,14 @@ contract MocHelperConfig is Script {
             docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
             mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
             kdocTokenAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914 // Address of the kDOC proxy contract in Rootstock testnet
+        });
+    }
+
+    function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
+        RootstockMainnetNetworkConfig = NetworkConfig({
+            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // DOC
+            mocProxyAddress: 0xF773B590Af754d597770937fa8ea7aBdF2668370, // MOC
+            kdocTokenAddress: 0x544eB90E766b405134B3b3F62b6B4c23Fcd5fDA2  // kDOC
         });
     }
 

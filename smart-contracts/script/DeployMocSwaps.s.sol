@@ -10,8 +10,10 @@ import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
 contract DeployMocSwaps is Script {
-    address OWNER = makeAddr(OWNER_STRING);
-    address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
+    address FEE_COLLECTOR = FEE_COLLECTOR_ADDR;
+    address OWNER = OWNER_ADDR;
+    address ADMIN = ADMIN_ADDR;
+    address SWAPPER = SWAPPER_ADDR;
 
     function run() external returns (AdminOperations, DocTokenHandler, DcaManager, MocHelperConfig) {
         MocHelperConfig helperConfig = new MocHelperConfig();
@@ -44,6 +46,9 @@ contract DeployMocSwaps is Script {
             docTokenHandler.transferOwnership(OWNER); // Only for tests!!!
         }
 
+        if (block.chainid == 31 || block.chainid == 30) {
+            adminOperations.setAdminRole(ADMIN);
+        }
         // For back-end and front-end devs to test:
         // rbtcDca.transferOwnership(0x8191c3a9DF486A09d8087E99A1b2b6885Cc17214); // Carlos
         // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
