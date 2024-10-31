@@ -26,11 +26,8 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
      * @param kDocTokenAddress the address of Tropykus' kDOC token contract
      * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
      * @param mocProxyAddress the address of the MoC proxy contract on the blockchain of deployment
-     * @param feeCollector the address of to which fees will sent on every purchase
-     * @param minFeeRate the lowest possible fee
-     * @param maxFeeRate the highest possible fee
-     * @param minAnnualAmount the annual amount below which max fee is applied
-     * @param maxAnnualAmount the annual amount above which min fee is applied
+     * @param feeSettings the settings to calculate the fees charged by the protocol
+     * @param yieldsInterest whether the token used for DCA yields an interest
      */
     constructor(
         address dcaManagerAddress,
@@ -39,10 +36,7 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
         uint256 minPurchaseAmount,
         address feeCollector,
         address mocProxyAddress,
-        uint256 minFeeRate,
-        uint256 maxFeeRate,
-        uint256 minAnnualAmount,
-        uint256 maxAnnualAmount,
+        FeeSettings memory feeSettings,
         bool yieldsInterest
     )
         DocHandler(
@@ -51,10 +45,7 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
             kDocTokenAddress,
             minPurchaseAmount,
             feeCollector,
-            minFeeRate,
-            maxFeeRate,
-            minAnnualAmount,
-            maxAnnualAmount,
+            feeSettings,
             yieldsInterest
         )
     {

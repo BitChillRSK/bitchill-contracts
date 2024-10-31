@@ -5,8 +5,8 @@ import {IDocHandlerMoc} from "../../src/interfaces/IDocHandlerMoc.sol";
 import {IDocHandlerDex} from "../../src/interfaces/IDocHandlerDex.sol";
 
 /**
- * @title ITestDocTokenHandler
+ * @title ITestDocHandler
  * @author BitChill team: Antonio Rodríguez-Ynyesto
  * @dev Interface used to test the DocTokenHandler contracts
  */
-interface ITestDocTokenHandler is IDocHandlerMoc, IDocHandlerDex {}
+interface ITestDocHandler is IDocHandlerMoc, IDocHandlerDex {}

@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
+import {IDocHandler} from "./interfaces/IDocHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-import {IDocTokenHandlerDex} from "./interfaces/IDocTokenHandlerDex.sol";
+import {DocHandler} from "./DocHandler.sol";
+import {IDocHandlerDex} from "./interfaces/IDocHandlerDex.sol";
 import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,23 +20,19 @@ import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
- * @title DocTokenHandler
- * @dev Implementation of the IDocTokenHandlerDex interface.
+ * @title DocHandlerDex
+ * @dev Implementation of the IDocHandlerDex interface.
  */
-contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
+contract DocHandlerDex is DocHandler, IDocHandlerDex {
     using SafeERC20 for IERC20;
 
     //////////////////////
     // State variables ///
     //////////////////////
-    IERC20 public immutable i_docToken;
-    IkDocToken public immutable i_kDocToken;
     IWRBTC public immutable i_wrBtcToken;
-    mapping(address user => uint256 balance) private s_kDocBalances;
     mapping(address user => uint256 balance) private s_WrbtcBalances;
     ISwapRouter02 public immutable i_swapRouter02;
     ICoinPairPrice public immutable i_MocOracle;
-    uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
     uint256 constant PRECISION = 1e18;
     bytes public s_swapPath;
 
@@ -57,8 +56,15 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
-        Ownable(msg.sender)
-        TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, feeSettings, yieldsInterest)
+        DocHandler(
+            dcaManagerAddress,
+            docTokenAddress,
+            kDocTokenAddress,
+            minPurchaseAmount,
+            feeCollector,
+            feeSettings,
+            yieldsInterest
+        )
     {
         i_docToken = IERC20(docTokenAddress);
         i_kDocToken = IkDocToken(kDocTokenAddress);
@@ -77,11 +83,15 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
      * @param user: the address of the user making the deposit
      * @param depositAmount: the amount to deposit
      */
-    function depositToken(address user, uint256 depositAmount) public override onlyDcaManager {
+    function depositToken(address user, uint256 depositAmount)
+        public
+        override(DocHandler, ITokenHandler)
+        onlyDcaManager
+    {
         super.depositToken(user, depositAmount);
         if (i_docToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
             bool approvalSuccess = i_docToken.approve(address(i_kDocToken), depositAmount);
-            if (!approvalSuccess) revert DocTokenHandler__kDocApprovalFailed(user, depositAmount);
+            if (!approvalSuccess) revert DocHandler__kDocApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
         i_kDocToken.mint(depositAmount);
@@ -94,10 +104,14 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
      * @param user: the address of the user making the withdrawal
      * @param withdrawalAmount: the amount to withdraw
      */
-    function withdrawToken(address user, uint256 withdrawalAmount) public override onlyDcaManager {
+    function withdrawToken(address user, uint256 withdrawalAmount)
+        public
+        override(DocHandler, ITokenHandler)
+        onlyDcaManager
+    {
         uint256 docInTropykus = s_kDocBalances[user] * i_kDocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS;
         if (docInTropykus < withdrawalAmount) {
-            revert DocTokenHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
+            revert DocHandler__WithdrawalAmountExceedsKdocBalance(user, withdrawalAmount, docInTropykus);
         }
         _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
@@ -169,14 +183,14 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         }
     }
 
-    function getUsersKdocBalance(address user) external view override returns (uint256) {
+    function getUsersKdocBalance(address user) external view override(DocHandler, IDocHandler) returns (uint256) {
         return s_kDocBalances[user];
     }
 
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
         external
         view
-        override
+        override(DocHandler, ITokenHandler)
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
@@ -188,7 +202,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      * @notice anyone can pay for the transaction to have the rBTC sent to the user
      */
-    function withdrawAccumulatedRbtc(address user) external override {
+    function withdrawAccumulatedRbtc(address user) external override(TokenHandler, ITokenHandler) {
         uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
         if (rbtcBalance == 0) revert TokenHandler__NoAccumulatedRbtcToWithdraw();
 
@@ -214,7 +228,7 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         onlyOwner /* TODO: set another role for access control? */
     {
         if (poolFeeRates.length != intermediateTokens.length + 1) {
-            revert DocTokenHandlerDex__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
+            revert DexSwaps__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
         }
 
         bytes memory newPath = abi.encodePacked(address(i_docToken));
@@ -225,30 +239,12 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
         newPath = abi.encodePacked(newPath, poolFeeRates[poolFeeRates.length - 1], address(i_wrBtcToken));
 
         s_swapPath = newPath;
-        emit DocTokenHandlerDex_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
+        emit DexSwaps_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
     }
 
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-        internal
-        view
-        returns (uint256, uint256[] memory, uint256)
-    {
-        uint256 fee;
-        uint256 aggregatedFee;
-        uint256[] memory netDocAmountsToSpend = new uint256[](purchaseAmounts.length);
-        uint256 totalDocAmountToSpend;
-        for (uint256 i; i < purchaseAmounts.length; ++i) {
-            fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
-            aggregatedFee += fee;
-            netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
-            totalDocAmountToSpend += netDocAmountsToSpend[i];
-        }
-        return (aggregatedFee, netDocAmountsToSpend, totalDocAmountToSpend);
-    }
-
     /**
      * @param docAmountToSpend the amount of DOC to swap for BTC
      */
@@ -271,44 +267,5 @@ contract DocTokenHandlerDex is TokenHandler, IDocTokenHandlerDex {
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
         minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
-    }
-
-    function _redeemDoc(address user, uint256 docToRedeem) internal {
-        (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        if (docToRedeem > underlyingAmount) {
-            revert DocTokenHandler__DocRedeemAmountExceedsBalance(docToRedeem, underlyingAmount);
-        }
-        uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
-        uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = docToRedeem * exchangeRate / EXCHANGE_RATE_DECIMALS;
-        if (kDocToRepay > usersKdocBalance) {
-            revert DocTokenHandler__KdocToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersKdocBalance);
-        }
-        s_kDocBalances[user] -= kDocToRepay;
-        i_kDocToken.redeemUnderlying(docToRedeem);
-        emit DocTokenHandler__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
-    }
-
-    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
-        internal
-    {
-        // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
-        uint256 kDocBalancePrev = i_kDocToken.balanceOf(address(this));
-        i_kDocToken.redeemUnderlying(totalDocToRedeem);
-        uint256 kDocBalancePost = i_kDocToken.balanceOf(address(this));
-
-        if (kDocBalancePrev - kDocBalancePost > 0) {
-            uint256 totalKdocRepayed = kDocBalancePrev - kDocBalancePost;
-            uint256 numOfPurchases = users.length;
-            for (uint256 i; i < numOfPurchases; ++i) {
-                // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
-                uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
-                s_kDocBalances[users[i]] -= usersRepayedKdoc;
-                emit DocTokenHandler__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
-            }
-            emit DocTokenHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
-        } else {
-            revert DocTokenHandler__BatchRedeemDocFailed();
-        }
     }
 }

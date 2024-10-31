@@ -1,12 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {IWRBTC} from "./IWRBTC.sol";
+import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
+import {ICoinPairPrice} from "./ICoinPairPrice.sol";
+
 /**
  * @title IDexSwaps
  * @author BitChill team: Antonio Rodríguez-Ynyesto
  * @dev Interface for DEX swapping
  */
 interface IDexSwaps {
+    /*//////////////////////////////////////////////////////////////
+                           TYPE DECLARATIONS
+    //////////////////////////////////////////////////////////////*/
+    struct UniswapSettings {
+        IWRBTC wrBtcToken;
+        ISwapRouter02 swapRouter02;
+        address[] swapIntermediateTokens;
+        uint24[] swapPoolFeeRates;
+        ICoinPairPrice mocOracle;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/

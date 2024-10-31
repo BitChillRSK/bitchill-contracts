@@ -5,8 +5,8 @@ pragma solidity ^0.8.20;
 import {Script} from "forge-std/Script.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {DocTokenHandlerDex} from "../src/DocTokenHandlerDex.sol";
-import {IDocTokenHandlerDex} from "../src/interfaces/IDocTokenHandlerDex.sol";
+import {DocHandlerDex} from "../src/DocHandlerDex.sol";
+import {IDexSwaps} from "../src/interfaces/IDexSwaps.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
@@ -20,7 +20,7 @@ contract DeployDexSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
 
-    function run() external returns (AdminOperations, DocTokenHandlerDex, DcaManager, DexHelperConfig) {
+    function run() external returns (AdminOperations, DocHandlerDex, DcaManager, DexHelperConfig) {
         DexHelperConfig helperConfig = new DexHelperConfig();
 
         DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
@@ -37,11 +37,11 @@ contract DeployDexSwaps is Script {
         // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        DocTokenHandlerDex docTokenHandlerDex = new DocTokenHandlerDex(
+        DocHandlerDex docTokenHandlerDex = new DocHandlerDex(
             address(dcaManager),
             docToken,
             kDocToken,
-            IDocTokenHandlerDex.UniswapSettings({
+            IDexSwaps.UniswapSettings({
                 wrBtcToken: IWRBTC(wrBtcToken),
                 swapRouter02: ISwapRouter02(swapRouter02),
                 swapIntermediateTokens: swapIntermediateTokens,

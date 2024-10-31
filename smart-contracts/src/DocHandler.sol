@@ -43,7 +43,6 @@ abstract contract DocHandler is TokenHandler, IDocHandler {
         address kDocTokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        address mocProxyAddress,
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
