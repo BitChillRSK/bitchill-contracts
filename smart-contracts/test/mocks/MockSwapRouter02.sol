@@ -2,8 +2,9 @@
 pragma solidity 0.8.24;
 
 import "../Constants.sol";
+import {MockWrbtcToken} from "./MockWrbtcToken.sol";
 
-// Mock interface for Uniswap V3 SwapRouter
+// Minimal mock interface for Uniswap V3 SwapRouter
 interface IV3SwapRouter {
     struct ExactInputParams {
         bytes path;
@@ -17,9 +18,11 @@ interface IV3SwapRouter {
 
 // Mock implementation of SwapRouter02 (V3 Router)
 contract MockSwapRouter02 is IV3SwapRouter {
+    MockWrbtcToken s_mockWrbtcToken;
     uint256 private s_outputTokenPrice;
 
-    constructor(uint256 _outputTokenPrice) {
+    constructor(MockWrbtcToken mockWrbtcToken, uint256 _outputTokenPrice) {
+        s_mockWrbtcToken = mockWrbtcToken;
         s_outputTokenPrice = _outputTokenPrice;
     }
 
@@ -27,9 +30,13 @@ contract MockSwapRouter02 is IV3SwapRouter {
     function exactInput(ExactInputParams calldata params) external payable override returns (uint256 amountOut) {
         require(params.amountIn > 0, "AmountIn must be greater than zero");
 
-        amountOut = (params.amountIn * 1e18 * 995) / (1000 * s_outputTokenPrice); // TODO: DOUBLE-CHECK MATH!!!
+        amountOut = (params.amountIn /* * 1e18*/ * 995) / (1000 * s_outputTokenPrice); // Simulate some slippage TODO: DOUBLE-CHECK MATH!!!
 
         require(params.amountOutMinimum <= amountOut, "Insufficient output amount");
+
+        // To simulate the DocHandlerDex contract receiving WRBTC when exactInput is called, we deposit rBTC in the WRBTC contract here
+        // msg.sender is the DocHandlerDex contract
+        s_mockWrbtcToken.deposit{value: amountOut}(msg.sender);
 
         return amountOut;
     }

@@ -69,7 +69,7 @@ contract DexHelperConfig is Script {
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
         MockWrbtcToken mockWrbtcToken = new MockWrbtcToken();
-        MockSwapRouter02 mockSwapRouter02 = new MockSwapRouter02(BTC_PRICE);
+        MockSwapRouter02 mockSwapRouter02 = new MockSwapRouter02(mockWrbtcToken, BTC_PRICE);
         MockMocOracle mockMocOracle = new MockMocOracle();
         vm.stopBroadcast();
 

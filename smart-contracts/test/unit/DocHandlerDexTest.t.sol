@@ -26,7 +26,7 @@ pragma solidity 0.8.24;
 //         if (keccak256(abi.encodePacked(testEnv)) != keccak256(abi.encodePacked("dexSwaps"))) {
 //             return;
 //         }
-//         assertEq(docTokenHandlerDex.supportsInterface(type(ITokenHandler).interfaceId), true);
+//         assertEq(docHandlerDex.supportsInterface(type(ITokenHandler).interfaceId), true);
 //     }
 
 //     function testDTHDModifyMinPurchaseAmount() external {
@@ -34,8 +34,8 @@ pragma solidity 0.8.24;
 //             return;
 //         }
 //         vm.prank(OWNER);
-//         docTokenHandlerDex.modifyMinPurchaseAmount(1000);
-//         uint256 newPurchaseAmount = docTokenHandlerDex.getMinPurchaseAmount();
+//         docHandlerDex.modifyMinPurchaseAmount(1000);
+//         uint256 newPurchaseAmount = docHandlerDex.getMinPurchaseAmount();
 //         assertEq(newPurchaseAmount, 1000);
 //     }
 
@@ -44,11 +44,11 @@ pragma solidity 0.8.24;
 //             return;
 //         }
 //         vm.prank(OWNER);
-//         docTokenHandlerDex.setFeeRateParams(5, 5, 5, 5);
-//         assertEq(docTokenHandlerDex.getMinFeeRate(), 5);
-//         assertEq(docTokenHandlerDex.getMaxFeeRate(), 5);
-//         assertEq(docTokenHandlerDex.getMinAnnualAmount(), 5);
-//         assertEq(docTokenHandlerDex.getMaxAnnualAmount(), 5);
+//         docHandlerDex.setFeeRateParams(5, 5, 5, 5);
+//         assertEq(docHandlerDex.getMinFeeRate(), 5);
+//         assertEq(docHandlerDex.getMaxFeeRate(), 5);
+//         assertEq(docHandlerDex.getMinAnnualAmount(), 5);
+//         assertEq(docHandlerDex.getMaxAnnualAmount(), 5);
 //     }
 
 //     function testDTHDSetFeeCollectorAddress() external {
@@ -57,7 +57,7 @@ pragma solidity 0.8.24;
 //         }
 //         address newFeeCollector = makeAddr("newFeeCollector");
 //         vm.prank(OWNER);
-//         docTokenHandlerDex.setFeeCollectorAddress(newFeeCollector);
-//         assertEq(docTokenHandlerDex.getFeeCollectorAddress(), newFeeCollector);
+//         docHandlerDex.setFeeCollectorAddress(newFeeCollector);
+//         assertEq(docHandlerDex.getFeeCollectorAddress(), newFeeCollector);
 //     }
 // }

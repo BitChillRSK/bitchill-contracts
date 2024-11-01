@@ -211,6 +211,6 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
+        minimumRbtcAmount = (docAmountToSpend /* * PRECISION */ * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
     }
 }

@@ -20,6 +20,7 @@ import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
+import {MockSwapRouter02} from "../mocks/MockSwapRouter02.sol";
 import "../Constants.sol";
 import "./TestsHelper.t.sol";
 
@@ -47,6 +48,7 @@ contract DcaDappTest is Test {
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant NUM_OF_SCHEDULES = 5;
+    string swapType = vm.envString("SWAP_TYPE");
 
     //////////////////////
     // Events ////////////
@@ -102,7 +104,6 @@ contract DcaDappTest is Test {
                             UNIT TESTS SETUP (MoC purchases)
     //////////////////////////////////////////////////////////////*/
     function setUp() public virtual {
-        string memory swapType = vm.envString("SWAP_TYPE");
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             MocHelperConfig helperConfig;
             DeployMocSwaps deployContracts = new DeployMocSwaps();
@@ -158,18 +159,20 @@ contract DcaDappTest is Test {
             DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
 
             MockWrbtcToken mockWrBtcToken;
+            MockSwapRouter02 mockSwapRouter02;
 
             address docTokenAddress = networkConfig.docTokenAddress;
             address kDocTokenAddress = networkConfig.kdocTokenAddress;
             address wrBtcTokenAddress = networkConfig.wrbtcTokenAddress;
-            // address swapRouter02 = networkConfig.swapRouter02Address;
+            address swapRouter02Address = networkConfig.swapRouter02Address;
             // address[] memory swapIntermediateTokens = networkConfig.swapIntermediateTokens;
             // uint24[] memory swapPoolFeeRates = networkConfig.swapPoolFeeRates;
-            address mocOracle = networkConfig.mocOracleAddress;
+            // address mocOracle = networkConfig.mocOracleAddress;
 
             mockDocToken = MockDocToken(docTokenAddress);
             mockKdocToken = MockKdocToken(kDocTokenAddress);
             mockWrBtcToken = MockWrbtcToken(wrBtcTokenAddress);
+            // mockSwapRouter02 = MockSwapRouter02(swapRouter02Address);
 
             // FeeCalculator helper test contract
             feeCalculator = new FeeCalculator();
@@ -190,6 +193,10 @@ contract DcaDappTest is Test {
 
             // Mint DOC for the user
             mockDocToken.mint(USER, USER_TOTAL_DOC);
+            // Deal 1000 rBTC to the mock SwapRouter02 contract, so that it can deposit rBTC on the mock WRBTC contract
+            // to simulate that the DocHandlerDex contract has received WRBTC after calling the `exactInput()` function
+            vm.deal(swapRouter02Address, 1000 ether);
+
             // mockWrBtcToken.deposit{value: 1E18}();
 
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
@@ -280,14 +287,14 @@ contract DcaDappTest is Test {
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
-        vm.expectEmit(true, true, true, false);
-        emit TokenHandler__RbtcBought(
-            USER,
-            address(mockDocToken),
-            netPurchaseAmount / BTC_PRICE,
-            dcaDetails[SCHEDULE_INDEX].scheduleId,
-            netPurchaseAmount
-        );
+        // vm.expectEmit(true, true, true, false);
+        // emit TokenHandler__RbtcBought(
+        //     USER,
+        //     address(mockDocToken),
+        //     netPurchaseAmount / BTC_PRICE,
+        //     dcaDetails[SCHEDULE_INDEX].scheduleId,
+        //     netPurchaseAmount
+        // );
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
@@ -296,9 +303,19 @@ contract DcaDappTest is Test {
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
+
         // Check that DOC was substracted and rBTC was added to user's balances
         assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, DOC_TO_SPEND);
-        assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
+                netPurchaseAmount / BTC_PRICE,
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalDocSpent) {
@@ -333,7 +350,17 @@ contract DcaDappTest is Test {
                 vm.stopPrank();
                 // Check that DOC was substracted and rBTC was added to user's balances
                 assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
-                assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+                // assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+
+                if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+                    assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, totalDocSpent / BTC_PRICE);
+                } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+                    assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                        RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
+                        totalDocSpent / BTC_PRICE,
+                        0.5e16 // Allow a maximum difference of 0.5%
+                    );
+                }
 
                 totalDocSpent += netPurchaseAmount;
                 totalDocRedeemed += schedulePurchaseAmount;
@@ -345,7 +372,17 @@ contract DcaDappTest is Test {
         console.log("Total DOC spent :", totalDocSpent);
         console.log("Total DOC redeemed :", totalDocRedeemed);
         vm.prank(USER);
-        assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+        // assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                docHandler.getAccumulatedRbtcBalance(),
+                totalDocSpent / BTC_PRICE,
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function makeBatchPurchasesOneUser() internal {

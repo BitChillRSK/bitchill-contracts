@@ -17,18 +17,18 @@ contract DocHandlerMocTest is DcaDappTest {
     ///// Settings tests ///////
     ////////////////////////////
 
-    function testDTHSupportsInterface() external {
+    function testDocHandlerSupportsInterface() external {
         assertEq(docHandler.supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
-    function testDTHModifyMinPurchaseAmount() external {
+    function testDocHandlerModifyMinPurchaseAmount() external {
         vm.prank(OWNER);
         docHandler.modifyMinPurchaseAmount(1000);
         uint256 newPurchaseAmount = docHandler.getMinPurchaseAmount();
         assertEq(newPurchaseAmount, 1000);
     }
 
-    function testDTHSetFeeRateParams() external {
+    function testDocHandlerSetFeeRateParams() external {
         vm.prank(OWNER);
         docHandler.setFeeRateParams(5, 5, 5, 5);
         assertEq(docHandler.getMinFeeRate(), 5);
@@ -37,7 +37,7 @@ contract DocHandlerMocTest is DcaDappTest {
         assertEq(docHandler.getMaxAnnualAmount(), 5);
     }
 
-    function testDTHSetFeeCollectorAddress() external {
+    function testDocHandlerSetFeeCollectorAddress() external {
         address newFeeCollector = makeAddr("newFeeCollector");
         vm.prank(OWNER);
         docHandler.setFeeCollectorAddress(newFeeCollector);

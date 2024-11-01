@@ -5,16 +5,16 @@ import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {Test, console} from "forge-std/Test.sol";
 import "../Constants.sol";
 
-
 contract MockMocProxy {
     MockDocToken mockDocToken;
-    
+
     event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
+
     constructor(address docTokenAddress) {
         mockDocToken = MockDocToken(docTokenAddress);
-    }    
+    }
 
-    function redeemDocRequest(uint256 docAmount) external {        
+    function redeemDocRequest(uint256 docAmount) external {
         // mockDocToken.approve(address(this), docAmount);
     }
 
@@ -26,5 +26,5 @@ contract MockMocProxy {
         if (success) {
             emit MockMocProxy__DocRedeemed(msg.sender, docAmount, redeemedRbtc);
         }
-    }    
+    }
 }

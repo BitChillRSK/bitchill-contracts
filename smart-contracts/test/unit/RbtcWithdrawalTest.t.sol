@@ -34,7 +34,16 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.withdrawAllAccmulatedRbtc();
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-        assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / BTC_PRICE);
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / BTC_PRICE);
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
+                netPurchaseAmount / BTC_PRICE,
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function testWithdrawRbtcAfterSeveralPurchases() external {
@@ -44,7 +53,17 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.withdrawAllAccmulatedRbtc();
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-        assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+        // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
+                totalDocSpent / BTC_PRICE,
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function testCannotWithdrawBeforePurchasing() external {
