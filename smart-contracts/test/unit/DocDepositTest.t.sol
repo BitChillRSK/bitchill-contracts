@@ -22,7 +22,7 @@ contract DocDepositTest is DcaDappTest {
 
     function testCannotDepositZeroDoc() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docHandlerMoc), DOC_TO_DEPOSIT);
+        mockDocToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         vm.expectRevert(IDcaManager.DcaManager__DepositAmountMustBeGreaterThanZero.selector);
         dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX, 0);
         vm.stopPrank();

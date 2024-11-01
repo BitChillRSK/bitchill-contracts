@@ -18,29 +18,29 @@ contract DocHandlerMocTest is DcaDappTest {
     ////////////////////////////
 
     function testDTHSupportsInterface() external {
-        assertEq(docHandlerMoc.supportsInterface(type(ITokenHandler).interfaceId), true);
+        assertEq(docHandler.supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
     function testDTHModifyMinPurchaseAmount() external {
         vm.prank(OWNER);
-        docHandlerMoc.modifyMinPurchaseAmount(1000);
-        uint256 newPurchaseAmount = docHandlerMoc.getMinPurchaseAmount();
+        docHandler.modifyMinPurchaseAmount(1000);
+        uint256 newPurchaseAmount = docHandler.getMinPurchaseAmount();
         assertEq(newPurchaseAmount, 1000);
     }
 
     function testDTHSetFeeRateParams() external {
         vm.prank(OWNER);
-        docHandlerMoc.setFeeRateParams(5, 5, 5, 5);
-        assertEq(docHandlerMoc.getMinFeeRate(), 5);
-        assertEq(docHandlerMoc.getMaxFeeRate(), 5);
-        assertEq(docHandlerMoc.getMinAnnualAmount(), 5);
-        assertEq(docHandlerMoc.getMaxAnnualAmount(), 5);
+        docHandler.setFeeRateParams(5, 5, 5, 5);
+        assertEq(docHandler.getMinFeeRate(), 5);
+        assertEq(docHandler.getMaxFeeRate(), 5);
+        assertEq(docHandler.getMinAnnualAmount(), 5);
+        assertEq(docHandler.getMaxAnnualAmount(), 5);
     }
 
     function testDTHSetFeeCollectorAddress() external {
         address newFeeCollector = makeAddr("newFeeCollector");
         vm.prank(OWNER);
-        docHandlerMoc.setFeeCollectorAddress(newFeeCollector);
-        assertEq(docHandlerMoc.getFeeCollectorAddress(), newFeeCollector);
+        docHandler.setFeeCollectorAddress(newFeeCollector);
+        assertEq(docHandler.getFeeCollectorAddress(), newFeeCollector);
     }
 }
