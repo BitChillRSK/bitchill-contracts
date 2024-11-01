@@ -63,7 +63,17 @@ contract RbtcPurchaseTest is DcaDappTest {
             vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         vm.prank(USER);
-        assertEq(docHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+        // assertEq(docHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(docHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                docHandler.getAccumulatedRbtcBalance(),
+                (netPurchaseAmount / BTC_PRICE) * numOfPurchases,
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function testRevertPurchasetIfDocRunsOut() external {

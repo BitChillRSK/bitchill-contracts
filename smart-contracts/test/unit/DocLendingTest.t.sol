@@ -110,12 +110,28 @@ contract DocLendingTest is DcaDappTest {
                 + (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored()), // First batch purchase in makeBatchPurchasesOneUser is done with the starting exchange rate, the second after some time has passed
             0.0001e16 // Allow a maximum difference of 0.0001%
         );
-        assertEq(
-            mockKdocToken.balanceOf(address(docHandler)),
-            DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
-                - (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored())
-        );
-        // (DOC_TO_DEPOSIT - 2 * DOC_TO_SPEND) * 1e18 / mockKdocToken.exchangeRateStored()
+        // assertEq(
+        //     mockKdocToken.balanceOf(address(docHandler)),
+        //     DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
+        //         - (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored())
+        // );
+
+        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+            assertEq(
+                mockKdocToken.balanceOf(address(docHandler)),
+                DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
+                    - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
+                    - (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored())
+            );
+        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+                mockKdocToken.balanceOf(address(docHandler)),
+                DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
+                    - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
+                    - (DOC_TO_SPEND * 1e18 / mockKdocToken.exchangeRateStored()),
+                0.5e16 // Allow a maximum difference of 0.5%
+            );
+        }
     }
 
     function testWithdrawInterest() external {
