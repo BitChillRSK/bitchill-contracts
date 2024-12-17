@@ -9,7 +9,7 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import "../Constants.sol";
 
-contract RbtcPurchaseTest is DcaDappTest {
+contract RbtcMocPurchaseTest is DcaDappTest {
     function setUp() public override {
         super.setUp();
     }
