@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
 // import {DcaManager} from "../../src/DcaManager.sol";
@@ -16,7 +16,6 @@ pragma solidity 0.8.24;
 // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 // import "../../src/test/Constants.sol";
 // import "./TestsHelper.t.sol";
-
 
 // contract DcaDappTest is Test {
 //     DcaManager dcaManager;
@@ -79,7 +78,7 @@ pragma solidity 0.8.24;
 //     //////////////////////
 //     // Errors ////////////
 //     //////////////////////
-//     // Ownable    
+//     // Ownable
 //     error OwnableUnauthorizedAccount(address account);
 
 //     function setUp() external {
@@ -108,7 +107,7 @@ pragma solidity 0.8.24;
 
 //         // Give the MoC proxy contract allowance
 //         mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
-        
+
 //         // Give the MoC proxy contract allowance to move DOC from docTokenHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
 //         vm.prank(address(docTokenHandler));
 //         mockDocToken.approve(mocProxyAddress, type(uint256).max);
@@ -240,7 +239,7 @@ pragma solidity 0.8.24;
 //         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
 //         uint256 RbtcBalanceBeforePurchase = docTokenHandler.getAccumulatedRbtcBalance();
 //         vm.stopPrank();
-        
+
 //         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
 //         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
@@ -313,7 +312,7 @@ pragma solidity 0.8.24;
 
 //         uint8 numOfPurchases = 5;
 
-//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
 //             uint256 scheduleIndex = i;
 //             vm.startPrank(USER);
 //             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -393,7 +392,7 @@ pragma solidity 0.8.24;
 
 //         uint256 totalNetPurchaseAmount;
 
-//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
 //             uint256 scheduleIndex = i;
 //             vm.startPrank(USER);
 //             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
@@ -401,7 +400,7 @@ pragma solidity 0.8.24;
 //             vm.stopPrank();
 //             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
 //             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
-            
+
 //             users[i] = user;
 //             scheduleIndexes[i] = i;
 //             vm.startPrank(OWNER);
@@ -409,7 +408,7 @@ pragma solidity 0.8.24;
 //             purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchasePeriod;
 //             vm.stopPrank();
 //         }
-//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) { 
+//         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
 //             vm.expectEmit(false, false, false, false);
 //             emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, 0); // Never mind the actual values on this test
 //         }
@@ -421,20 +420,19 @@ pragma solidity 0.8.24;
 //         uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
 
 //         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
-//         assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
+//         assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
 
 //         vm.prank(USER);
 //         uint256 userAccumulatedRbtcPost = docTokenHandler.getAccumulatedRbtcBalance();
 //         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
-//         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE); 
+//         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
 
 //         vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
 //         vm.prank(OWNER);
 //         dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
 //         uint256 postDocTokenHandlerBalance2 = address(docTokenHandler).balance;
 //         // After a second purchase, we have the same increment
-//         assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE); 
-        
+//         assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
 
 //     }
 
@@ -444,7 +442,7 @@ pragma solidity 0.8.24;
 
 //     function testWithdrawRbtcAfterOnePurchase() external {
 //         // TODO: test this for multiple stablecoins/schedules
-        
+
 //         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
 //         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
@@ -600,11 +598,10 @@ pragma solidity 0.8.24;
 //         bytes memory encodedRevert = abi.encodeWithSelector(
 //             IAdminOperations.AdminOperations__ContractIsNotTokenHandler.selector, address(dummyERC165Contract)
 //         );
-        
+
 //         vm.expectRevert(encodedRevert);
 //         vm.prank(OWNER);
 //         adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(dummyERC165Contract));
-
 
 //         vm.expectRevert();
 //         vm.prank(OWNER);
@@ -623,7 +620,7 @@ pragma solidity 0.8.24;
 //     function testTokenHandlerUpdated() external {
 //         address prevDocTokenHandler = adminOperations.getTokenHandler(address(mockDocToken));
 //         vm.startBroadcast();
-//         DocTokenHandler newDocTokenHandler = 
+//         DocTokenHandler newDocTokenHandler =
 //                     new DocTokenHandler(address(dcaManager), address(mockDocToken), address(mockKdocToken), MIN_PURCHASE_AMOUNT, address(mockMocProxy),
 //                     FEE_COLLECTOR, MIN_FEE_RATE, MAX_FEE_RATE, MIN_ANNUAL_AMOUNT, MAX_ANNUAL_AMOUNT);
 //         vm.stopBroadcast();
@@ -665,7 +662,6 @@ pragma solidity 0.8.24;
 //         assertEq(minPurchasePeriodAfter, newMinPurchasePeriod);
 //     }
 
-    
 //     /*//////////////////////////////////////////////////////////////
 //                           MOCK MOC PROXY TESTS
 //     //////////////////////////////////////////////////////////////*/

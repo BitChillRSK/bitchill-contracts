@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -93,7 +93,7 @@ contract RbtcDca is Ownable {
      * @param docTokenAddress: the address of the Dollar On Chain token on the blockchain of deployment
      * @param mocProxyAddress: the address of the MoC proxy contract on the blockchain of deployment
      */
-    constructor(address docTokenAddress, address mocProxyAddress) Ownable(msg.sender) {
+    constructor(address docTokenAddress, address mocProxyAddress) Ownable() {
         i_docTokenContract = DocTokenContract(docTokenAddress);
         i_mocProxyContract = MocProxyContract(mocProxyAddress);
     }

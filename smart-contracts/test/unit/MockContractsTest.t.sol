@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
@@ -8,11 +8,10 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
 contract MockContractsTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     /*//////////////////////////////////////////////////////////////
                           MOCK MOC PROXY TESTS
     //////////////////////////////////////////////////////////////*/
@@ -24,9 +23,7 @@ contract MockContractsTest is DcaDappTest {
         vm.startPrank(USER);
         mockDocToken.approve(address(mockMocProxy), redeemAmount);
         vm.expectEmit(true, true, true, false);
-        emit MockMocProxy__DocRedeemed(
-            USER, redeemAmount, 1 ether
-        );
+        emit MockMocProxy__DocRedeemed(USER, redeemAmount, 1 ether);
         mockMocProxy.redeemFreeDoc(redeemAmount);
         vm.stopPrank();
         uint256 rBtcBalancePost = USER.balance;

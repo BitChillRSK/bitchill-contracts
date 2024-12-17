@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
@@ -8,16 +8,15 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
 contract DocWithdrawalTest is DcaDappTest {
-
     function setUp() public override {
         super.setUp();
     }
-    
+
     ////////////////////////////
     /// DOC Withdrawal tests ///
     ////////////////////////////
     function testDocWithdrawal() external {
-        super.withdrawDoc(); 
+        super.withdrawDoc();
     }
 
     function testCannotWithdrawZeroDoc() external {

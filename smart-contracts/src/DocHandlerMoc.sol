@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {DocHandler} from "./DocHandler.sol";
@@ -17,6 +17,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
     using SafeERC20 for IERC20;
+
+    IMocProxy public immutable i_mocProxy; // Make immutable again after adapting everything to 0.8.19?
 
     /**
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
@@ -49,8 +51,6 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
             yieldsInterest
         )
     {
-        i_docToken = IERC20(docTokenAddress);
-        i_kDocToken = IkDocToken(kDocTokenAddress);
         i_mocProxy = IMocProxy(mocProxyAddress);
     }
 

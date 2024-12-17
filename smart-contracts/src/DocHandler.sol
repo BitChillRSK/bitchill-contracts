@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
@@ -21,7 +21,6 @@ abstract contract DocHandler is TokenHandler, IDocHandler {
     //////////////////////
     // State variables ///
     //////////////////////
-    IMocProxy public immutable i_mocProxy;
     IERC20 public immutable i_docToken;
     IkDocToken public immutable i_kDocToken;
     mapping(address user => uint256 balance) internal s_kDocBalances;
@@ -46,7 +45,7 @@ abstract contract DocHandler is TokenHandler, IDocHandler {
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
-        Ownable(msg.sender)
+        Ownable()
         TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, feeSettings, yieldsInterest)
     {
         i_docToken = IERC20(docTokenAddress);

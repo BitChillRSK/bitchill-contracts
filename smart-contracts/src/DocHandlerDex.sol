@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IDocHandler} from "./interfaces/IDocHandler.sol";
@@ -66,8 +66,6 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
             yieldsInterest
         )
     {
-        i_docToken = IERC20(docTokenAddress);
-        i_kDocToken = IkDocToken(kDocTokenAddress);
         i_swapRouter02 = uniswapSettings.swapRouter02;
         i_wrBtcToken = uniswapSettings.wrBtcToken;
         i_MocOracle = uniswapSettings.mocOracle;

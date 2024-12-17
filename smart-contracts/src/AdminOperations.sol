@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity ^0.8.19;
 
 import {IAdminOperations} from "./interfaces/IAdminOperations.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
@@ -22,7 +22,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     mapping(address token => address tokenHandlerContract) private s_tokenHandler;
     // mapping(address token => address swapper) private s_swapper;
 
-    constructor() Ownable(msg.sender) {
+    constructor() Ownable() {
         // _grantRole(ADMIN_ROLE, msg.sender);
         // _grantRole(SWAPPER_ROLE, msg.sender);
     }

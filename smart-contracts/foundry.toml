@@ -10,6 +10,8 @@ remappings = [
     '@uniswap/swap-router-contracts=lib/swap-router-contracts',
 ]
 
+solc_version = "0.8.19"
+
 [fuzz]
 runs = 1000
 
