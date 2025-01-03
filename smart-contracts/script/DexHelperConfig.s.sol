@@ -30,7 +30,9 @@ contract DexHelperConfig is Script {
     event HelperConfig__CreatedMockMocOracle(address mocOracleAddress);
 
     constructor() {
-        if (block.chainid == 31) {
+        if (block.chainid == 30) {
+            activeNetworkConfig = getRootstockMainnetConfig();
+        } else if (block.chainid == 31) {
             activeNetworkConfig = getRootstockTestnetConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilConfig();
@@ -59,6 +61,25 @@ contract DexHelperConfig is Script {
         });
     }
 
+    function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
+        address[] memory intermediateTokens = new address[](1);
+        intermediateTokens[0] = 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96; // Address of the rUSDT token in Rootstock testnet
+
+        uint24[] memory poolFeeRates = new uint24[](2);
+        poolFeeRates[0] = 500;
+        poolFeeRates[1] = 500;
+
+        RootstockMainnetNetworkConfig = NetworkConfig({
+            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock testnet
+            kdocTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2, // Address of the kDOC proxy contract in Rootstock testnet
+            wrbtcTokenAddress: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d, // Address of the WRBTC token in Rootstock testnet
+            swapRouter02Address: 0x0B14ff67f0014046b4b99057Aec4509640b3947A, // TODO: Deploy a mock router on RSK testnet?
+            swapIntermediateTokens: intermediateTokens,
+            swapPoolFeeRates: poolFeeRates,
+            mocOracleAddress: 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD
+        });
+    }
+
     function getOrCreateAnvilConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
         // Check to see if we already have an active network config
         if (activeNetworkConfig.docTokenAddress != address(0)) {
@@ -67,7 +88,7 @@ contract DexHelperConfig is Script {
 
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
-        MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
+        MockKdocToken mockKdocToken = new MockKdocToken(address(mockDocToken));
         MockWrbtcToken mockWrbtcToken = new MockWrbtcToken();
         MockSwapRouter02 mockSwapRouter02 = new MockSwapRouter02(mockWrbtcToken, BTC_PRICE);
         MockMocOracle mockMocOracle = new MockMocOracle();

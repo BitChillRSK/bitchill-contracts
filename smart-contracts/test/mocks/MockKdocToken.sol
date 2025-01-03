@@ -17,11 +17,7 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each kDOC token increase by 5% annually (mocking behaviour)
     uint256 constant YEAR_IN_SECONDS = 31536000;
 
-    constructor(address initialOwner, address docTokenAddress)
-        ERC20("Tropykus kDOC", "kDOC")
-        Ownable()
-        ERC20Permit("Tropykus kDOC")
-    {
+    constructor(address docTokenAddress) ERC20("Tropykus kDOC", "kDOC") Ownable() ERC20Permit("Tropykus kDOC") {
         i_docToken = IDocToken(docTokenAddress);
         i_deploymentTimestamp = block.timestamp;
     }

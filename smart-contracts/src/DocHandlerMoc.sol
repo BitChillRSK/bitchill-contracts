@@ -162,10 +162,11 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
      * @param docAmountToSpend the amount of DOC to repay to redeem rBTC
      */
     function _redeemRbtc(uint256 docAmountToSpend) internal returns (uint256, uint256) {
-        try i_mocProxy.redeemDocRequest(docAmountToSpend) {}
-        catch {
-            revert DocHandler__RedeemDocRequestFailed();
-        }
+        // try i_mocProxy.redeemDocRequest(docAmountToSpend) {}
+        // catch {
+        //     revert DocHandler__RedeemDocRequestFailed();
+        // }
+        i_mocProxy.redeemDocRequest(docAmountToSpend);
         uint256 balancePrev = address(this).balance;
         try i_mocProxy.redeemFreeDoc(docAmountToSpend) {}
         catch {

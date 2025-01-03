@@ -14,7 +14,7 @@ import {AdminOperations} from "../../src/AdminOperations.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
 import {DexHelperConfig} from "../../script/DexHelperConfig.s.sol";
-import {DeployDexSwaps} from "../../../script/DeployDexSwaps.s.sol";
+import {DeployDexSwaps} from "../../script/DeployDexSwaps.s.sol";
 import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
@@ -49,6 +49,7 @@ contract DcaDappTest is Test {
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant NUM_OF_SCHEDULES = 5;
+    uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 1 BTC
     string swapType = vm.envString("SWAP_TYPE");
 
     //////////////////////
@@ -133,19 +134,34 @@ contract DcaDappTest is Test {
             vm.prank(ADMIN);
             adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docHandler));
 
-            // Deal rBTC funds to MoC contract and user
-            vm.deal(mocProxyAddress, 1000 ether);
+            // Deal rBTC funds to user
             vm.deal(USER, STARTING_RBTC_USER_BALANCE);
 
             // Give the MoC proxy contract allowance
             mockDocToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
 
-            // Give the MoC proxy contract allowance to move DOC from docHandler (this is mocking behaviour) TODO: look at this carefully when deploying on testnet (pretty sure it's fine)
-            vm.prank(address(docHandler));
-            mockDocToken.approve(mocProxyAddress, type(uint256).max);
-
             // Mint DOC for the user
-            mockDocToken.mint(USER, USER_TOTAL_DOC);
+            if (block.chainid == 31337) {
+                // Deal rBTC funds to MoC contract
+                vm.deal(mocProxyAddress, 1000 ether);
+
+                // Give the MoC proxy contract allowance to move DOC from docHandler
+                // This is necessary for local tests because of how the mock contract works, but not for the live contract
+                vm.prank(address(docHandler));
+
+                mockDocToken.approve(mocProxyAddress, type(uint256).max);
+                mockDocToken.mint(USER, USER_TOTAL_DOC);
+            } else if (block.chainid == 30 || block.chainid == 31) {
+                // bytes32 balanceSlot = keccak256(abi.encode(USER, uint256(DOC_BALANCES_SLOT)));
+                // vm.store(address(mockDocToken), balanceSlot, bytes32(USER_TOTAL_DOC));
+                // bytes32 balance = vm.load(address(mockDocToken), balanceSlot);
+                // emit log_uint(uint256(balance));
+
+                vm.prank(USER);
+                console.log("Gas provided to mintDoc:", gasleft());
+                // mockMocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
+                mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
+            }
 
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
             vm.startPrank(USER);

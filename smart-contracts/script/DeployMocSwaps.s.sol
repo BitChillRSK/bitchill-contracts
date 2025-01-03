@@ -20,7 +20,6 @@ contract DeployMocSwaps is Script {
         (address docToken, address mocProxy, address kDocToken) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
-        // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
         DocHandlerMoc docHandlerMoc = new DocHandlerMoc(
@@ -39,8 +38,8 @@ contract DeployMocSwaps is Script {
             DOC_YIELDS_INTEREST
         );
 
-        // For local tests:
-        if (block.chainid == 31337) {
+        // For local or fork tests:
+        if (block.chainid == 31337 || block.chainid == 30 || block.chainid == 31) {
             // adminOperations.setAdminRole(ADMIN); // Only for tests!!!
             // adminOperations.setSwapperRole(SWAPPER); // Only for tests!!!
             adminOperations.transferOwnership(OWNER); // Only for tests!!!

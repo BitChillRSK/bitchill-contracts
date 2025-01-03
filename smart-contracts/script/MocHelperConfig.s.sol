@@ -21,28 +21,29 @@ contract MocHelperConfig is Script {
     event HelperConfig__CreatedMockKdocToken(address kdocTokenAddress);
 
     constructor() {
-        if (block.chainid == 31) {
+        if (block.chainid == 30) {
+            activeNetworkConfig = getRootstockMainnetConfig();
+        } else if (block.chainid == 31) {
             activeNetworkConfig = getRootstockTestnetConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilConfig();
         }
+        // else if Sepolia y RSK
     }
 
-    // 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab WRBTC - RSK TESTNET
-    // 0x4D5a316D23eBE168d8f887b4447bf8DbFA4901CC rUSDT - RSK TESTNET
-
     function getRootstockTestnetConfig() public pure returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
-        address[] memory intermediateTokens = new address[](1);
-        intermediateTokens[0] = 0x4d5A316d23EBe168D8f887b4447BF8DBfA4901cc; // Address of the rUSDT token in Rootstock testnet
-
-        uint24[] memory poolFeeRates = new uint24[](2);
-        poolFeeRates[0] = 500;
-        poolFeeRates[1] = 500;
-
         RootstockTestnetNetworkConfig = NetworkConfig({
             docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
             mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
             kdocTokenAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914 // Address of the kDOC proxy contract in Rootstock testnet
+        });
+    }
+
+    function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
+        RootstockMainnetNetworkConfig = NetworkConfig({
+            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
+            mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
+            kdocTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2 // Address of the kDOC proxy contract in Rootstock mainnet
         });
     }
 
@@ -55,7 +56,7 @@ contract MocHelperConfig is Script {
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
-        MockKdocToken mockKdocToken = new MockKdocToken(msg.sender, address(mockDocToken));
+        MockKdocToken mockKdocToken = new MockKdocToken(address(mockDocToken));
         vm.stopBroadcast();
 
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));

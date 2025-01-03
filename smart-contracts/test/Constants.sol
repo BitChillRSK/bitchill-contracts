@@ -18,3 +18,5 @@ uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000;
 uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
 uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 bool constant DOC_YIELDS_INTEREST = true;
+
+// uint256 constant DOC_BALANCES_SLOT = 4;

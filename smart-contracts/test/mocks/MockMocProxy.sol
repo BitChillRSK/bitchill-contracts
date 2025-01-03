@@ -27,4 +27,6 @@ contract MockMocProxy {
             emit MockMocProxy__DocRedeemed(msg.sender, docAmount, redeemedRbtc);
         }
     }
+
+    function mintDoc(uint256 rbtcToDeposit) external payable {}
 }
