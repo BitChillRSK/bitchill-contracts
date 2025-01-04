@@ -136,30 +136,30 @@ contract DocLendingTest is DcaDappTest {
 
     function testWithdrawInterest() external {
         vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
-        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
+        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken), TROPYKUS_INDEX);
         uint256 userDocBalanceBeforeInterestWithdrawal = mockDocToken.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
         vm.prank(USER);
-        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken));
+        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), TROPYKUS_INDEX);
         uint256 userDocBalanceAfterInterestWithdrawal = mockDocToken.balanceOf(USER);
         assertEq(userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal, withdrawableInterest);
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
+        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken), TROPYKUS_INDEX);
         assertEq(withdrawableInterest, 0);
     }
 
     function testWithdrawTokenAndInterest() external {
         vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
-        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
+        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken), TROPYKUS_INDEX);
         uint256 userDocBalanceBeforeInterestWithdrawal = mockDocToken.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
         vm.prank(USER);
-        dcaManager.withdrawTokenAndInterest(address(mockDocToken), 0, DOC_TO_SPEND); // withdraw, for example, the amount of one periodic purchase
+        dcaManager.withdrawTokenAndInterest(address(mockDocToken), 0, DOC_TO_SPEND, TROPYKUS_INDEX); // withdraw, for example, the amount of one periodic purchase
         uint256 userDocBalanceAfterInterestWithdrawal = mockDocToken.balanceOf(USER);
         assertEq(
             userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal,
             withdrawableInterest + DOC_TO_SPEND
         );
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken));
+        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(mockDocToken), TROPYKUS_INDEX);
         assertEq(withdrawableInterest, 0);
     }
 }

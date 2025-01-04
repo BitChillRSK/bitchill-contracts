@@ -19,8 +19,14 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER");
 
-    mapping(address token => address tokenHandlerContract) private s_tokenHandler;
+    mapping(bytes32 tokenProtocolHash => address tokenHandlerContract) private s_tokenHandler;
     // mapping(address token => address swapper) private s_swapper;
+    // mapping(address token => string[] protocols) private s_tokenProtocols; // Doesn't seem like we'll need this - TODO: check!
+    mapping(string lowerCaseProtocolName => uint256 protocolIndex) private s_protocolIndexes;
+    mapping(uint256 protocolIndex => string lowerCaseProtocolName) private s_protocolNames;
+    // No lending -> 0
+    // "tropykus" -> 1
+    // "sovryn" -> 2
 
     constructor() Ownable() {
         // _grantRole(ADMIN_ROLE, msg.sender);
@@ -30,32 +36,29 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     /**
      * @dev Assigns a new TokenHandler to a token.
      * @param token The address of the token.
+     * @param lendingProtocolIndex The index of the protocol where (if) the token is lent
      * @param handler The address of the TokenHandler.
+     * @notice lendingProtocolIndex == 0 means the token is not lent
      */
-    function assignOrUpdateTokenHandler(address token, address handler) external onlyRole(ADMIN_ROLE) /*onlyOwner*/ {
+    function assignOrUpdateTokenHandler(address token, uint256 lendingProtocolIndex, address handler)
+        external
+        onlyRole(ADMIN_ROLE)
+    {
         if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
+        if (bytes(s_protocolNames[lendingProtocolIndex]).length == 0) {
+            revert AdminOperations__LendingProtocolNotAllowed(lendingProtocolIndex);
+        }
 
         ITokenHandler tokenHandler = ITokenHandler(handler);
 
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
-            s_tokenHandler[token] = handler;
-            emit AdminOperations__TokenHandlerUpdated(token, handler);
+            bytes32 key = _encodeKey(token, lendingProtocolIndex);
+            s_tokenHandler[key] = handler;
+            // _addLendingProtocolToToken(token, lendingProtocol);
+            emit AdminOperations__TokenHandlerUpdated(token, lendingProtocolIndex, handler);
         } else {
             revert AdminOperations__ContractIsNotTokenHandler(handler);
         }
-
-        // If a contract with no supportsInterface function is passed we will get an empty revert
-
-        // This doesn't work because unhandled reverts (e. g., when the contract in the given address does not have the supportsInterface function) will not be caught
-        // try tokenHandler.supportsInterface(type(ITokenHandler).interfaceId) returns (bool contractIsTokenHandler) {
-        //     if(contractIsTokenHandler){
-        //         s_tokenHandler[token] = handler;
-        //         emit AdminOperations__TokenHandlerUpdated(token, handler);
-        //     } else revert AdminOperations__ContractIsNotTokenHandler(handler);
-        // } catch {
-        //     console.log("Catch");
-        //     revert AdminOperations__ContractIsNotTokenHandler(handler);
-        // }
     }
 
     /**
@@ -77,10 +80,44 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     /**
      * @dev Retrieves the handler for a given token.
      * @param token The address of the token.
-     * @return The address of the TokenHandler. If address(0) is returned, the token is not accepted by the dApp.
+     * @param lendingProtocolIndex The index of the lending protocol (empty string if token will not be lent)
+     * @return The address of the TokenHandler. If address(0) is returned, the tuple token-protocol is not correct
      */
-    function getTokenHandler(address token) public view returns (address) {
-        return s_tokenHandler[token];
+    function getTokenHandler(address token, uint256 lendingProtocolIndex) public view returns (address) {
+        bytes32 key = _encodeKey(token, lendingProtocolIndex);
+        return s_tokenHandler[key];
+    }
+
+    /**
+     * @dev Adds a lending protocol to the system by assigining an index to its name
+     * @param lowerCaseName The name of the lending protocol in lower case
+     * @param index The index to be assigned to it
+     * @notice The index cannot be zero, since all elements in a mapping map to 0 by default
+     */
+    function addOrUpdateLendingProtocol(string memory lowerCaseName, uint256 index) external onlyRole(ADMIN_ROLE) {
+        if (index == 0) revert AdminOperations__LendingProtocolIndexCannotBeZero();
+        if (bytes(lowerCaseName).length == 0) revert AdminOperations__LendingProtocolNameNotSet();
+        s_protocolIndexes[lowerCaseName] = index;
+        s_protocolNames[index] = lowerCaseName;
+        emit AdminOperations__LendingProtocolAdded(index, lowerCaseName);
+    }
+
+    /**
+     * @dev Retrieves the index of the lending protocol
+     * @param lowerCaseName The name of the lending protocol in lower case
+     * @return The index of the lending protocol
+     */
+    function getLendingProtocolIndex(string memory lowerCaseName) external view returns (uint256) {
+        return s_protocolIndexes[lowerCaseName];
+    }
+    /**
+     * @dev Retrieves the index of the lending protocol
+     * @param index The index of the lending protocol in lower case
+     * @return The name of the lending protocol
+     */
+
+    function getLendingProtocolName(uint256 index) external view returns (string memory) {
+        return s_protocolNames[index];
     }
 
     /**
@@ -90,6 +127,26 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      */
     // function getSwapper(address token) public view returns (address) {
     //     return s_swapper[token];
+    // }
+
+    /**
+     * @dev Encodes the token and lending protocol
+     * @param token The address of the token.
+     * @param lendingProtocolIndex The name of the lending protocol (empty string if token will not be lent)
+     */
+    function _encodeKey(address token, uint256 lendingProtocolIndex) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(token, lendingProtocolIndex));
+    }
+
+    /**
+     * @dev Adds a lending protocol to a token's allowlist
+     * @param token The address of the token.
+     * @param lendingProtocol The name of the lending protocol
+     */
+    // function _addLendingProtocolToToken(address token, string memory lendingProtocol) private {
+    //     if (keccak256(abi.encode(lendingProtocol)) != keccak256(abi.encode(""))) {
+    //         s_tokenProtocols[token].push(lendingProtocol);
+    //     }
     // }
 
     /**

@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import "../Constants.sol";
 
 contract DcaScheduleTest is DcaDappTest {
     function setUp() public override {
@@ -27,7 +28,9 @@ contract DcaScheduleTest is DcaDappTest {
         emit DcaManager__DcaScheduleCreated(
             USER, address(mockDocToken), scheduleId, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         uint256 scheduleBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
         assertEq(DOC_TO_DEPOSIT, scheduleBalanceAfterDeposit);
         assertEq(DOC_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex));
@@ -46,7 +49,9 @@ contract DcaScheduleTest is DcaDappTest {
         emit DcaManager__DcaScheduleCreated(
             USER, address(mockDocToken), scheduleId, DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         bytes32 scheduleId2 = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
@@ -55,7 +60,9 @@ contract DcaScheduleTest is DcaDappTest {
         emit DcaManager__DcaScheduleCreated(
             USER, address(mockDocToken), scheduleId2, DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         assert(scheduleId != scheduleId2);
         vm.stopPrank();
     }
@@ -91,12 +98,16 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log("scheduleId2 is", vm.toString(scheduleId2));
         // Delete one
@@ -115,12 +126,16 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].scheduleId));
         console.log("scheduleId 2 is", vm.toString(scheduleId2));
@@ -163,12 +178,16 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 = keccak256(
             abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
         );
-        dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+        );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(mockDocToken))[1].scheduleId));
         console.log("scheduleId 2 is", vm.toString(scheduleId2));

@@ -29,12 +29,12 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(dummyERC165Contract));
+        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(dummyERC165Contract));
 
         vm.expectRevert();
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(dcaManager));
+        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(dcaManager));
     }
 
     function testUpdateTokenHandlerFailsIfAddressIsEoa() external {
@@ -44,11 +44,11 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), dummyAddress);
+        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, dummyAddress);
     }
 
     function testTokenHandlerUpdated() external {
-        address prevDocHandlerMoc = adminOperations.getTokenHandler(address(mockDocToken));
+        address prevDocHandlerMoc = adminOperations.getTokenHandler(address(mockDocToken), TROPYKUS_INDEX);
         vm.startBroadcast();
         DocHandlerMoc newDocHandlerMoc = new DocHandlerMoc(
             address(dcaManager),
@@ -69,7 +69,7 @@ contract AdminOperationsTest is DcaDappTest {
         assert(prevDocHandlerMoc != address(newDocHandlerMoc));
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), address(newDocHandlerMoc));
-        assertEq(adminOperations.getTokenHandler(address(mockDocToken)), address(newDocHandlerMoc));
+        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(newDocHandlerMoc));
+        assertEq(adminOperations.getTokenHandler(address(mockDocToken), TROPYKUS_INDEX), address(newDocHandlerMoc));
     }
 }

@@ -91,7 +91,9 @@ contract DcaDappTest is Test {
     );
 
     // AdminOperations
-    event AdminOperations__TokenHandlerUpdated(address indexed token, address newHandler);
+    event AdminOperations__TokenHandlerUpdated(
+        address indexed token, uint256 indexed lendinProtocolIndex, address indexed newHandler
+    );
 
     //MockMocProxy
     event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
@@ -121,18 +123,22 @@ contract DcaDappTest is Test {
             // Set roles
             vm.prank(OWNER);
             adminOperations.setAdminRole(ADMIN);
-            vm.prank(ADMIN);
+            vm.startPrank(ADMIN);
             adminOperations.setSwapperRole(SWAPPER);
+            // Add Troypkus and Sovryn as allowed lending protocols
+            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, 1);
+            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
+            vm.stopPrank();
 
             // FeeCalculator helper test contract
             feeCalculator = new FeeCalculator();
 
             // Add tokenHandler
-            vm.expectEmit(true, true, false, false);
-            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docHandler));
+            vm.expectEmit(true, true, true, false);
+            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, TROPYKUS_INDEX, address(docHandler));
             // vm.prank(OWNER);
             vm.prank(ADMIN);
-            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docHandler));
+            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, address(docHandler));
 
             // Deal rBTC funds to user
             vm.deal(USER, STARTING_RBTC_USER_BALANCE);
@@ -167,7 +173,9 @@ contract DcaDappTest is Test {
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
             vm.startPrank(USER);
             mockDocToken.approve(address(docHandler), DOC_TO_DEPOSIT);
-            dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            );
             vm.stopPrank();
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             DexHelperConfig helperConfig;
@@ -197,14 +205,18 @@ contract DcaDappTest is Test {
             // Set roles
             vm.prank(OWNER);
             adminOperations.setAdminRole(ADMIN);
-            vm.prank(ADMIN);
+            vm.startPrank(ADMIN);
             adminOperations.setSwapperRole(SWAPPER);
+            // Add Troypkus and Sovryn as allowed lending protocols
+            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, 1);
+            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
+            vm.stopPrank();
 
             // Add tokenHandler
-            vm.expectEmit(true, true, false, false);
-            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, address(docHandler));
+            vm.expectEmit(true, true, true, false);
+            emit AdminOperations__TokenHandlerUpdated(docTokenAddress, TROPYKUS_INDEX, address(docHandler));
             vm.prank(ADMIN);
-            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docHandler));
+            adminOperations.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, address(docHandler));
 
             // TODO: Think through the setup for DEX swapping tests
 
@@ -219,7 +231,9 @@ contract DcaDappTest is Test {
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
             vm.startPrank(USER);
             mockDocToken.approve(address(docHandler), DOC_TO_DEPOSIT);
-            dcaManager.createDcaSchedule(address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            );
             vm.stopPrank();
         } else {
             revert("Invalid deploy environment");
@@ -285,7 +299,9 @@ contract DcaDappTest is Test {
             emit DcaManager__DcaScheduleCreated(
                 USER, address(mockDocToken), scheduleId, docToDeposit, purchaseAmount, purchasePeriod
             );
-            dcaManager.createDcaSchedule(address(mockDocToken), docToDeposit, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), docToDeposit, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+            );
             uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
             assertEq(docToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
             assertEq(purchaseAmount, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex));
@@ -464,7 +480,7 @@ contract DcaDappTest is Test {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
         );
 
         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
@@ -504,7 +520,7 @@ contract DcaDappTest is Test {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
         );
         // uint256 postDocHandlerBalance2 = address(docHandler).balance;
 

@@ -16,6 +16,7 @@ interface IDcaManager {
         uint256 purchasePeriod; // Time between purchases in seconds
         uint256 lastPurchaseTimestamp; // Timestamp of the latest purchase
         bytes32 scheduleId; // Unique identifier of each DCA schedule
+        uint256 lendingProtocolIndex;
     }
 
     //////////////////////
@@ -100,9 +101,15 @@ interface IDcaManager {
      * @param depositAmount The amount of the stablecoin to deposit.
      * @param purchaseAmount The amount of to spend periodically in buying rBTC
      * @param purchasePeriod The period for recurrent purchases
+     * @param lendingProtocolIndex: the index in the AdminOperations contract of the lending protocol, if any, where the token will be deposited to generate yield
      */
-    function createDcaSchedule(address token, uint256 depositAmount, uint256 purchaseAmount, uint256 purchasePeriod)
-        external;
+    function createDcaSchedule(
+        address token,
+        uint256 depositAmount,
+        uint256 purchaseAmount,
+        uint256 purchasePeriod,
+        uint256 lendingProtocolIndex
+    ) external;
 
     /**
      * @notice Update an existing DCA schedule.
@@ -166,6 +173,7 @@ interface IDcaManager {
      * @param scheduleIds the IDs of the DCA schedules that correspond to each user's purchase
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
      * @param purchasePeriods the purchase period that corresponds to each user's purchase
+     * @param lendingProtocolIndex the lending protocol to withdraw the tokens from before purchasing
      */
     function batchBuyRbtc(
         address[] memory buyers,
@@ -173,33 +181,43 @@ interface IDcaManager {
         uint256[] memory scheduleIndexes,
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
-        uint256[] memory purchasePeriods
+        uint256[] memory purchasePeriods,
+        uint256 lendingProtocolIndex
     ) external;
 
     /**
      * @notice Withdraw the token accumulated by a user as interest through all the DCA strategies using that token
      * @param token The token address
+     * @param lendingProtocolIndex: the lending protocol index
      */
-    function withdrawInterestFromTokenHandler(address token) external;
+    function withdrawInterestFromTokenHandler(address token, uint256 lendingProtocolIndex) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
      * @param token The token address of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
      * @param withdrawalAmount The amount of the stablecoin to withdraw.
+     * @param lendingProtocolIndex: the lending protocol index
      */
-    function withdrawTokenAndInterest(address token, uint256 scheduleIndex, uint256 withdrawalAmount) external;
+    function withdrawTokenAndInterest(
+        address token,
+        uint256 scheduleIndex,
+        uint256 withdrawalAmount,
+        uint256 lendingProtocolIndex
+    ) external;
 
     /**
      * @notice Withdraw the rBtc accumulated by a user through all the DCA strategies created using a given stablecoin
      * @param token The token address of the stablecoin
+     * @param lendingProtocolIndex The index of the lending protocol where the stablecoin is lent (0 if it is not lent)
      */
-    function withdrawRbtcFromTokenHandler(address token) external;
+    function withdrawRbtcFromTokenHandler(address token, uint256 lendingProtocolIndex) external;
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
+     * @param lendingProtocolIndex The lending protocol that held the tokens before they were spent on rBTC purchases
      */
-    function withdrawAllAccmulatedRbtc() external;
+    function withdrawAllAccmulatedRbtc(uint256 lendingProtocolIndex) external;
 
     /**
      * @dev modifies the minimum period that can be set for purchases
@@ -220,7 +238,9 @@ interface IDcaManager {
     function getUsersDepositedTokens(address user) external view returns (address[] memory);
     function getUsers() external view returns (address[] memory);
     function getTotalNumberOfDeposits() external view returns (uint256);
-    function getInterestAccruedByUser(address user, address token) external returns (uint256);
+    function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
+        external
+        returns (uint256);
 
     /**
      * @dev returns the minimum period that can be set for purchases

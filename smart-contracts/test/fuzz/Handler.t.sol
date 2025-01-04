@@ -60,7 +60,9 @@ contract Handler is Test {
             uint256 purchaseAmount = depositAmount / 10;
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
-            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
         }
@@ -83,7 +85,9 @@ contract Handler is Test {
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
-            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+            );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
         }
@@ -109,7 +113,9 @@ contract Handler is Test {
             uint256 depositAmount = purchaseAmount * 10;
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
-            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+            );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
         }
@@ -140,7 +146,9 @@ contract Handler is Test {
             uint256 purchaseAmount = 100 ether;
             // We need to create a DCA schedule before modifying the purchase period
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
-            dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
+            dcaManager.createDcaSchedule(
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+            );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
         }
@@ -162,7 +170,9 @@ contract Handler is Test {
         purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
         mockDocToken.approve(address(docHandlerMoc), depositAmount);
-        dcaManager.createDcaSchedule(address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod);
+        dcaManager.createDcaSchedule(
+            address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+        );
         vm.stopPrank();
     }
 
@@ -298,7 +308,13 @@ contract Handler is Test {
 
             vm.prank(OWNER);
             dcaManager.batchBuyRbtc(
-                buyers, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+                buyers,
+                address(mockDocToken),
+                scheduleIndexes,
+                scheduleIds,
+                purchaseAmounts,
+                purchasePeriods,
+                TROPYKUS_INDEX
             );
         }
     }
@@ -309,13 +325,14 @@ contract Handler is Test {
         if (depositedTokens.length == 0) return;
         tokenHandlerIndex = bound(tokenHandlerIndex, 0, depositedTokens.length - 1);
         vm.startPrank(user);
-        uint256 rbtcBalance = ITokenHandler(adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex]))
-            .getAccumulatedRbtcBalance();
+        uint256 rbtcBalance = ITokenHandler(
+            adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex], TROPYKUS_INDEX)
+        ).getAccumulatedRbtcBalance();
         if (rbtcBalance == 0) {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawRbtcFromTokenHandler(depositedTokens[tokenHandlerIndex]);
+        dcaManager.withdrawRbtcFromTokenHandler(depositedTokens[tokenHandlerIndex], TROPYKUS_INDEX);
         vm.stopPrank();
     }
 
@@ -329,21 +346,21 @@ contract Handler is Test {
         }
         uint256 rbtcBalance = 0;
         for (uint256 i; i < depositedTokens.length; ++i) {
-            rbtcBalance +=
-                ITokenHandler(adminOperations.getTokenHandler(depositedTokens[i])).getAccumulatedRbtcBalance();
+            rbtcBalance += ITokenHandler(adminOperations.getTokenHandler(depositedTokens[i], TROPYKUS_INDEX))
+                .getAccumulatedRbtcBalance();
         }
         if (rbtcBalance == 0) {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawAllAccmulatedRbtc();
+        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
         vm.stopPrank();
     }
 
     function withdrawInterestFromDocHandlerMoc(uint256 userSeed) external {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
-        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken));
+        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), TROPYKUS_INDEX);
         vm.stopPrank();
     }
 }

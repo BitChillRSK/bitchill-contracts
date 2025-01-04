@@ -58,7 +58,7 @@ contract InvariantTest is StdInvariant, Test {
         // Assign DOC token handler
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, address(docHandlerMoc));
+        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, address(docHandlerMoc));
 
         // Initialize users and distribute 10000 DOC tokens
         for (uint256 i = 0; i < NUM_USERS; i++) {

@@ -151,7 +151,13 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            emptyAddressArray, address(mockDocToken), emptyUintArray, emptyBytes32Array, emptyUintArray, emptyUintArray
+            emptyAddressArray,
+            address(mockDocToken),
+            emptyUintArray,
+            emptyBytes32Array,
+            emptyUintArray,
+            emptyUintArray,
+            TROPYKUS_INDEX
         );
     }
 
@@ -163,7 +169,13 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(mockDocToken), dummyUintArray, dummyBytes32Array, dummyUintArray, dummyUintArray
+            users,
+            address(mockDocToken),
+            dummyUintArray,
+            dummyBytes32Array,
+            dummyUintArray,
+            dummyUintArray,
+            TROPYKUS_INDEX
         );
     }
 
@@ -235,7 +247,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods
+            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
         );
 
         uint256 postDocHandlerMocBalance = address(docHandler).balance;

@@ -32,7 +32,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc();
+        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
@@ -51,7 +51,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc();
+        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
 
@@ -70,7 +70,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.expectRevert(ITokenHandler.TokenHandler__NoAccumulatedRbtcToWithdraw.selector);
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc();
+        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
     }
