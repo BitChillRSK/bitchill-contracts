@@ -161,6 +161,7 @@ contract DcaDappTest is Test {
                 console.log("Gas provided to mintDoc:", gasleft());
                 // mockMocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
                 mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
+                // mockMocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
             }
 
             // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)

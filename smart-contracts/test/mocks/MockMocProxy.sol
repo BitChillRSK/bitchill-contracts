@@ -29,4 +29,5 @@ contract MockMocProxy {
     }
 
     function mintDoc(uint256 rbtcToDeposit) external payable {}
+    function mintDocVendors(uint256 rbtcToDeposit, address payable vendorAccount) external payable {}
 }
