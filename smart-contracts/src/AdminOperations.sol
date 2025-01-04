@@ -110,15 +110,23 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     function getLendingProtocolIndex(string memory lowerCaseName) external view returns (uint256) {
         return s_protocolIndexes[lowerCaseName];
     }
+
     /**
      * @dev Retrieves the index of the lending protocol
      * @param index The index of the lending protocol in lower case
      * @return The name of the lending protocol
      */
-
     function getLendingProtocolName(uint256 index) external view returns (string memory) {
         return s_protocolNames[index];
     }
+
+    /**
+     * @param index The index of the lending protocol in lower case
+     * @return Whether the token is lent in any lending protocol
+     */
+    // function tokenIsLent(uint256 index) external view returns (bool) {
+    //     return bytes(s_protocolNames[index]).length != 0;
+    // }
 
     /**
      * @dev Retrieves the swapper for a given token.

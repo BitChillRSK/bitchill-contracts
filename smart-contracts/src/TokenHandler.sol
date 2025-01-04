@@ -28,6 +28,8 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
     bool internal immutable i_yieldsInterest; // Whether the token deposited will yield interest while waiting to be spent on DCA purchases
 
+    // i_yieldsInterest doesn't seem necessary anymore. TODO: REMOVE!!!
+
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;
 
@@ -164,9 +166,9 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         return s_usersAccumulatedRbtc[msg.sender];
     }
 
-    function depositsYieldInterest() external view override returns (bool) {
-        return i_yieldsInterest;
-    }
+    // function depositsYieldInterest() external view override returns (bool) {
+    //     return i_yieldsInterest;
+    // }
 
     function getMinFeeRate() public view override returns (uint256) {
         return s_minFeeRate;

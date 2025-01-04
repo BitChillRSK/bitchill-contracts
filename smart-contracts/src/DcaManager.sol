@@ -448,9 +448,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     function _withdrawInterest(address token, uint256 lendingProtocolIndex) internal {
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
-        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
-        uint256 lockedTokenAmount;
+        // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
+        // if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token);
+        uint256 lockedTokenAmount;
         for (uint256 i; i < dcaSchedules.length; ++i) {
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }
@@ -542,9 +543,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         returns (uint256)
     {
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
-        if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token); // TODO: this may not be necessary and could be done by checking the DcaDetails.lendingProtocolIndex != 0
-        uint256 lockedTokenAmount;
+        // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
+        if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token);
+        uint256 lockedTokenAmount;
         for (uint256 i; i < dcaSchedules.length; ++i) {
             lockedTokenAmount += dcaSchedules[i].tokenBalance;
         }

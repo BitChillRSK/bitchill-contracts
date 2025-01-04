@@ -162,7 +162,7 @@ interface ITokenHandler {
      * @dev Checks if deposits yield interest.
      * @return A boolean indicating if deposits yield interest.
      */
-    function depositsYieldInterest() external returns (bool);
+    // function depositsYieldInterest() external returns (bool);
 
     /**
      * @dev Withdraws the interest earned for a user.
