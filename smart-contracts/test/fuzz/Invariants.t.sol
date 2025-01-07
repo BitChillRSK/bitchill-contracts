@@ -125,7 +125,7 @@ contract InvariantTest is StdInvariant, Test {
         // kDOC to DOC correspondence holds
         uint256 sumOfUsersKdoc;
         for (uint256 i; i < users.length; ++i) {
-            sumOfUsersKdoc += docHandlerMoc.getUsersKdocBalance(users[i]);
+            sumOfUsersKdoc += docHandlerMoc.getUsersLendingTokenBalance(users[i]);
         }
         console.log("Interest Factor: ", interestFactor);
         console.log("exchangeRateStored: ", mockKdocToken.exchangeRateStored());

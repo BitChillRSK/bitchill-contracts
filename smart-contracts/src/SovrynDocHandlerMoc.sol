@@ -2,20 +2,20 @@
 pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {DocHandler} from "./DocHandler.sol";
+import {SovrynDocHandler} from "./SovrynDocHandler.sol";
 import {IDocHandlerMoc} from "./interfaces/IDocHandlerMoc.sol";
-import {IkDocToken} from "./interfaces/IkDocToken.sol";
+import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title DocHandlerMoc
- * @dev Implementation of the IDocHandlerMoc interface.
+ * @title DocHandler
+ * @dev Implementation of the IDocHandler interface.
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
+contract SovrynDocHandlerMoc is SovrynDocHandler, IDocHandlerMoc {
     using SafeERC20 for IERC20;
 
     IMocProxy public immutable i_mocProxy; // Make immutable again after adapting everything to 0.8.19?
@@ -41,7 +41,7 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
-        DocHandler(
+        SovrynDocHandler(
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,

@@ -18,6 +18,9 @@ interface ILoanTokenLogicLM {
     // function mint(address receiver, uint256 depositAmount, bool useLM) external;
     function mint(address receiver, uint256 depositAmount) external returns (uint256 mintAmount);
     function burn(address user, uint256 burnAmount) external returns (uint256 loanAmountPaid);
+    function tokenPrice() external returns (uint256 price);
+    function assetBalanceOf(address _owner) external view returns (uint256);
+    function profitOf(address user) external view returns (int256);
 }
 
 contract SovrynDepositWithdraw {
@@ -26,6 +29,8 @@ contract SovrynDepositWithdraw {
     ILoanTokenLogicLM loanTokenProxy;
 
     constructor(address _docToken, address _loanTokenProxy) {
+        // docToken: 0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0
+        // loanTokenProxy: 0x74e00A8CeDdC752074aad367785bFae7034ed89f
         docToken = IERC20(_docToken);
         iSUSD = IERC20(_loanTokenProxy);
         loanTokenProxy = ILoanTokenLogicLM(_loanTokenProxy);
@@ -39,8 +44,17 @@ contract SovrynDepositWithdraw {
         // iSUSD.transfer(msg.sender, iSUSD.balanceOf(address(this)));
     }
 
-    function withdrawDoc() external {
+    function withdrawDoc(uint256 docAmount) external {
         // iSUSD.transferFrom(msg.sender, address(this), iSUSD.balanceOf(msg.sender));
-        loanTokenProxy.burn(msg.sender, iSUSD.balanceOf(address(this)));
+        // loanTokenProxy.burn(msg.sender, iSUSD.balanceOf(address(this)));
+
+        uint256 exchangeRate = loanTokenProxy.tokenPrice(); // esto devuelve la tasa de cambio
+        uint256 iSusdToRepay = docAmount * 1e18 / exchangeRate;
+        loanTokenProxy.burn(msg.sender, iSusdToRepay);
+    }
+
+    function getUnderlyingAmount() external view returns (uint256 underlyingAmount) {
+        underlyingAmount =
+            loanTokenProxy.assetBalanceOf(address(this)) + uint256(loanTokenProxy.profitOf(address(this)));
     }
 }

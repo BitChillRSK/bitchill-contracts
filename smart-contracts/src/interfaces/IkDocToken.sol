@@ -21,7 +21,7 @@ interface IkDocToken {
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 
     /**
-     * @dev This function is used to withdraw DOC from the Tropykus protocol and give back the corresponding kDOC
+     * @dev This function is used to retrieve the amount of DOC corresponding to a user that holds kDOC
      * @param owner the user that owns the DOC deposited into Tropykus
      */
     function getSupplierSnapshotStored(address owner)

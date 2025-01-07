@@ -23,12 +23,19 @@ interface IiSusdToken {
     function burn(address receiver, uint256 burnAmount) external returns (uint256 loanAmountPaid);
 
     /**
-     * @dev This function is used to withdraw DOC from the Sovryn protocol and give back the corresponding kDOC
-     * @param owner the user that owns the DOC deposited into Sovryn
+     * @notice Get loan token balance.
+     * @return The user's balance of underlying token.
+     *
      */
-    function getSupplierSnapshotStored(address owner)
-        external
-        returns (uint256 tokens, uint256 underlyingAmount, uint256 suppliedAt, uint256 promisedSupplyRate);
+    function assetBalanceOf(address _owner) external view returns (uint256);
+
+    /**
+     * @notice Wrapper for internal _profitOf low level function.
+     * @param user The user address.
+     * @return The profit of a user.
+     *
+     */
+    function profitOf(address user) external view returns (int256);
 
     /**
      * @dev Returns the balance of the specified address.
@@ -38,9 +45,8 @@ interface IiSusdToken {
     function balanceOf(address owner) external returns (uint256);
 
     /**
-     * @notice Calculates the exchange rate from the underlying to the CToken
-     * @dev This function does not accrue interest before calculating the exchange rate
-     * @return Calculated exchange rate scaled by 1e18
+     * @notice Calculates the exchange rate from the underlying DOC to iSusd
+     * @return price of iSusd/DOC
      */
-    function exchangeRateStored() external view returns (uint256);
+    function tokenPrice() external view returns (uint256 price);
 }

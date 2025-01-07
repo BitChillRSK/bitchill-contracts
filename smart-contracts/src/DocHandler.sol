@@ -90,7 +90,7 @@ abstract contract DocHandler is TokenHandler, IDocHandler {
         super.withdrawToken(user, withdrawalAmount);
     }
 
-    function getUsersKdocBalance(address user) external view override returns (uint256) {
+    function getUsersLendingTokenBalance(address user) external view override returns (uint256) {
         return s_kDocBalances[user];
     }
 

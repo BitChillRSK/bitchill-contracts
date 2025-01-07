@@ -48,5 +48,5 @@ interface IDocTokenHandler { /* is ITokenHandler */
      * @notice Gets the kDOC balance of the user
      * @param user The user whose balance is checked
      */
-    function getUsersKdocBalance(address user) external returns (uint256);
+    function getUsersLendingTokenBalance(address user) external returns (uint256);
 }
