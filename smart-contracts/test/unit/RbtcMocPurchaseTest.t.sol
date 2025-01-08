@@ -23,17 +23,17 @@ contract RbtcMocPurchaseTest is DcaDappTest {
 
     function testCannotBuyIfPeriodNotElapsed() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docHandler), DOC_TO_DEPOSIT);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_SPEND);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
-        // bytes32 scheduleId = dcaManager.getScheduleId(address(mockDocToken), SCHEDULE_INDEX);
+        docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
+        dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, DOC_TO_SPEND);
+        dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
+        // bytes32 scheduleId = dcaManager.getScheduleId(address(docToken), SCHEDULE_INDEX);
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
+            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.stopPrank();
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId); // first purchase
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId); // first purchase
         bytes memory encodedRevert = abi.encodeWithSelector(
             IDcaManager.DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed.selector,
             block.timestamp + MIN_PURCHASE_PERIOD - block.timestamp
@@ -41,7 +41,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId); // second purchase
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId); // second purchase
     }
 
     function testSeveralPurchasesOneSchedule() external {
@@ -50,16 +50,15 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
-        );
+        bytes32 scheduleId =
+            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
 
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
+        dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         for (uint256 i; i < numOfPurchases; ++i) {
             // vm.prank(OWNER);
             vm.prank(SWAPPER);
-            dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
+            dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
             vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         vm.prank(USER);
@@ -78,23 +77,22 @@ contract RbtcMocPurchaseTest is DcaDappTest {
 
     function testRevertPurchasetIfDocRunsOut() external {
         uint256 numOfPurchases = DOC_TO_DEPOSIT / DOC_TO_SPEND;
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
-        );
+        bytes32 scheduleId =
+            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         for (uint256 i; i < numOfPurchases; ++i) {
             // vm.prank(OWNER);
             vm.prank(SWAPPER);
-            dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
+            dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
             vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
         }
         // Attempt to purchase once more
         bytes memory encodedRevert = abi.encodeWithSelector(
-            IDcaManager.DcaManager__ScheduleBalanceNotEnoughForPurchase.selector, address(mockDocToken), 0
+            IDcaManager.DcaManager__ScheduleBalanceNotEnoughForPurchase.selector, address(docToken), 0
         );
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
     }
 
     function testSeveralPurchasesWithSeveralSchedules() external {
@@ -104,16 +102,15 @@ contract RbtcMocPurchaseTest is DcaDappTest {
 
     function testOnlySwapperCanCallDcaManagerToPurchase() external {
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceBeforePurchase = docHandler.getAccumulatedRbtcBalance();
         // bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
         bytes memory encodedRevert = abi.encodeWithSelector(IDcaManager.DcaManager__UnauthorizedSwapper.selector, USER);
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
-        );
+        bytes32 scheduleId =
+            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         vm.expectRevert(encodedRevert);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
+        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
@@ -123,14 +120,14 @@ contract RbtcMocPurchaseTest is DcaDappTest {
 
     function testOnlyDcaManagerCanPurchase() external {
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceBeforePurchase = docHandler.getAccumulatedRbtcBalance();
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length - 1)
+            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.expectRevert(ITokenHandler.TokenHandler__OnlyDcaManagerCanCall.selector);
         docHandler.buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT, MIN_PURCHASE_PERIOD);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
@@ -152,7 +149,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
             emptyAddressArray,
-            address(mockDocToken),
+            address(docToken),
             emptyUintArray,
             emptyBytes32Array,
             emptyUintArray,
@@ -169,33 +166,27 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users,
-            address(mockDocToken),
-            dummyUintArray,
-            dummyBytes32Array,
-            dummyUintArray,
-            dummyUintArray,
-            TROPYKUS_INDEX
+            users, address(docToken), dummyUintArray, dummyBytes32Array, dummyUintArray, dummyUintArray, TROPYKUS_INDEX
         );
     }
 
     function testPurchaseFailsIfIdAndIndexDontMatch() external {
         bytes32 scheduleId = keccak256(
-            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
+            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
         );
 
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceBeforePurchase = docHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
 
         vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, scheduleId);
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
 
         vm.startPrank(USER);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(mockDocToken), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
         vm.stopPrank();
 
@@ -208,7 +199,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         super.createSeveralDcaSchedules();
 
         bytes32 scheduleId = keccak256(
-            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(mockDocToken)).length)
+            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
         );
 
         uint256 prevDocHandlerMocBalance = address(docHandler).balance;
@@ -216,7 +207,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         uint256 userAccumulatedRbtcPrev = docHandler.getAccumulatedRbtcBalance();
         // vm.prank(OWNER);
         // address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
-        // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(mockDocToken)).length;
+        // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(docToken)).length;
         address[] memory users = new address[](NUM_OF_SCHEDULES);
         uint256[] memory scheduleIndexes = new uint256[](NUM_OF_SCHEDULES);
         uint256[] memory purchaseAmounts = new uint256[](NUM_OF_SCHEDULES);
@@ -229,8 +220,8 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
-            uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(mockDocToken), scheduleIndex);
-            uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(mockDocToken), scheduleIndex);
+            uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(docToken), scheduleIndex);
+            uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(docToken), scheduleIndex);
             vm.stopPrank();
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
@@ -238,8 +229,8 @@ contract RbtcMocPurchaseTest is DcaDappTest {
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
             scheduleIndexes[i] = i;
             vm.startPrank(OWNER);
-            purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchaseAmount;
-            purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(mockDocToken))[i].purchasePeriod;
+            purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(docToken))[i].purchaseAmount;
+            purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(docToken))[i].purchasePeriod;
             scheduleIds[i] = scheduleId;
             vm.stopPrank();
         }
@@ -247,7 +238,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(mockDocToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
+            users, address(docToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
         );
 
         uint256 postDocHandlerMocBalance = address(docHandler).balance;

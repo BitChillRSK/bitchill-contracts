@@ -22,7 +22,7 @@ contract DocWithdrawalTest is DcaDappTest {
     function testCannotWithdrawZeroDoc() external {
         vm.startPrank(USER);
         vm.expectRevert(IDcaManager.DcaManager__WithdrawalAmountMustBeGreaterThanZero.selector);
-        dcaManager.withdrawToken(address(mockDocToken), SCHEDULE_INDEX, 0);
+        dcaManager.withdrawToken(address(docToken), SCHEDULE_INDEX, 0);
         vm.stopPrank();
     }
 
@@ -30,12 +30,12 @@ contract DocWithdrawalTest is DcaDappTest {
         vm.startPrank(USER);
         bytes memory encodedRevert = abi.encodeWithSelector(
             IDcaManager.DcaManager__WithdrawalAmountExceedsBalance.selector,
-            address(mockDocToken),
+            address(docToken),
             USER_TOTAL_DOC,
             DOC_TO_DEPOSIT
         );
         vm.expectRevert(encodedRevert);
-        dcaManager.withdrawToken(address(mockDocToken), SCHEDULE_INDEX, USER_TOTAL_DOC);
+        dcaManager.withdrawToken(address(docToken), SCHEDULE_INDEX, USER_TOTAL_DOC);
         vm.stopPrank();
     }
 }

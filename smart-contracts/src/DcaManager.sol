@@ -5,6 +5,7 @@ import {IDcaManager} from "./interfaces/IDcaManager.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
+import {ITokenLending} from "./interfaces/ITokenLending.sol";
 import {AdminOperations} from "./AdminOperations.sol";
 
 /**
@@ -447,15 +448,20 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     function _withdrawInterest(address token, uint256 lendingProtocolIndex) internal {
+        bytes32 protocolNameHash =
+            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
+        if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
         // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
-        // if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token);
+        // if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token); // This seemed wrong
         uint256 lockedTokenAmount;
         for (uint256 i; i < dcaSchedules.length; ++i) {
-            lockedTokenAmount += dcaSchedules[i].tokenBalance;
+            if (dcaSchedules[i].lendingProtocolIndex == lendingProtocolIndex) {
+                lockedTokenAmount += dcaSchedules[i].tokenBalance;
+            }
         }
-        tokenHandler.withdrawInterest(msg.sender, lockedTokenAmount);
+        ITokenLending(address(tokenHandler)).withdrawInterest(msg.sender, lockedTokenAmount);
     }
 
     // function _isTokenDeposited(address token) internal view returns (bool) {
@@ -542,15 +548,20 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         override
         returns (uint256)
     {
+        bytes32 protocolNameHash =
+            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
+        if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
         // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
-        if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token);
+        // if (dcaSchedules[0].lendingProtocolIndex == 0) revert DcaManager__TokenDoesNotYieldInterest(token); // This seemed wrong
         uint256 lockedTokenAmount;
         for (uint256 i; i < dcaSchedules.length; ++i) {
-            lockedTokenAmount += dcaSchedules[i].tokenBalance;
+            if (dcaSchedules[i].lendingProtocolIndex == lendingProtocolIndex) {
+                lockedTokenAmount += dcaSchedules[i].tokenBalance;
+            }
         }
-        return tokenHandler.getAccruedInterest(user, lockedTokenAmount);
+        return ITokenLending(address(tokenHandler)).getAccruedInterest(user, lockedTokenAmount);
     }
 
     // function getTokenHandlerAddress(address token) external view returns (address) {

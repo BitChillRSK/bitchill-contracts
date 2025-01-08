@@ -5,7 +5,8 @@ pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {DocHandlerDex} from "../src/DocHandlerDex.sol";
+import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
+import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
 import {IDexSwaps} from "../src/interfaces/IDexSwaps.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
@@ -13,14 +14,17 @@ import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces
 // import {ISwapRouter02} from "../src/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {ITokenHandler} from "../src/interfaces/ITokenHandler.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
 contract DeployDexSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
+    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
+    address docHandlerDexAddress;
 
-    function run() external returns (AdminOperations, DocHandlerDex, DcaManager, DexHelperConfig) {
+    function run() external returns (AdminOperations, address, DcaManager, DexHelperConfig) {
         DexHelperConfig helperConfig = new DexHelperConfig();
 
         DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
@@ -37,33 +41,61 @@ contract DeployDexSwaps is Script {
         // After startBroadcast -> "real" tx
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        DocHandlerDex docTokenHandlerDex = new DocHandlerDex(
-            address(dcaManager),
-            docToken,
-            kDocToken,
-            IDexSwaps.UniswapSettings({
-                wrBtcToken: IWRBTC(wrBtcToken),
-                swapRouter02: ISwapRouter02(swapRouter02),
-                swapIntermediateTokens: swapIntermediateTokens,
-                swapPoolFeeRates: swapPoolFeeRates,
-                mocOracle: ICoinPairPrice(mocOracle)
-            }),
-            MIN_PURCHASE_AMOUNT,
-            FEE_COLLECTOR,
-            ITokenHandler.FeeSettings({
-                minFeeRate: MIN_FEE_RATE,
-                maxFeeRate: MAX_FEE_RATE,
-                minAnnualAmount: MIN_ANNUAL_AMOUNT,
-                maxAnnualAmount: MAX_ANNUAL_AMOUNT
-            }),
-            DOC_YIELDS_INTEREST
-        );
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+            TropykusDocHandlerDex docHandlerDex = new TropykusDocHandlerDex(
+                address(dcaManager),
+                docToken,
+                kDocToken,
+                IDexSwaps.UniswapSettings({
+                    wrBtcToken: IWRBTC(wrBtcToken),
+                    swapRouter02: ISwapRouter02(swapRouter02),
+                    swapIntermediateTokens: swapIntermediateTokens,
+                    swapPoolFeeRates: swapPoolFeeRates,
+                    mocOracle: ICoinPairPrice(mocOracle)
+                }),
+                MIN_PURCHASE_AMOUNT,
+                FEE_COLLECTOR,
+                ITokenHandler.FeeSettings({
+                    minFeeRate: MIN_FEE_RATE,
+                    maxFeeRate: MAX_FEE_RATE,
+                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
+                }),
+                DOC_YIELDS_INTEREST // TODO: remove this paramter!!
+            );
+            docHandlerDexAddress = address(docHandlerDex);
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+            SovrynDocHandlerDex docHandlerDex = new SovrynDocHandlerDex(
+                address(dcaManager),
+                docToken,
+                kDocToken,
+                IDexSwaps.UniswapSettings({
+                    wrBtcToken: IWRBTC(wrBtcToken),
+                    swapRouter02: ISwapRouter02(swapRouter02),
+                    swapIntermediateTokens: swapIntermediateTokens,
+                    swapPoolFeeRates: swapPoolFeeRates,
+                    mocOracle: ICoinPairPrice(mocOracle)
+                }),
+                MIN_PURCHASE_AMOUNT,
+                FEE_COLLECTOR,
+                ITokenHandler.FeeSettings({
+                    minFeeRate: MIN_FEE_RATE,
+                    maxFeeRate: MAX_FEE_RATE,
+                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
+                }),
+                DOC_YIELDS_INTEREST // TODO: remove this paramter!!
+            );
+            docHandlerDexAddress = address(docHandlerDex);
+        } else {
+            revert("Invalid lending protocol");
+        }
 
         // For local tests:
         if (block.chainid == 31337) {
             dcaManager.transferOwnership(OWNER); // Only for tests!!!
             adminOperations.transferOwnership(OWNER); // Only for tests!!!
-            docTokenHandlerDex.transferOwnership(OWNER); // Only for tests!!!
+            Ownable(docHandlerDexAddress).transferOwnership(OWNER); // Only for tests!!!
         }
 
         // For back-end and front-end devs to test:
@@ -71,6 +103,6 @@ contract DeployDexSwaps is Script {
         // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
 
         vm.stopBroadcast();
-        return (adminOperations, docTokenHandlerDex, dcaManager, helperConfig);
+        return (adminOperations, docHandlerDexAddress, dcaManager, helperConfig);
     }
 }

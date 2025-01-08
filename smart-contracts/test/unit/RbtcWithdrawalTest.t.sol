@@ -24,11 +24,11 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
         vm.prank(USER);
-        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(mockDocToken));
+        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(docToken));
 
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
+        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);

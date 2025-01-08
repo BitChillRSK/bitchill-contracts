@@ -7,14 +7,14 @@ import {DcaManager} from "../../src/DcaManager.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
-import {DocHandlerMoc} from "src/DocHandlerMoc.sol";
+import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import "../Constants.sol";
 // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 contract Handler is Test {
     AdminOperations public adminOperations;
-    DocHandlerMoc public docHandlerMoc;
+    TropykusDocHandlerMoc public docHandlerMoc;
     DcaManager public dcaManager;
     MockDocToken public mockDocToken;
     // MockMocProxy public mockMocProxy;
@@ -28,7 +28,7 @@ contract Handler is Test {
 
     constructor(
         AdminOperations _adminOperations,
-        DocHandlerMoc _docHandlerMoc,
+        TropykusDocHandlerMoc _docHandlerMoc,
         DcaManager _dcaManager,
         MockDocToken _mockDocToken,
         address[] memory users
@@ -357,7 +357,7 @@ contract Handler is Test {
         vm.stopPrank();
     }
 
-    function withdrawInterestFromDocHandlerMoc(uint256 userSeed) external {
+    function withdrawInterestFromTropykusDocHandlerMoc(uint256 userSeed) external {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
         dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), TROPYKUS_INDEX);

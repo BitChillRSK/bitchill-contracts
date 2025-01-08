@@ -2,28 +2,25 @@
 pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {IDocHandler} from "./interfaces/IDocHandler.sol";
+import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-import {DocHandler} from "./DocHandler.sol";
-import {IDocHandlerDex} from "./interfaces/IDocHandlerDex.sol";
+import {SovrynDocHandler} from "./SovrynDocHandler.sol";
+import {IDexSwaps} from "./interfaces/IDexSwaps.sol";
 import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-// import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-// import {ISwapRouter02} from "./interfaces/ISwapRouter02.sol";
 import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
-// import {IV3SwapRouter} from "./interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
- * @title DocHandlerDex
- * @dev Implementation of the IDocHandlerDex interface.
+ * @title SovrynDocHandlerDex
+ * @dev Implementation of the ISovrynDocHandlerDex interface.
  */
-contract DocHandlerDex is DocHandler, IDocHandlerDex {
+contract SovrynDocHandlerDex is SovrynDocHandler, IDexSwaps {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -41,7 +38,7 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
-     * @param kDocTokenAddress the address of Tropykus' kDOC token contract
+     * @param kDocTokenAddress the address of Sovryn' kDOC token contract
      * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
@@ -56,7 +53,7 @@ contract DocHandlerDex is DocHandler, IDocHandlerDex {
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
-        DocHandler(
+        SovrynDocHandler(
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,

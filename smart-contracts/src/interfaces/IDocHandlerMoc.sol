@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {IDocHandler} from "./IDocHandler.sol";
+import {ITokenLending} from "./ITokenLending.sol";
 
 /**
  * @title IDocHandlerMoc
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the DocHandler contract.
  */
-interface IDocHandlerMoc is IDocHandler {
+interface IDocHandlerMoc is ITokenLending {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -17,8 +16,8 @@ interface IDocHandlerMoc is IDocHandler {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error DocHandler__RedeemDocRequestFailed();
-    error DocHandler__RedeemFreeDocFailed();
+    error DocHandlerMoc__RedeemDocRequestFailed();
+    error DocHandlerMoc__RedeemFreeDocFailed();
 
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS

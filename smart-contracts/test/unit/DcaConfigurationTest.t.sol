@@ -18,36 +18,36 @@ contract DcaConfigurationTest is DcaDappTest {
     ///////////////////////////////
     function testSetPurchaseAmount() external {
         vm.startPrank(USER);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_SPEND);
-        assertEq(DOC_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(mockDocToken), SCHEDULE_INDEX));
+        dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, DOC_TO_SPEND);
+        assertEq(DOC_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
     function testSetPurchasePeriod() external {
         vm.startPrank(USER);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
-        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(mockDocToken), SCHEDULE_INDEX));
+        dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
+        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
     function testPurchaseAmountCannotBeMoreThanHalfBalance() external {
         vm.expectRevert(IDcaManager.DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance.selector);
         vm.prank(USER);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT / 2 + 1);
+        dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT / 2 + 1);
     }
 
     function testPurchaseAmountMustBeGreaterThanMin() external {
         bytes memory encodedRevert = abi.encodeWithSelector(
-            IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanMinimum.selector, address(mockDocToken)
+            IDcaManager.DcaManager__PurchaseAmountMustBeGreaterThanMinimum.selector, address(docToken)
         );
         vm.expectRevert(encodedRevert);
         vm.prank(USER);
-        dcaManager.setPurchaseAmount(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_AMOUNT - 1);
+        dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_AMOUNT - 1);
     }
 
     function testPurchasePeriodMustBeGreaterThanMin() external {
         vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMin.selector);
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(mockDocToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
+        dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
     }
 }

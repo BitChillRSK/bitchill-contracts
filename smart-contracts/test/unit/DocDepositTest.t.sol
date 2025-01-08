@@ -22,19 +22,18 @@ contract DocDepositTest is DcaDappTest {
 
     function testCannotDepositZeroDoc() external {
         vm.startPrank(USER);
-        mockDocToken.approve(address(docHandler), DOC_TO_DEPOSIT);
+        docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         vm.expectRevert(IDcaManager.DcaManager__DepositAmountMustBeGreaterThanZero.selector);
-        dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX, 0);
+        dcaManager.depositToken(address(docToken), SCHEDULE_INDEX, 0);
         vm.stopPrank();
     }
 
     function testDepositRevertsIfDocNotApproved() external {
         vm.startPrank(USER);
-        bytes memory encodedRevert = abi.encodeWithSelector(
-            ITokenHandler.TokenHandler__InsufficientTokenAllowance.selector, address(mockDocToken)
-        );
+        bytes memory encodedRevert =
+            abi.encodeWithSelector(ITokenHandler.TokenHandler__InsufficientTokenAllowance.selector, address(docToken));
         vm.expectRevert(encodedRevert);
-        dcaManager.depositToken(address(mockDocToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
+        dcaManager.depositToken(address(docToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
         vm.stopPrank();
     }
 }

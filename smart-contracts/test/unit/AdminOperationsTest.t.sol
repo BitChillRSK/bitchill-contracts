@@ -6,7 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {DocHandlerMoc} from "../../src/DocHandlerMoc.sol";
+import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import "./TestsHelper.t.sol";
 
@@ -29,12 +29,12 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(dummyERC165Contract));
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(dummyERC165Contract));
 
         vm.expectRevert();
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(dcaManager));
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(dcaManager));
     }
 
     function testUpdateTokenHandlerFailsIfAddressIsEoa() external {
@@ -44,16 +44,16 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, dummyAddress);
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, dummyAddress);
     }
 
     function testTokenHandlerUpdated() external {
-        address prevDocHandlerMoc = adminOperations.getTokenHandler(address(mockDocToken), TROPYKUS_INDEX);
+        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(docToken), TROPYKUS_INDEX);
         vm.startBroadcast();
-        DocHandlerMoc newDocHandlerMoc = new DocHandlerMoc(
+        TropykusDocHandlerMoc newTropykusDocHandlerMoc = new TropykusDocHandlerMoc(
             address(dcaManager),
-            address(mockDocToken),
-            address(mockKdocToken),
+            address(docToken),
+            address(kdocToken),
             MIN_PURCHASE_AMOUNT,
             address(mockMocProxy),
             FEE_COLLECTOR,
@@ -66,10 +66,10 @@ contract AdminOperationsTest is DcaDappTest {
             DOC_YIELDS_INTEREST
         );
         vm.stopBroadcast();
-        assert(prevDocHandlerMoc != address(newDocHandlerMoc));
+        assert(prevTropykusDocHandlerMoc != address(newTropykusDocHandlerMoc));
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(mockDocToken), TROPYKUS_INDEX, address(newDocHandlerMoc));
-        assertEq(adminOperations.getTokenHandler(address(mockDocToken), TROPYKUS_INDEX), address(newDocHandlerMoc));
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(newTropykusDocHandlerMoc));
+        assertEq(adminOperations.getTokenHandler(address(docToken), TROPYKUS_INDEX), address(newTropykusDocHandlerMoc));
     }
 }

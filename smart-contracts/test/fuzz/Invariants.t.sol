@@ -6,8 +6,9 @@ import {Test, console} from "forge-std/Test.sol";
 import {StdInvariant} from "forge-std/StdInvariant.sol";
 import {DcaManager} from "src/DcaManager.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
-import {DocHandlerMoc} from "src/DocHandlerMoc.sol";
-// import {DocHandlerMocDex} from "../../src/DocHandlerMocDex.sol";
+import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
+// import {TropykusDocHandlerMocDex} from "../../src/TropykusDocHandlerMocDex.sol";
+import {IDocHandler} from "src/interfaces/IDocHandler.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
 import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
@@ -20,8 +21,8 @@ import "../Constants.sol";
 contract InvariantTest is StdInvariant, Test {
     DcaManager dcaManager;
     AdminOperations adminOperations;
-    DocHandlerMoc docHandlerMoc;
-    // DocHandlerMocDex docHandlerMocDex;
+    TropykusDocHandlerMoc docHandlerMoc;
+    // TropykusDocHandlerMocDex docHandlerMocDex;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
     MockMocProxy mockMocProxy;
@@ -44,7 +45,9 @@ contract InvariantTest is StdInvariant, Test {
     function setUp() external {
         setUpTimestamp = block.timestamp;
         deployer = new DeployMocSwaps();
-        (adminOperations, docHandlerMoc, dcaManager, helperConfig) = deployer.run();
+        address docHandlerAddress;
+        (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployer.run();
+        docHandlerMoc = TropykusDocHandlerMoc(payable(docHandlerAddress));
         (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
             helperConfig.activeNetworkConfig();
         mockDocToken = MockDocToken(docTokenAddress);
@@ -113,7 +116,7 @@ contract InvariantTest is StdInvariant, Test {
             vm.stopPrank();
         }
         // DOC deposited in Bitchill is immediately lent in Tropykus
-        assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in DocHandlerMoc
+        assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in TropykusDocHandlerMoc
 
         // Update the amount of DOC in the mock kDOC contract according to the interest that has been generated
         uint256 interestFactor = 1e18 + (block.timestamp - setUpTimestamp) * 5 * 1e18 / (100 * 31536000); // 1 + timeInYears * yearlyIncrease
@@ -144,7 +147,7 @@ contract InvariantTest is StdInvariant, Test {
         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docHandlerMoc)));
     }
 
-    function invariant_DocHandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {
+    function invariant_TropykusDocHandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {
         // get the contract's rBTC balance and compare it to the sum of all users' balances
         vm.prank(OWNER);
         address[] memory users = dcaManager.getUsers();

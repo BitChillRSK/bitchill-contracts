@@ -18,17 +18,17 @@ contract MockContractsTest is DcaDappTest {
     function testMockMocProxyRedeemFreeDoc() external {
         if (block.chainid == 31337) {
             uint256 redeemAmount = 50_000 ether; // redeem 50,000 DOC
-            mockDocToken.mint(USER, redeemAmount);
+            docToken.mint(USER, redeemAmount);
             uint256 rBtcBalancePrev = USER.balance;
-            uint256 docBalancePrev = mockDocToken.balanceOf(USER);
+            uint256 docBalancePrev = docToken.balanceOf(USER);
             vm.startPrank(USER);
-            mockDocToken.approve(address(mockMocProxy), redeemAmount);
+            docToken.approve(address(mockMocProxy), redeemAmount);
             vm.expectEmit(true, true, true, false);
             emit MockMocProxy__DocRedeemed(USER, redeemAmount, 1 ether);
             mockMocProxy.redeemFreeDoc(redeemAmount);
             vm.stopPrank();
             uint256 rBtcBalancePost = USER.balance;
-            uint256 docBalancePost = mockDocToken.balanceOf(USER);
+            uint256 docBalancePost = docToken.balanceOf(USER);
             assertEq(rBtcBalancePost - rBtcBalancePrev, 1 ether);
             assertEq(docBalancePrev - docBalancePost, redeemAmount);
         }

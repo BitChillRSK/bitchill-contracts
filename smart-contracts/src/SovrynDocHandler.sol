@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-import {IDocHandler} from "./interfaces/IDocHandler.sol";
+import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -11,10 +11,9 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title SovrynDocHandler
- * @dev Implementation of the IDocHandler interface.
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
  */
-abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
+abstract contract SovrynDocHandler is TokenHandler, ISovrynDocLending {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -64,7 +63,7 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
         super.depositToken(user, depositAmount);
         if (i_docToken.allowance(address(this), address(i_iSusdToken)) < depositAmount) {
             bool approvalSuccess = i_docToken.approve(address(i_iSusdToken), depositAmount);
-            if (!approvalSuccess) revert DocHandler__iSusdApprovalFailed(user, depositAmount);
+            if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
         }
         uint256 previSusdBalance = i_iSusdToken.balanceOf(address(this));
         i_iSusdToken.mint(address(this), depositAmount);
@@ -84,7 +83,7 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
     {
         uint256 docInTropykus = _iSusdToDoc(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
         if (docInTropykus < withdrawalAmount) {
-            revert DocHandler__WithdrawalAmountExceedsiSusdBalance(user, withdrawalAmount, docInTropykus);
+            revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInTropykus);
         }
         _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
@@ -103,12 +102,12 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
         s_iSusdBalances[user] -= iSusdToRepay;
         i_iSusdToken.burn(address(this), iSusdToRepay);
         // uint256 returnedAmount = i_iSusdToken.burn(address(this), iSusdToRepay);
-        // if (returnedAmount > docInterestAmount * 99 / 100) emit DocHandler__SuccessfulDocRedemption(user, docInterestAmount, iSusdToRepay);
-        // else revert DocHandler__RedeemUnderlyingFailed(returnedAmount); TODO: check if we just remove this altogether
-        emit DocHandler__SuccessfulInterestWithdrawal(user, docInterestAmount, iSusdToRepay);
+        // if (returnedAmount > docInterestAmount * 99 / 100) emit TokenLending__SuccessfulDocRedemption(user, docInterestAmount, iSusdToRepay);
+        // else revert TokenLending__RedeemUnderlyingFailed(returnedAmount); TODO: check if we just remove this altogether
+        emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, iSusdToRepay);
 
         // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
-        // if (!transferSuccess) revert DocHandler__InterestWithdrawalFailed(user, docInterestAmount);
+        // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);
     }
 
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
@@ -148,12 +147,14 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
         uint256 usersiSusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _docToiSusd(docToRedeem, exchangeRate);
         if (iSusdToRepay > usersiSusdBalance) {
-            revert DocHandler__IsusdToRepayExceedsUsersBalance(user, docToRedeem * exchangeRate, usersiSusdBalance);
+            revert TokenLending__LendingTokenToRepayExceedsUsersBalance(
+                user, docToRedeem * exchangeRate, usersiSusdBalance
+            );
         }
         s_iSusdBalances[user] -= iSusdToRepay;
         i_iSusdToken.burn(address(this), iSusdToRepay);
-        // if (result == 0) emit DocHandler__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
-        // else revert DocHandler__RedeemUnderlyingFailed(result); TODO: check if we just remove this altogether
+        // if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
+        // else revert TokenLending__RedeemUnderlyingFailed(result); TODO: check if we just remove this altogether
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
@@ -162,7 +163,7 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
         uint256 underlyingAmount =
             i_iSusdToken.assetBalanceOf(address(this)) + uint256(i_iSusdToken.profitOf(address(this))); // TODO: check if int->uint conversion is OK
         if (totalDocToRedeem > underlyingAmount) {
-            revert DocHandler__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
+            revert TokenLending__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
         uint256 totaliSusdToRepay = _docToiSusd(totalDocToRedeem, i_iSusdToken.tokenPrice());
 
@@ -171,12 +172,12 @@ abstract contract SovrynDocHandler is TokenHandler, IDocHandler {
             // @notice the amount of iSusd each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
             uint256 usersRepayediSusd = totaliSusdToRepay * purchaseAmounts[i] / totalDocToRedeem;
             s_iSusdBalances[users[i]] -= usersRepayediSusd;
-            emit DocHandler__DocRedeemediSusdRepayed(users[i], purchaseAmounts[i], usersRepayediSusd);
+            emit TokenLending__DocRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayediSusd);
         }
         i_iSusdToken.burn(address(this), totaliSusdToRepay);
         // uint256 result = i_iSusdToken.redeemUnderlying(totalDocToRedeem);
-        // if (result == 0) emit DocHandler__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
-        // else revert DocHandler__BatchRedeemDocFailed(); TODO: check if we just remove this altogether
+        // if (result == 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
+        // else revert TokenLending__BatchRedeemDocFailed(); TODO: check if we just remove this altogether
     }
 
     function _docToiSusd(uint256 docAmount, uint256 exchangeRate) internal pure returns (uint256 iSusdAmount) {

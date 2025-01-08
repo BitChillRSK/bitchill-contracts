@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {DocHandler} from "./DocHandler.sol";
+import {TropykusDocHandler} from "./TropykusDocHandler.sol";
 import {IDocHandlerMoc} from "./interfaces/IDocHandlerMoc.sol";
 import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
@@ -11,11 +11,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title DocHandlerMoc
- * @dev Implementation of the IDocHandlerMoc interface.
+ * @title TropykusDocHandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
+contract TropykusDocHandlerMoc is TropykusDocHandler, IDocHandlerMoc {
     using SafeERC20 for IERC20;
 
     IMocProxy public immutable i_mocProxy; // Make immutable again after adapting everything to 0.8.19?
@@ -41,7 +40,7 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
         FeeSettings memory feeSettings,
         bool yieldsInterest
     )
-        DocHandler(
+        TropykusDocHandler(
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,
@@ -164,13 +163,13 @@ contract DocHandlerMoc is DocHandler, IDocHandlerMoc {
     function _redeemRbtc(uint256 docAmountToSpend) internal returns (uint256, uint256) {
         try i_mocProxy.redeemDocRequest(docAmountToSpend) {}
         catch {
-            revert DocHandler__RedeemDocRequestFailed();
+            revert DocHandlerMoc__RedeemDocRequestFailed();
         }
         // i_mocProxy.redeemDocRequest(docAmountToSpend);
         uint256 balancePrev = address(this).balance;
         try i_mocProxy.redeemFreeDoc(docAmountToSpend) {}
         catch {
-            revert DocHandler__RedeemFreeDocFailed();
+            revert DocHandlerMoc__RedeemFreeDocFailed();
         }
         uint256 balancePost = address(this).balance;
         return (balancePrev, balancePost);
