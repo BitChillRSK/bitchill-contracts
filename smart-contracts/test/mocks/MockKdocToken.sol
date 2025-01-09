@@ -30,9 +30,10 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     }
 
     function redeemUnderlying(uint256 amount) public returns (uint256) {
-        require(balanceOf(msg.sender) >= amount, "Insufficient balance");
+        uint256 kDocToBurn = amount * DECIMALS / exchangeRateStored();
+        require(balanceOf(msg.sender) >= kDocToBurn, "Insufficient balance");
         i_docToken.transfer(msg.sender, amount);
-        _burn(msg.sender, amount * DECIMALS / exchangeRateStored()); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
+        _burn(msg.sender, kDocToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
         return 0;
     }
 
