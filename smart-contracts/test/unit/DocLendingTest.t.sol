@@ -143,6 +143,7 @@ contract DocLendingTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.withdrawInterestFromTokenHandler(address(docToken), s_lendingProtocolIndex);
         uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
+        console.log("userDocBalanceAfterInterestWithdrawal:", userDocBalanceAfterInterestWithdrawal);
         assertEq(userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal, withdrawableInterest);
         withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
         assertEq(withdrawableInterest, 0);

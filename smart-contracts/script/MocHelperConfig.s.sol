@@ -62,9 +62,9 @@ contract MocHelperConfig is Script {
             });
         } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
             RootstockMainnetNetworkConfig = NetworkConfig({
-                docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
-                mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
-                lendingTokenAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock testnet
+                docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
+                mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
+                lendingTokenAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock mainnet
             });
         } else {
             revert("Invalid lending protocol");

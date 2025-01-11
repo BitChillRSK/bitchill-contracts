@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {IDocToken} from "../../src/interfaces/IDocToken.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
 import {console} from "forge-std/Test.sol";
 
 contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
@@ -36,10 +38,10 @@ contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
      */
     function burn(address receiver, uint256 burnAmount) external returns (uint256 loanAmountPaid) {
         require(balanceOf(msg.sender) >= burnAmount, "Insufficient balance");
-        loanAmountPaid = burnAmount * tokenPrice() / DECIMALS;
+        loanAmountPaid = Math.ceilDiv(burnAmount * tokenPrice(), DECIMALS);
         i_docToken.transfer(receiver, loanAmountPaid);
         _burn(msg.sender, burnAmount);
-        return 0;
+        return loanAmountPaid;
     }
 
     /**

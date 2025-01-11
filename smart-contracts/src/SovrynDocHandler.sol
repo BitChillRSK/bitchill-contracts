@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-// import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
+import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -14,7 +14,7 @@ import {TokenLending} from "src/TokenLending.sol";
  * @title SovrynDocHandler
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
  */
-abstract contract SovrynDocHandler is TokenHandler, TokenLending /*, ISovrynDocLending*/ {
+abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLending {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -96,13 +96,11 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending /*, ISovrynDocL
         uint256 exchangeRate = i_iSusdToken.tokenPrice();
         uint256 totalDocInLending = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        uint256 iSusdToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
+        uint256 iSusdToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
         // _redeemDoc(user, docInterestAmount);
         s_iSusdBalances[user] -= iSusdToRepay;
-        i_iSusdToken.burn(address(this), iSusdToRepay);
-        // uint256 returnedAmount = i_iSusdToken.burn(address(this), iSusdToRepay);
-        // if (returnedAmount > docInterestAmount * 99 / 100) emit TokenLending__SuccessfulDocRedemption(user, docInterestAmount, iSusdToRepay);
-        // else revert TokenLending__RedeemUnderlyingFailed(returnedAmount); TODO: check if we just remove this altogether
+        uint256 docRedeemed = i_iSusdToken.burn(user, iSusdToRepay);
+        if (docRedeemed == 0) revert SovrynDocLending__RedeemUnderlyingFailed();
         emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, iSusdToRepay);
 
         // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
@@ -133,9 +131,9 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending /*, ISovrynDocL
             );
         }
         s_iSusdBalances[user] -= iSusdToRepay;
-        i_iSusdToken.burn(address(this), iSusdToRepay);
-        // if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
-        // else revert TokenLending__RedeemUnderlyingFailed(result); TODO: check if we just remove this altogether
+        uint256 docRedeemed = i_iSusdToken.burn(address(this), iSusdToRepay);
+        if (docRedeemed > 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
+        else revert SovrynDocLending__RedeemUnderlyingFailed();
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
@@ -156,9 +154,8 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending /*, ISovrynDocL
             s_iSusdBalances[users[i]] -= usersRepayediSusd;
             emit TokenLending__DocRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayediSusd);
         }
-        i_iSusdToken.burn(address(this), totaliSusdToRepay);
-        // uint256 result = i_iSusdToken.redeemUnderlying(totalDocToRedeem);
-        // if (result == 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
-        // else revert TokenLending__BatchRedeemDocFailed(); TODO: check if we just remove this altogether
+        uint256 docRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
+        if (docRedeemed > 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
+        else revert SovrynDocLending__RedeemUnderlyingFailed();
     }
 }

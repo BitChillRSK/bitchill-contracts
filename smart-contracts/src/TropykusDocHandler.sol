@@ -97,14 +97,13 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         uint256 exchangeRate = i_kDocToken.exchangeRateStored();
         uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        uint256 kDocToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
+        uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
         // _redeemDoc(user, docInterestAmount);
         s_kDocBalances[user] -= kDocToRepay;
         uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
-        if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docInterestAmount, kDocToRepay);
+        if (result == 0) emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
         i_stableToken.safeTransfer(user, docInterestAmount);
-        emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
 
         // bool transferSuccess = i_stableToken.safeTransfer(user, docInterestAmount);
         // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);

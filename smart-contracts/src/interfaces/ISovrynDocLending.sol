@@ -8,4 +8,9 @@ import {ITokenLending} from "./ITokenLending.sol";
  * @author BitChill team: Antonio Rodríguez-Ynyesto
  * @dev Interface for the SovrynDocHandler contract.
  */
-interface ISovrynDocLending is ITokenLending {}
+interface ISovrynDocLending is ITokenLending {
+    /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+    error SovrynDocLending__RedeemUnderlyingFailed();
+}
