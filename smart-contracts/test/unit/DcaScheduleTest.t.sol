@@ -28,7 +28,7 @@ contract DcaScheduleTest is DcaDappTest {
             USER, address(docToken), scheduleId, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         uint256 scheduleBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
         assertEq(DOC_TO_DEPOSIT, scheduleBalanceAfterDeposit);
@@ -48,7 +48,7 @@ contract DcaScheduleTest is DcaDappTest {
             USER, address(docToken), scheduleId, DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         bytes32 scheduleId2 =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
@@ -58,7 +58,7 @@ contract DcaScheduleTest is DcaDappTest {
             USER, address(docToken), scheduleId2, DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
         );
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         assert(scheduleId != scheduleId2);
         vm.stopPrank();
@@ -95,13 +95,13 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log("scheduleId2 is", vm.toString(scheduleId2));
@@ -121,13 +121,13 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(docToken))[1].scheduleId));
@@ -171,13 +171,13 @@ contract DcaScheduleTest is DcaDappTest {
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(docToken))[1].scheduleId));

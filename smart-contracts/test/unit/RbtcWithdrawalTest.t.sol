@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
 import "../Constants.sol";
 
 contract RbtcWithdrawalTest is DcaDappTest {
@@ -32,7 +33,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
+        dcaManager.withdrawAllAccmulatedRbtc(s_lendingProtocolIndex);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
@@ -51,7 +52,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
+        dcaManager.withdrawAllAccmulatedRbtc(s_lendingProtocolIndex);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
 
@@ -68,9 +69,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
 
     function testCannotWithdrawBeforePurchasing() external {
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
-        vm.expectRevert(ITokenHandler.TokenHandler__NoAccumulatedRbtcToWithdraw.selector);
+        vm.expectRevert(IPurchaseRbtc.PurchaseRbtc__NoAccumulatedRbtcToWithdraw.selector);
         vm.prank(USER);
-        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
+        dcaManager.withdrawAllAccmulatedRbtc(s_lendingProtocolIndex);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
     }

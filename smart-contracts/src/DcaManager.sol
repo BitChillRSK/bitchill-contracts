@@ -7,6 +7,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {ITokenLending} from "./interfaces/ITokenLending.sol";
 import {AdminOperations} from "./AdminOperations.sol";
+import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 
 /**
  * @title DCA Manager
@@ -244,7 +245,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     {
         (uint256 purchaseAmount, uint256 purchasePeriod, uint256 lendingProtocolIndex) =
             _rBtcPurchaseChecksEffects(buyer, token, scheduleIndex, scheduleId);
-        _handler(token, lendingProtocolIndex).buyRbtc(buyer, scheduleId, purchaseAmount, purchasePeriod);
+        IPurchaseRbtc(address(_handler(token, lendingProtocolIndex))).buyRbtc(
+            buyer, scheduleId, purchaseAmount, purchasePeriod
+        );
     }
 
     /**
@@ -279,7 +282,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             _rBtcPurchaseChecksEffects(buyers[i], token, scheduleIndexes[i], scheduleIds[i]);
             // TODO: Add check that purchaseAmount and purchasePeriod match the schedule's?
         }
-        _handler(token, lendingProtocolIndex).batchBuyRbtc(buyers, scheduleIds, purchaseAmounts, purchasePeriods);
+        IPurchaseRbtc(address(_handler(token, lendingProtocolIndex))).batchBuyRbtc(
+            buyers, scheduleIds, purchaseAmounts, purchasePeriods
+        );
     }
 
     /**
@@ -288,7 +293,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param lendingProtocolIndex The index of the lending protocol where the stablecoin is lent (0 if it is not lent)
      */
     function withdrawRbtcFromTokenHandler(address token, uint256 lendingProtocolIndex) external override nonReentrant {
-        _handler(token, lendingProtocolIndex).withdrawAccumulatedRbtc(msg.sender);
+        IPurchaseRbtc(address(_handler(token, lendingProtocolIndex))).withdrawAccumulatedRbtc(msg.sender);
     }
 
     /**
@@ -299,7 +304,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         address[] memory depositedTokens = s_usersDepositedTokens[msg.sender];
         for (uint256 i; i < depositedTokens.length; ++i) {
             if (s_adminOperations.getTokenHandler(depositedTokens[i], lendingProtocolIndex) != address(0)) {
-                _handler(depositedTokens[i], lendingProtocolIndex).withdrawAccumulatedRbtc(msg.sender);
+                IPurchaseRbtc(address(_handler(depositedTokens[i], lendingProtocolIndex))).withdrawAccumulatedRbtc(
+                    msg.sender
+                );
             }
         }
     }

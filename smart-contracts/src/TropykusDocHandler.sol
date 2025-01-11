@@ -3,23 +3,25 @@ pragma solidity ^0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
+import {DcaManagerAccessControl} from "src/DcaManagerAccessControl.sol";
 import {ITropykusDocLending} from "./interfaces/ITropykusDocLending.sol";
 import {IkDocToken} from "./interfaces/IkDocToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {TokenLending} from "src/TokenLending.sol";
 
 /**
  * @title TropykusDocHandler
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
  */
-abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
+abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDocLending {
     using SafeERC20 for IERC20;
 
     //////////////////////
     // State variables ///
     //////////////////////
-    IERC20 public immutable i_docToken;
+    // IERC20 public immutable i_docToken;
     IkDocToken public immutable i_kDocToken;
     mapping(address user => uint256 balance) internal s_kDocBalances;
     uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
@@ -40,13 +42,11 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         address kDocTokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings,
-        bool yieldsInterest
+        FeeSettings memory feeSettings
     )
-        Ownable()
-        TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, feeSettings, yieldsInterest)
+        TokenHandler(dcaManagerAddress, docTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
+        TokenLending(EXCHANGE_RATE_DECIMALS)
     {
-        i_docToken = IERC20(docTokenAddress);
         i_kDocToken = IkDocToken(kDocTokenAddress);
     }
 
@@ -61,8 +61,8 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         onlyDcaManager
     {
         super.depositToken(user, depositAmount);
-        if (i_docToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
-            bool approvalSuccess = i_docToken.approve(address(i_kDocToken), depositAmount);
+        if (i_stableToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
+            bool approvalSuccess = i_stableToken.approve(address(i_kDocToken), depositAmount);
             if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
@@ -81,7 +81,7 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         override(TokenHandler, ITokenHandler)
         onlyDcaManager
     {
-        uint256 docInTropykus = _kdocToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
+        uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
         if (docInTropykus < withdrawalAmount) {
             revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInTropykus);
         }
@@ -95,7 +95,7 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_kDocToken.exchangeRateStored();
-        uint256 totalDocInLending = _kdocToDoc(s_kDocBalances[user], exchangeRate);
+        uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         uint256 kDocToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
         // _redeemDoc(user, docInterestAmount);
@@ -103,10 +103,10 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
         if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docInterestAmount, kDocToRepay);
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
-        i_docToken.safeTransfer(user, docInterestAmount);
+        i_stableToken.safeTransfer(user, docInterestAmount);
         emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
 
-        // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
+        // bool transferSuccess = i_stableToken.safeTransfer(user, docInterestAmount);
         // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);
     }
 
@@ -117,39 +117,18 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
-        uint256 totalDocInLending = _kdocToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
+        uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
         docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
-    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-        internal
-        view
-        returns (uint256, uint256[] memory, uint256)
-    {
-        uint256 fee;
-        uint256 aggregatedFee;
-        uint256[] memory netDocAmountsToSpend = new uint256[](purchaseAmounts.length);
-        uint256 totalDocAmountToSpend;
-        for (uint256 i; i < purchaseAmounts.length; ++i) {
-            fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
-            aggregatedFee += fee;
-            netDocAmountsToSpend[i] = purchaseAmounts[i] - fee;
-            totalDocAmountToSpend += netDocAmountsToSpend[i];
-        }
-        return (aggregatedFee, netDocAmountsToSpend, totalDocAmountToSpend);
-    }
 
-    function _redeemDoc(address user, uint256 docToRedeem) internal {
-        // (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
-        // if (docToRedeem > underlyingAmount) {
-        //     revert TokenLending__DocRedeemAmountExceedsBalance(docToRedeem, underlyingAmount);
-        // } // NO SÉ SI ESTO TIENE MUCHO SENTIDO
+    function _redeemDoc(address user, uint256 docToRedeem) internal virtual {
         uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = _docToKdoc(docToRedeem, exchangeRate);
+        uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
             revert TokenLending__LendingTokenToRepayExceedsUsersBalance(
                 user, docToRedeem * exchangeRate, usersKdocBalance
@@ -163,34 +142,13 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
+        virtual
     {
         (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
         if (totalDocToRedeem > underlyingAmount) {
             revert TokenLending__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 totalKdocToRepay = _docToKdoc(totalDocToRedeem, i_kDocToken.exchangeRateStored());
-
-        // TODO: delete this commented code after further testing (we realised this could be done following CEI)
-        // @notice here we don't follow CEI, but this function is protected by an onlyDcaManager modifier
-        // uint256 kDocBalancePrev = i_kDocToken.balanceOf(address(this));
-        // i_kDocToken.redeemUnderlying(totalDocToRedeem);
-        // uint256 kDocBalancePost = i_kDocToken.balanceOf(address(this));
-
-        // if (kDocToRepay != kDocBalancePrev - kDocBalancePost) revert("PERO QUE COJONES");
-
-        // if (kDocBalancePrev - kDocBalancePost > 0) {
-        //     uint256 totalKdocRepayed = kDocBalancePrev - kDocBalancePost;
-        //     uint256 numOfPurchases = users.length;
-        //     for (uint256 i; i < numOfPurchases; ++i) {
-        //         // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
-        //         uint256 usersRepayedKdoc = totalKdocRepayed * purchaseAmounts[i] / totalDocToRedeem;
-        //         s_kDocBalances[users[i]] -= usersRepayedKdoc;
-        //         emit TokenLending__DocRedeemedKdocRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
-        //     }
-        //     emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocRepayed);
-        // } else {
-        //     revert TokenLending__BatchRedeemDocFailed();
-        // }
+        uint256 totalKdocToRepay = _docToLendingToken(totalDocToRedeem, i_kDocToken.exchangeRateStored());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
@@ -202,13 +160,5 @@ abstract contract TropykusDocHandler is TokenHandler, ITropykusDocLending {
         uint256 result = i_kDocToken.redeemUnderlying(totalDocToRedeem);
         if (result == 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
         else revert TokenLending__BatchRedeemDocFailed();
-    }
-
-    function _docToKdoc(uint256 docAmount, uint256 exchangeRate) internal pure returns (uint256 kDocAmount) {
-        kDocAmount = docAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
-    }
-
-    function _kdocToDoc(uint256 kDocAmount, uint256 exchangeRate) internal pure returns (uint256 docAmount) {
-        docAmount = kDocAmount * exchangeRate / EXCHANGE_RATE_DECIMALS;
     }
 }

@@ -41,8 +41,18 @@ contract InvariantTest is StdInvariant, Test {
     uint256 constant INITIAL_PURCHASE_PERIOD = 1 weeks;
     uint256 constant MOC_START_RBTC_BALANCE = 500 ether;
     uint256 setUpTimestamp;
+    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
+    uint256 s_lendingProtocolIndex;
 
     function setUp() external {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+            s_lendingProtocolIndex = TROPYKUS_INDEX;
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+            s_lendingProtocolIndex = SOVRYN_INDEX;
+        } else {
+            revert("Lending protocol not allowed");
+        }
+
         setUpTimestamp = block.timestamp;
         deployer = new DeployMocSwaps();
         address docHandlerAddress;
@@ -61,7 +71,7 @@ contract InvariantTest is StdInvariant, Test {
         // Assign DOC token handler
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, address(docHandlerMoc));
+        adminOperations.assignOrUpdateTokenHandler(docTokenAddress, s_lendingProtocolIndex, address(docHandlerMoc));
 
         // Initialize users and distribute 10000 DOC tokens
         for (uint256 i = 0; i < NUM_USERS; i++) {

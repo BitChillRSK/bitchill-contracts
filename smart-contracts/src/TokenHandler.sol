@@ -5,59 +5,44 @@ import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {FeeHandler} from "./FeeHandler.sol";
+import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
 /**
  * @title TokenHandler
  * @dev Base contract for handling various tokens.
  */
-abstract contract TokenHandler is ITokenHandler, Ownable {
+abstract contract TokenHandler is ITokenHandler, Ownable, FeeHandler, DcaManagerAccessControl {
     using SafeERC20 for IERC20;
 
     //////////////////////
     // State variables ///
     //////////////////////
-    address public immutable i_stableToken; // The stablecoin token to be deposited
     uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
-    address public immutable i_dcaManager; // The DCA manager contract
-    mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
-    uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
-    uint256 internal s_minFeeRate; // Minimum fee rate
-    uint256 internal s_maxFeeRate; // Maximum fee rate
-    uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
-    uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
-    address internal s_feeCollector; // Address to which the fees charged to the user will be sent
-    bool internal immutable i_yieldsInterest; // Whether the token deposited will yield interest while waiting to be spent on DCA purchases
+    // mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
+    // uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
+    // address public immutable i_stableToken; // The stablecoin token to be deposited
+    IERC20 public immutable i_stableToken; // The stablecoin token to be deposited
 
     // i_yieldsInterest doesn't seem necessary anymore. TODO: REMOVE!!!
 
     // Store user DCA details generically
     // mapping(address => DcaDetails) public dcaDetails;
 
-    //////////////////////
-    // Modifiers /////////
-    //////////////////////
-    modifier onlyDcaManager() {
-        if (msg.sender != i_dcaManager) revert TokenHandler__OnlyDcaManagerCanCall();
-        _;
-    }
-
     constructor(
         address dcaManagerAddress,
         address tokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings,
-        bool yieldsInterest
-    ) {
-        i_dcaManager = dcaManagerAddress;
-        i_stableToken = tokenAddress;
+        FeeSettings memory feeSettings
+    ) FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress) {
+        i_stableToken = IERC20(tokenAddress); // TODO: remove this parameter!!
         s_minPurchaseAmount = minPurchaseAmount;
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
         s_maxFeeRate = feeSettings.maxFeeRate;
         s_minAnnualAmount = feeSettings.minAnnualAmount;
         s_maxAnnualAmount = feeSettings.maxAnnualAmount;
-        i_yieldsInterest = yieldsInterest;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -75,7 +60,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         // Transfer the selected token from the user to this contract. The user must have called the token contract's
         // approve function with this contract's address and the amount approved
         if (IERC20(i_stableToken).allowance(user, address(this)) < depositAmount) {
-            revert TokenHandler__InsufficientTokenAllowance(i_stableToken);
+            revert TokenHandler__InsufficientTokenAllowance(address(i_stableToken));
         }
 
         IERC20(i_stableToken).safeTransferFrom(user, address(this), depositAmount);
@@ -83,7 +68,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         // bool depositSuccess = IERC20(i_stableToken).safeTransferFrom(user, address(this), depositAmount);
         // if (!depositSuccess) revert TokenHandler__TokenDepositFailed(i_stableToken);
 
-        emit TokenHandler__TokenDeposited(i_stableToken, user, depositAmount);
+        emit TokenHandler__TokenDeposited(address(i_stableToken), user, depositAmount);
     }
 
     /**
@@ -97,22 +82,7 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         // bool withdrawalSuccess = IERC20(i_stableToken).safeTransfer(user, withdrawalAmount);
         // if (!withdrawalSuccess) revert TokenHandler__TokenWithdrawalFailed(i_stableToken);
 
-        emit TokenHandler__TokenWithdrawn(i_stableToken, user, withdrawalAmount);
-    }
-
-    /**
-     * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
-     * @notice anyone can pay for the transaction to have the rBTC sent to the user
-     */
-    function withdrawAccumulatedRbtc(address user) external virtual override {
-        uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
-        if (rbtcBalance == 0) revert TokenHandler__NoAccumulatedRbtcToWithdraw();
-
-        s_usersAccumulatedRbtc[user] = 0;
-        // Transfer RBTC from this contract back to the user
-        (bool sent,) = user.call{value: rbtcBalance}("");
-        if (!sent) revert TokenHandler__rBtcWithdrawalFailed();
-        emit TokenHandler__rBtcWithdrawn(user, rbtcBalance);
+        emit TokenHandler__TokenWithdrawn(address(i_stableToken), user, withdrawalAmount);
     }
 
     function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
@@ -123,105 +93,11 @@ abstract contract TokenHandler is ITokenHandler, Ownable {
         s_minPurchaseAmount = minPurchaseAmount;
     }
 
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
-        external
-        override
-        onlyOwner
-    {
-        if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
-        if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
-        if (s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount);
-        if (s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount);
-    }
-
-    function setMinFeeRate(uint256 minFeeRate) public override onlyOwner {
-        s_minFeeRate = minFeeRate;
-    }
-
-    function setMaxFeeRate(uint256 maxFeeRate) public override onlyOwner {
-        s_maxFeeRate = maxFeeRate;
-    }
-
-    function setMinAnnualAmount(uint256 minAnnualAmount) public override onlyOwner {
-        s_minAnnualAmount = minAnnualAmount;
-    }
-
-    function setMaxAnnualAmount(uint256 maxAnnualAmount) public override onlyOwner {
-        s_maxAnnualAmount = maxAnnualAmount;
-    }
-
-    function setFeeCollectorAddress(address feeCollector) external override onlyOwner {
-        s_feeCollector = feeCollector;
-    }
-
     /*//////////////////////////////////////////////////////////////
                                 GETTERS
     //////////////////////////////////////////////////////////////*/
 
     function getMinPurchaseAmount() external view returns (uint256) {
         return s_minPurchaseAmount;
-    }
-
-    function getAccumulatedRbtcBalance() external view override returns (uint256) {
-        return s_usersAccumulatedRbtc[msg.sender];
-    }
-
-    // function depositsYieldInterest() external view override returns (bool) {
-    //     return i_yieldsInterest;
-    // }
-
-    function getMinFeeRate() public view override returns (uint256) {
-        return s_minFeeRate;
-    }
-
-    function getMaxFeeRate() public view override returns (uint256) {
-        return s_maxFeeRate;
-    }
-
-    function getMinAnnualAmount() public view override returns (uint256) {
-        return s_minAnnualAmount;
-    }
-
-    function getMaxAnnualAmount() public view override returns (uint256) {
-        return s_maxAnnualAmount;
-    }
-
-    function getFeeCollectorAddress() external view override returns (address) {
-        return s_feeCollector;
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                           INTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @dev Calculates the fee rate based on the annual spending.
-     * @param purchaseAmount The amount of stablecoin to be swapped for rBTC in each purchase.
-     * @param purchasePeriod The period between purchases in seconds.
-     * @return The fee rate in basis points.
-     */
-    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view returns (uint256) {
-        uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
-        uint256 feeRate;
-
-        if (annualSpending >= s_maxAnnualAmount) {
-            feeRate = s_minFeeRate;
-        } else if (annualSpending <= s_minAnnualAmount) {
-            feeRate = s_maxFeeRate;
-        } else {
-            // Calculate the linear fee rate
-            feeRate = s_maxFeeRate
-                - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_maxAnnualAmount - s_minAnnualAmount);
-        }
-        return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
-    }
-
-    // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {
-    function _transferFee(uint256 fee) internal {
-        IERC20(i_stableToken).safeTransfer(s_feeCollector, fee);
-
-        // bool feeTransferSuccess = IERC20(i_stableToken).safeTransfer(s_feeCollector, fee);
-        // if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
     }
 }

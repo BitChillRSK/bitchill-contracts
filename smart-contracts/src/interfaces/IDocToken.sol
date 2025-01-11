@@ -9,7 +9,6 @@ pragma solidity ^0.8.19;
 interface IDocToken {
     /**
      * @dev This function checks the allowance the owner of some DOC has given to a spender
-     *
      * @param owner the address that owns of the DOC
      * @param spender the address allowed to spend them
      */
@@ -17,7 +16,6 @@ interface IDocToken {
 
     /**
      * @dev This function transfers an amount of DOC from a sender to a recipient
-     *
      * @param sender the address whose DOC is sent
      * @param recipient the address that receives them
      * @param amount the amount of DOC transferred
@@ -26,7 +24,6 @@ interface IDocToken {
 
     /**
      * @dev This function transfers an amount of DOC from the msg.sender to a recipient
-     *
      * @param recipient the address that receives the DOC
      * @param amount the amount of DOC transferred
      */
@@ -41,4 +38,10 @@ interface IDocToken {
      * @return success A boolean value indicating whether the approval was successful.
      */
     function approve(address spender, uint256 amount) external returns (bool);
+
+    /**
+     * @notice Returns the DOC balance of a given address
+     * @param owner the address whose balance is returned
+     */
+    function balanceOf(address owner) external view returns (uint256);
 }

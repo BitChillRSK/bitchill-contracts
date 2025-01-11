@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import "./TestsHelper.t.sol";
@@ -29,12 +29,14 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(dummyERC165Contract));
+        adminOperations.assignOrUpdateTokenHandler(
+            address(docToken), s_lendingProtocolIndex, address(dummyERC165Contract)
+        );
 
         vm.expectRevert();
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(dcaManager));
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, address(dcaManager));
     }
 
     function testUpdateTokenHandlerFailsIfAddressIsEoa() external {
@@ -44,32 +46,36 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, dummyAddress);
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, dummyAddress);
     }
 
     function testTokenHandlerUpdated() external {
-        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(docToken), TROPYKUS_INDEX);
+        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex);
         vm.startBroadcast();
         TropykusDocHandlerMoc newTropykusDocHandlerMoc = new TropykusDocHandlerMoc(
             address(dcaManager),
             address(docToken),
-            address(kdocToken),
+            address(lendingToken),
             MIN_PURCHASE_AMOUNT,
             address(mockMocProxy),
             FEE_COLLECTOR,
-            ITokenHandler.FeeSettings({
+            IFeeHandler.FeeSettings({
                 minFeeRate: MIN_FEE_RATE,
                 maxFeeRate: MAX_FEE_RATE,
                 minAnnualAmount: MIN_ANNUAL_AMOUNT,
                 maxAnnualAmount: MAX_ANNUAL_AMOUNT
-            }),
-            DOC_YIELDS_INTEREST
+            })
         );
         vm.stopBroadcast();
         assert(prevTropykusDocHandlerMoc != address(newTropykusDocHandlerMoc));
         // vm.prank(OWNER);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(newTropykusDocHandlerMoc));
-        assertEq(adminOperations.getTokenHandler(address(docToken), TROPYKUS_INDEX), address(newTropykusDocHandlerMoc));
+        adminOperations.assignOrUpdateTokenHandler(
+            address(docToken), s_lendingProtocolIndex, address(newTropykusDocHandlerMoc)
+        );
+        assertEq(
+            adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex),
+            address(newTropykusDocHandlerMoc)
+        );
     }
 }

@@ -5,9 +5,9 @@ pragma solidity ^0.8.19;
 import {Script} from "forge-std/Script.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
-import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
-import {IDexSwaps} from "../src/interfaces/IDexSwaps.sol";
+// import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
+// import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
+import {IUniswapPurchase} from "../src/interfaces/IUniswapPurchase.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
@@ -42,51 +42,51 @@ contract DeployDexSwaps is Script {
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
-            TropykusDocHandlerDex docHandlerDex = new TropykusDocHandlerDex(
-                address(dcaManager),
-                docToken,
-                kDocToken,
-                IDexSwaps.UniswapSettings({
-                    wrBtcToken: IWRBTC(wrBtcToken),
-                    swapRouter02: ISwapRouter02(swapRouter02),
-                    swapIntermediateTokens: swapIntermediateTokens,
-                    swapPoolFeeRates: swapPoolFeeRates,
-                    mocOracle: ICoinPairPrice(mocOracle)
-                }),
-                MIN_PURCHASE_AMOUNT,
-                FEE_COLLECTOR,
-                ITokenHandler.FeeSettings({
-                    minFeeRate: MIN_FEE_RATE,
-                    maxFeeRate: MAX_FEE_RATE,
-                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
-                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                }),
-                DOC_YIELDS_INTEREST // TODO: remove this paramter!!
-            );
-            docHandlerDexAddress = address(docHandlerDex);
+            // TropykusDocHandlerDex docHandlerDex = new TropykusDocHandlerDex(
+            //     address(dcaManager),
+            //     docToken,
+            //     kDocToken,
+            //     IUniswapPurchase.UniswapSettings({
+            //         wrBtcToken: IWRBTC(wrBtcToken),
+            //         swapRouter02: ISwapRouter02(swapRouter02),
+            //         swapIntermediateTokens: swapIntermediateTokens,
+            //         swapPoolFeeRates: swapPoolFeeRates,
+            //         mocOracle: ICoinPairPrice(mocOracle)
+            //     }),
+            //     MIN_PURCHASE_AMOUNT,
+            //     FEE_COLLECTOR,
+            //     ITokenHandler.FeeSettings({
+            //         minFeeRate: MIN_FEE_RATE,
+            //         maxFeeRate: MAX_FEE_RATE,
+            //         minAnnualAmount: MIN_ANNUAL_AMOUNT,
+            //         maxAnnualAmount: MAX_ANNUAL_AMOUNT
+            //     }),
+            //     DOC_YIELDS_INTEREST // TODO: remove this paramter!!
+            // );
+            // docHandlerDexAddress = address(docHandlerDex);
         } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            SovrynDocHandlerDex docHandlerDex = new SovrynDocHandlerDex(
-                address(dcaManager),
-                docToken,
-                kDocToken,
-                IDexSwaps.UniswapSettings({
-                    wrBtcToken: IWRBTC(wrBtcToken),
-                    swapRouter02: ISwapRouter02(swapRouter02),
-                    swapIntermediateTokens: swapIntermediateTokens,
-                    swapPoolFeeRates: swapPoolFeeRates,
-                    mocOracle: ICoinPairPrice(mocOracle)
-                }),
-                MIN_PURCHASE_AMOUNT,
-                FEE_COLLECTOR,
-                ITokenHandler.FeeSettings({
-                    minFeeRate: MIN_FEE_RATE,
-                    maxFeeRate: MAX_FEE_RATE,
-                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
-                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                }),
-                DOC_YIELDS_INTEREST // TODO: remove this paramter!!
-            );
-            docHandlerDexAddress = address(docHandlerDex);
+            // SovrynDocHandlerDex docHandlerDex = new SovrynDocHandlerDex(
+            //     address(dcaManager),
+            //     docToken,
+            //     kDocToken,
+            //     IUniswapPurchase.UniswapSettings({
+            //         wrBtcToken: IWRBTC(wrBtcToken),
+            //         swapRouter02: ISwapRouter02(swapRouter02),
+            //         swapIntermediateTokens: swapIntermediateTokens,
+            //         swapPoolFeeRates: swapPoolFeeRates,
+            //         mocOracle: ICoinPairPrice(mocOracle)
+            //     }),
+            //     MIN_PURCHASE_AMOUNT,
+            //     FEE_COLLECTOR,
+            //     ITokenHandler.FeeSettings({
+            //         minFeeRate: MIN_FEE_RATE,
+            //         maxFeeRate: MAX_FEE_RATE,
+            //         minAnnualAmount: MIN_ANNUAL_AMOUNT,
+            //         maxAnnualAmount: MAX_ANNUAL_AMOUNT
+            //     }),
+            //     DOC_YIELDS_INTEREST // TODO: remove this paramter!!
+            // );
+            // docHandlerDexAddress = address(docHandlerDex);
         } else {
             revert("Invalid lending protocol");
         }

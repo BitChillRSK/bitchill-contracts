@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// import {IDexSwaps} from "./IDexSwaps.sol";
+// import {IUniswapPurchase} from "./IUniswapPurchase.sol";
 // import {ITropykusDocLending} from "./ITropykusDocLending.sol";
 
 // /**
@@ -9,4 +9,4 @@ pragma solidity ^0.8.19;
 //  * @author BitChill team: Antonio Rodríguez-Ynyesto
 //  * @dev Interface for the DocHandlerDex contract.
 //  */
-// interface ITropykusDocHandlerDex is ITropykusDocLending, IDexSwaps {}
+// interface ITropykusDocHandlerDex is ITropykusDocLending, IUniswapPurchase {}

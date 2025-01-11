@@ -7,8 +7,9 @@ import {DcaManager} from "../../src/DcaManager.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {IDocHandler} from "../../src/interfaces/IDocHandler.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
-import {TropykusDocHandlerDex} from "../../src/TropykusDocHandlerDex.sol";
+// import {TropykusDocHandlerDex} from "../../src/TropykusDocHandlerDex.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
 // import {ITestDocHandler} from "../../test/interfaces/ITestDocHandler.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
@@ -17,7 +18,9 @@ import {DexHelperConfig} from "../../script/DexHelperConfig.s.sol";
 import {DeployDexSwaps} from "../../script/DeployDexSwaps.s.sol";
 import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
-import {MockKdocToken} from "../mocks/MockKdocToken.sol";
+// import {MockIsusdToken} from "../mocks/MockIsusdToken.sol";
+// import {MockKdocToken} from "../mocks/MockKdocToken.sol";
+import {ILendingToken} from "../interfaces/ILendingToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../mocks/MockSwapRouter02.sol";
@@ -33,7 +36,7 @@ contract DcaDappTest is Test {
     IDocHandler docHandler;
     AdminOperations adminOperations;
     MockDocToken docToken;
-    MockKdocToken kdocToken;
+    ILendingToken lendingToken;
     MockWrbtcToken wrBtcToken;
     FeeCalculator feeCalculator;
 
@@ -51,7 +54,9 @@ contract DcaDappTest is Test {
     uint256 constant NUM_OF_SCHEDULES = 5;
     uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 1 BTC
     string swapType = vm.envString("SWAP_TYPE");
+    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     address docHandlerAddress;
+    uint256 s_lendingProtocolIndex;
 
     //////////////////////
     // Events ////////////
@@ -80,14 +85,16 @@ contract DcaDappTest is Test {
     // TokenHandler
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
-    event TokenHandler__RbtcBought(
+
+    // IPurchaseRbtc
+    event PurchaseRbtc__RbtcBought(
         address indexed user,
         address indexed tokenSpent,
         uint256 indexed rBtcBought,
         bytes32 scheduleId,
         uint256 amountSpent
     );
-    event TokenHandler__SuccessfulRbtcBatchPurchase(
+    event PurchaseRbtc__SuccessfulRbtcBatchPurchase(
         address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
     );
 
@@ -109,17 +116,31 @@ contract DcaDappTest is Test {
                             UNIT TESTS SETUP (MoC purchases)
     //////////////////////////////////////////////////////////////*/
     function setUp() public virtual {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+            s_lendingProtocolIndex = TROPYKUS_INDEX;
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+            s_lendingProtocolIndex = SOVRYN_INDEX;
+        } else {
+            revert("Lending protocol not allowed");
+        }
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             MocHelperConfig helperConfig;
             DeployMocSwaps deployContracts = new DeployMocSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
-            (address docTokenAddress, address mocProxyAddress, address kDocTokenAddress) =
+            (address docTokenAddress, address mocProxyAddress, address lendingTokenAddress) =
                 helperConfig.activeNetworkConfig();
 
             docToken = MockDocToken(docTokenAddress);
             mockMocProxy = MockMocProxy(mocProxyAddress);
-            kdocToken = MockKdocToken(kDocTokenAddress);
+
+            if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
+                lendingToken = ILendingToken(lendingTokenAddress);
+            } else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
+                lendingToken = ILendingToken(lendingTokenAddress);
+            } else {
+                revert("Lending protocol not allowed");
+            }
 
             // Deal rBTC funds to user
             vm.deal(USER, STARTING_RBTC_USER_BALANCE);
@@ -136,7 +157,6 @@ contract DcaDappTest is Test {
                 // Give the MoC proxy contract allowance to move DOC from docHandler
                 // This is necessary for local tests because of how the mock contract works, but not for the live contract
                 vm.prank(address(docHandler));
-
                 docToken.approve(mocProxyAddress, type(uint256).max);
                 docToken.mint(USER, USER_TOTAL_DOC);
             } else if (block.chainid == 30 || block.chainid == 31) {
@@ -163,12 +183,12 @@ contract DcaDappTest is Test {
             // MockSwapRouter02 mockSwapRouter02;
 
             address docTokenAddress = networkConfig.docTokenAddress;
-            address kDocTokenAddress = networkConfig.kdocTokenAddress;
+            address lendingTokenAddress = networkConfig.kdocTokenAddress;
             address wrBtcTokenAddress = networkConfig.wrbtcTokenAddress;
             address swapRouter02Address = networkConfig.swapRouter02Address;
 
             docToken = MockDocToken(docTokenAddress);
-            kdocToken = MockKdocToken(kDocTokenAddress);
+            lendingToken = ILendingToken(lendingTokenAddress);
             wrBtcToken = MockWrbtcToken(wrBtcTokenAddress);
 
             // TODO: Think through the setup for DEX swapping tests
@@ -199,15 +219,15 @@ contract DcaDappTest is Test {
 
         // Add tokenHandler
         vm.expectEmit(true, true, true, false);
-        emit AdminOperations__TokenHandlerUpdated(address(docToken), TROPYKUS_INDEX, address(docHandler));
+        emit AdminOperations__TokenHandlerUpdated(address(docToken), s_lendingProtocolIndex, address(docHandler));
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), TROPYKUS_INDEX, address(docHandler));
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, address(docHandler));
 
         // The starting point of the tests is that the user has already deposited 1000 DOC (so withdrawals can also be tested without much hassle)
         vm.startPrank(USER);
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         dcaManager.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.stopPrank();
     }
@@ -272,7 +292,7 @@ contract DcaDappTest is Test {
                 USER, address(docToken), scheduleId, docToDeposit, purchaseAmount, purchasePeriod
             );
             dcaManager.createDcaSchedule(
-                address(docToken), docToDeposit, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+                address(docToken), docToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
             uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
             assertEq(docToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
@@ -285,7 +305,7 @@ contract DcaDappTest is Test {
     function makeSinglePurchase() internal {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = docHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(docToken));
         vm.stopPrank();
 
@@ -306,7 +326,7 @@ contract DcaDappTest is Test {
 
         vm.startPrank(USER);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
+        uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
 
         // Check that DOC was substracted and rBTC was added to user's balances
@@ -341,15 +361,16 @@ contract DcaDappTest is Test {
             for (uint8 j; j < numOfPurchases; ++j) {
                 vm.startPrank(USER);
                 uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
-                uint256 RbtcBalanceBeforePurchase = docHandler.getAccumulatedRbtcBalance();
+                uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
                 bytes32 scheduleId = dcaManager.getScheduleId(address(docToken), scheduleIndex);
                 vm.stopPrank();
                 // vm.prank(OWNER);
+                console.log("Lending token balance of DOC handler", lendingToken.balanceOf(address(docHandler)));
                 vm.prank(SWAPPER);
                 dcaManager.buyRbtc(USER, address(docToken), scheduleIndex, scheduleId);
                 vm.startPrank(USER);
                 uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
-                uint256 RbtcBalanceAfterPurchase = docHandler.getAccumulatedRbtcBalance();
+                uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
                 vm.stopPrank();
                 // Check that DOC was substracted and rBTC was added to user's balances
                 assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
@@ -378,10 +399,10 @@ contract DcaDappTest is Test {
         // assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+            assertEq(IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                docHandler.getAccumulatedRbtcBalance(),
+                IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
                 totalDocSpent / BTC_PRICE,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
@@ -400,7 +421,7 @@ contract DcaDappTest is Test {
         }
 
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPrev = docHandler.getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPrev = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         // vm.prank(OWNER);
         // address user = dcaManager.getUsers()[0]; // Only one user in this test, but several schedules
         // uint256 numOfPurchases = dcaManager.ownerGetUsersDcaSchedules(user, address(mockDocToken)).length;
@@ -432,17 +453,17 @@ contract DcaDappTest is Test {
         }
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             vm.expectEmit(false, false, false, false);
-            emit TokenHandler__RbtcBought(USER, address(docToken), 0, scheduleIds[i], 0); // Never mind the actual values on this test
+            emit PurchaseRbtc__RbtcBought(USER, address(docToken), 0, scheduleIds[i], 0); // Never mind the actual values on this test
         }
 
         vm.expectEmit(true, true, true, false);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            emit TokenHandler__SuccessfulRbtcBatchPurchase(
+            emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
                 address(docToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount
             );
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
-            emit TokenHandler__SuccessfulRbtcBatchPurchase(
+            emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
                 address(docToken), (totalNetPurchaseAmount * 995) / (1000 * BTC_PRICE), totalNetPurchaseAmount
             );
         }
@@ -450,7 +471,13 @@ contract DcaDappTest is Test {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(docToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
+            users,
+            address(docToken),
+            scheduleIndexes,
+            scheduleIds,
+            purchaseAmounts,
+            purchasePeriods,
+            s_lendingProtocolIndex
         );
 
         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
@@ -471,7 +498,7 @@ contract DcaDappTest is Test {
         }
 
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPost = docHandler.getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPost = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
 
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
         // assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
@@ -490,7 +517,13 @@ contract DcaDappTest is Test {
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
-            users, address(docToken), scheduleIndexes, scheduleIds, purchaseAmounts, purchasePeriods, TROPYKUS_INDEX
+            users,
+            address(docToken),
+            scheduleIndexes,
+            scheduleIds,
+            purchaseAmounts,
+            purchasePeriods,
+            s_lendingProtocolIndex
         );
         // uint256 postDocHandlerBalance2 = address(docHandler).balance;
 

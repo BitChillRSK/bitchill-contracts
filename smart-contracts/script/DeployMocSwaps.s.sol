@@ -8,7 +8,7 @@ import {TropykusDocHandlerMoc} from "../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../src/SovrynDocHandlerMoc.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
-import {ITokenHandler} from "../src/interfaces/ITokenHandler.sol";
+import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
@@ -34,13 +34,12 @@ contract DeployMocSwaps is Script {
                 MIN_PURCHASE_AMOUNT,
                 FEE_COLLECTOR,
                 mocProxy,
-                ITokenHandler.FeeSettings({
+                IFeeHandler.FeeSettings({
                     minFeeRate: MIN_FEE_RATE,
                     maxFeeRate: MAX_FEE_RATE,
                     minAnnualAmount: MIN_ANNUAL_AMOUNT,
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                }),
-                DOC_YIELDS_INTEREST // TODO: remove this parameter!!
+                })
             );
             docHandlerMocAddress = address(docHandlerMoc);
         } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
@@ -51,17 +50,16 @@ contract DeployMocSwaps is Script {
                 MIN_PURCHASE_AMOUNT,
                 FEE_COLLECTOR,
                 mocProxy,
-                ITokenHandler.FeeSettings({
+                IFeeHandler.FeeSettings({
                     minFeeRate: MIN_FEE_RATE,
                     maxFeeRate: MAX_FEE_RATE,
                     minAnnualAmount: MIN_ANNUAL_AMOUNT,
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                }),
-                DOC_YIELDS_INTEREST
+                })
             );
             docHandlerMocAddress = address(docHandlerMoc);
         } else {
-            revert("Invalid deploy environment");
+            revert("Invalid lending protocol");
         }
 
         // For local or fork tests:

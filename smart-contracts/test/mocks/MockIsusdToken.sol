@@ -12,76 +12,59 @@ contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     IDocToken immutable i_docToken;
     uint256 constant DECIMALS = 1e18;
     // uint256 constant STARTING_EXCHANGE_RATE = 50;
-    uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 kDOC tokens, each kDOC token redeems 0.02 DOC tokens
+    uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 iSUSD tokens, each iSUSD token redeems 0.02 DOC tokens
     uint256 immutable i_deploymentTimestamp;
-    uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each kDOC token increase by 5% annually (mocking behaviour)
+    uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each iSUSD token increase by 5% annually (mocking behaviour)
     uint256 constant YEAR_IN_SECONDS = 31536000;
 
-    constructor(address docTokenAddress) ERC20("Tropykus kDOC", "kDOC") Ownable() ERC20Permit("Tropykus kDOC") {
+    constructor(address docTokenAddress) ERC20("Tropykus iSUSD", "iSUSD") Ownable() ERC20Permit("Tropykus iSUSD") {
         i_docToken = IDocToken(docTokenAddress);
         i_deploymentTimestamp = block.timestamp;
     }
 
-    function mint(uint256 amount) public returns (uint256) {
-        // require(i_docToken.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
-        // i_docToken.transferFrom(msg.sender, address(this), amount); // Deposit DOC into Tropykus
-        // _mint(msg.sender, amount * DECIMALS / exchangeRateStored()); //  Mint kDOC to user that deposited DOC (in our case, the DocHandler contract)
-        // return 0;
+    function mint(address receiver, uint256 depositAmount) external returns (uint256 mintAmount) {
+        require(i_docToken.allowance(msg.sender, address(this)) >= depositAmount, "Insufficient allowance");
+        i_docToken.transferFrom(msg.sender, address(this), depositAmount); // Deposit DOC into Tropykus
+        _mint(receiver, depositAmount * DECIMALS / tokenPrice()); //  Mint iSUSD to user that deposited DOC (in our case, the DocHandler contract)
+        return 0;
     }
 
-    // function redeemUnderlying(uint256 amount) public returns (uint256) {
-    //     require(balanceOf(msg.sender) >= amount, "Insufficient balance");
-    //     i_docToken.transfer(msg.sender, amount);
-    //     _burn(msg.sender, amount * DECIMALS / exchangeRateStored()); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
-    //     return 0;
-    // }
-
     /**
-     * @dev This function is used to withdraw DOC from the Sovryn protocol and give back the corresponding kDOC
+     * @dev This function is used to withdraw DOC from the Sovryn protocol, burning the corresponding iSUSD
      * @param receiver The account getting the redeemed DOC tokens.
-     * @param burnAmount The amount of loan tokens to redeem.
+     * @param burnAmount The amount of iSUSD to burn.
      */
     function burn(address receiver, uint256 burnAmount) external returns (uint256 loanAmountPaid) {
-        // TODO: fill out
+        require(balanceOf(msg.sender) >= burnAmount, "Insufficient balance");
+        loanAmountPaid = burnAmount * tokenPrice() / DECIMALS;
+        i_docToken.transfer(receiver, loanAmountPaid);
+        _burn(msg.sender, burnAmount);
+        return 0;
     }
 
     /**
-     * @dev Returns the current exchange rate between DOC and kDOC.
-     * The exchange rate increases linearly over time at 5% per year.
-     */
-    // function exchangeRateStored() public view returns (uint256) {
-    //     uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
-    //     uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
-
-    //     // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
-    //     // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
-    //     uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
-
-    //     return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
-    // }
-
-    /**
+     * @dev Returns the current exchange rate between DOC and iSUSD.
      * @notice Calculates the exchange rate from the underlying DOC to iSusd
      * @return price of iSusd/DOC
      */
-    function tokenPrice() external view returns (uint256 price) {
-        // TODO: fill out
+    function tokenPrice() public view returns (uint256 price) {
+        uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
+        uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
+
+        // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
+        // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
+        uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
+
+        return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
     }
 
-    // function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
-    //     // console.log("getSupplierSnapshotStored: balance = ", balanceOf(user));
-    //     uint256 underlyingAmount = balanceOf(user) * exchangeRateStored() / DECIMALS;
-    //     // console.log("getSupplierSnapshotStored: underlyingAmount = ", underlyingAmount);
-    //     return (0, underlyingAmount, 0, 0);
-    // }
-
     /**
-     * @notice Get loan token balance.
-     * @return The user's balance of underlying token.
+     * @notice Get the initially deposited amount of DOC
+     * @return The user's initial balance of underlying token.
      *
      */
-    function assetBalanceOf(address _owner) external view returns (uint256) {
-        // TODO: fill out
+    function assetBalanceOf(address _owner) public view returns (uint256) {
+        return balanceOf(_owner) * STARTING_EXCHANGE_RATE / DECIMALS;
     }
 
     /**
@@ -91,6 +74,8 @@ contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
      *
      */
     function profitOf(address user) external view returns (int256) {
-        // TODO: fill out
+        uint256 initialDocBalance = assetBalanceOf(user);
+        uint256 currentDocBalance = balanceOf(user) * tokenPrice() / DECIMALS;
+        return int256(currentDocBalance) - int256(initialDocBalance);
     }
 }

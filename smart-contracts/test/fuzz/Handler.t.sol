@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 import {AdminOperations} from "src/AdminOperations.sol";
 import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 import {MockDocToken} from "../mocks/MockDocToken.sol";
@@ -25,6 +26,8 @@ contract Handler is Test {
     address OWNER = makeAddr(OWNER_STRING);
     // address USER = makeAddr("user");
     address[] public s_users;
+    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
+    uint256 s_lendingProtocolIndex;
 
     constructor(
         AdminOperations _adminOperations,
@@ -38,6 +41,13 @@ contract Handler is Test {
         dcaManager = _dcaManager;
         mockDocToken = _mockDocToken;
         s_users = users;
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+            s_lendingProtocolIndex = TROPYKUS_INDEX;
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+            s_lendingProtocolIndex = SOVRYN_INDEX;
+        } else {
+            revert("Lending protocol not allowed");
+        }
     }
 
     function depositDoc(uint256 userSeed, uint256 scheduleIndex, uint256 depositAmount) public {
@@ -61,7 +71,7 @@ contract Handler is Test {
             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
             dcaManager.createDcaSchedule(
-                address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+                address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
             );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
@@ -86,7 +96,7 @@ contract Handler is Test {
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
             dcaManager.createDcaSchedule(
-                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
@@ -114,7 +124,7 @@ contract Handler is Test {
             uint256 purchasePeriod = 3 days;
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
             dcaManager.createDcaSchedule(
-                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
@@ -147,7 +157,7 @@ contract Handler is Test {
             // We need to create a DCA schedule before modifying the purchase period
             mockDocToken.approve(address(docHandlerMoc), depositAmount);
             dcaManager.createDcaSchedule(
-                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+                address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
         } else {
             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
@@ -171,7 +181,7 @@ contract Handler is Test {
         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
         mockDocToken.approve(address(docHandlerMoc), depositAmount);
         dcaManager.createDcaSchedule(
-            address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+            address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
         );
         vm.stopPrank();
     }
@@ -314,7 +324,7 @@ contract Handler is Test {
                 scheduleIds,
                 purchaseAmounts,
                 purchasePeriods,
-                TROPYKUS_INDEX
+                s_lendingProtocolIndex
             );
         }
     }
@@ -325,14 +335,14 @@ contract Handler is Test {
         if (depositedTokens.length == 0) return;
         tokenHandlerIndex = bound(tokenHandlerIndex, 0, depositedTokens.length - 1);
         vm.startPrank(user);
-        uint256 rbtcBalance = ITokenHandler(
-            adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex], TROPYKUS_INDEX)
+        uint256 rbtcBalance = IPurchaseRbtc(
+            adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex], s_lendingProtocolIndex)
         ).getAccumulatedRbtcBalance();
         if (rbtcBalance == 0) {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawRbtcFromTokenHandler(depositedTokens[tokenHandlerIndex], TROPYKUS_INDEX);
+        dcaManager.withdrawRbtcFromTokenHandler(depositedTokens[tokenHandlerIndex], s_lendingProtocolIndex);
         vm.stopPrank();
     }
 
@@ -346,21 +356,21 @@ contract Handler is Test {
         }
         uint256 rbtcBalance = 0;
         for (uint256 i; i < depositedTokens.length; ++i) {
-            rbtcBalance += ITokenHandler(adminOperations.getTokenHandler(depositedTokens[i], TROPYKUS_INDEX))
+            rbtcBalance += IPurchaseRbtc(adminOperations.getTokenHandler(depositedTokens[i], s_lendingProtocolIndex))
                 .getAccumulatedRbtcBalance();
         }
         if (rbtcBalance == 0) {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawAllAccmulatedRbtc(TROPYKUS_INDEX);
+        dcaManager.withdrawAllAccmulatedRbtc(s_lendingProtocolIndex);
         vm.stopPrank();
     }
 
     function withdrawInterestFromTropykusDocHandlerMoc(uint256 userSeed) external {
         address user = s_users[userSeed % s_users.length];
         vm.startPrank(user);
-        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), TROPYKUS_INDEX);
+        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), s_lendingProtocolIndex);
         vm.stopPrank();
     }
 }

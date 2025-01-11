@@ -21,23 +21,25 @@ contract DocLendingTest is DcaDappTest {
     function testDepositedDocIsLent() external {
         super.depositDoc();
         assertEq(docToken.balanceOf(address(docHandler)), 0); // DOC balance in handler contract is 0 because DOC is lent to Tropykus
-        assertEq(docToken.balanceOf(address(kdocToken)), 2 * DOC_TO_DEPOSIT); // Twice the DOC to deposit since a schedule is created in setUp()
+        assertEq(docToken.balanceOf(address(lendingToken)), 2 * DOC_TO_DEPOSIT); // Twice the DOC to deposit since a schedule is created in setUp()
     }
 
     function testDocDepositIncreasesKdocBalance() external {
         uint256 prevKdocBalance = docHandler.getUsersLendingTokenBalance(USER);
         super.depositDoc();
         uint256 postKdocBalance = docHandler.getUsersLendingTokenBalance(USER);
-        assertEq(kdocToken.balanceOf(address(docHandler)), 2 * DOC_TO_DEPOSIT * 1e18 / kdocToken.exchangeRateStored());
-        assertEq(postKdocBalance - prevKdocBalance, DOC_TO_DEPOSIT * 1e18 / kdocToken.exchangeRateStored());
+        assertEq(
+            lendingToken.balanceOf(address(docHandler)), 2 * DOC_TO_DEPOSIT * 1e18 / lendingToken.exchangeRateStored()
+        );
+        assertEq(postKdocBalance - prevKdocBalance, DOC_TO_DEPOSIT * 1e18 / lendingToken.exchangeRateStored());
     }
 
     function testDocWithdrawalRedeemsKdoc() external {
         uint256 prevKdocBalance = docHandler.getUsersLendingTokenBalance(USER);
         super.withdrawDoc();
         uint256 postKdocBalance = docHandler.getUsersLendingTokenBalance(USER);
-        assertEq(kdocToken.balanceOf(address(docHandler)), 0);
-        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_DEPOSIT * 1e18 / kdocToken.exchangeRateStored());
+        assertEq(lendingToken.balanceOf(address(docHandler)), 0);
+        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_DEPOSIT * 1e18 / lendingToken.exchangeRateStored());
     }
 
     function testRbtcPurchaseRedeemsKdoc() external {
@@ -48,10 +50,13 @@ contract DocLendingTest is DcaDappTest {
         console.log("postKdocBalance:", postKdocBalance);
         console.log("diff:", prevKdocBalance - postKdocBalance);
         assertEq(
-            kdocToken.balanceOf(address(docHandler)),
-            (DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE - DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored())
+            lendingToken.balanceOf(address(docHandler)),
+            (
+                DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
+                    - DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored()
+            )
         );
-        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored());
+        assertEq(prevKdocBalance - postKdocBalance, DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored());
     }
 
     function testSeveralRbtcPurchasesRedeemKdoc() external {
@@ -70,19 +75,20 @@ contract DocLendingTest is DcaDappTest {
             NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE // kdocToken.exchangeRateStored()
         );
         assertGe(
-            prevKdocBalance - postKdocBalance, NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored()
+            prevKdocBalance - postKdocBalance,
+            NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored()
         );
 
         // @notice Similarly, here we check that the remaining kDOC balance of the DOC Token Handler contract is lower
         // than it would have been if the redemptions had been made at the highest exchange rate but greater than
         // if the redemptions had been made at the starting exchange rate
         assertLe(
-            kdocToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(docHandler)),
             DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
-                - NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored()
+                - NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored()
         );
         assertGe(
-            kdocToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(docHandler)),
             DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                 - NUM_OF_SCHEDULES * DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE
         );
@@ -100,7 +106,8 @@ contract DocLendingTest is DcaDappTest {
         // );
         assertApproxEqRel( // There will be a slight arithmetic imprecision, so assertEq makes the test fail
             prevKdocBalance - postKdocBalance,
-            (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE) + (DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored()), // First batch purchase in makeBatchPurchasesOneUser is done with the starting exchange rate, the second after some time has passed
+            (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
+                + (DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored()), // First batch purchase in makeBatchPurchasesOneUser is done with the starting exchange rate, the second after some time has passed
             0.0001e16 // Allow a maximum difference of 0.0001%
         );
         // assertEq(
@@ -111,17 +118,17 @@ contract DocLendingTest is DcaDappTest {
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             assertEq(
-                kdocToken.balanceOf(address(docHandler)),
+                lendingToken.balanceOf(address(docHandler)),
                 DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                     - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
-                    - (DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored())
+                    - (DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored())
             );
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                kdocToken.balanceOf(address(docHandler)),
+                lendingToken.balanceOf(address(docHandler)),
                 DOC_TO_DEPOSIT * 1e18 / KDOC_STARTING_EXCHANGE_RATE
                     - (DOC_TO_SPEND * 1e18 / KDOC_STARTING_EXCHANGE_RATE)
-                    - (DOC_TO_SPEND * 1e18 / kdocToken.exchangeRateStored()),
+                    - (DOC_TO_SPEND * 1e18 / lendingToken.exchangeRateStored()),
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -129,30 +136,32 @@ contract DocLendingTest is DcaDappTest {
 
     function testWithdrawInterest() external {
         vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
-        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), TROPYKUS_INDEX);
+        uint256 withdrawableInterest =
+            dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
         uint256 userDocBalanceBeforeInterestWithdrawal = docToken.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
         vm.prank(USER);
-        dcaManager.withdrawInterestFromTokenHandler(address(docToken), TROPYKUS_INDEX);
+        dcaManager.withdrawInterestFromTokenHandler(address(docToken), s_lendingProtocolIndex);
         uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
         assertEq(userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal, withdrawableInterest);
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), TROPYKUS_INDEX);
+        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
         assertEq(withdrawableInterest, 0);
     }
 
     function testWithdrawTokenAndInterest() external {
         vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
-        uint256 withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), TROPYKUS_INDEX);
+        uint256 withdrawableInterest =
+            dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
         uint256 userDocBalanceBeforeInterestWithdrawal = docToken.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
         vm.prank(USER);
-        dcaManager.withdrawTokenAndInterest(address(docToken), 0, DOC_TO_SPEND, TROPYKUS_INDEX); // withdraw, for example, the amount of one periodic purchase
+        dcaManager.withdrawTokenAndInterest(address(docToken), 0, DOC_TO_SPEND, s_lendingProtocolIndex); // withdraw, for example, the amount of one periodic purchase
         uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
         assertEq(
             userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal,
             withdrawableInterest + DOC_TO_SPEND
         );
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), TROPYKUS_INDEX);
+        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
         assertEq(withdrawableInterest, 0);
     }
 }

@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
 import "../Constants.sol";
 
 contract DocHandlerMocTest is DcaDappTest {
@@ -30,17 +31,17 @@ contract DocHandlerMocTest is DcaDappTest {
 
     function testDocHandlerSetFeeRateParams() external {
         vm.prank(OWNER);
-        docHandler.setFeeRateParams(5, 5, 5, 5);
-        assertEq(docHandler.getMinFeeRate(), 5);
-        assertEq(docHandler.getMaxFeeRate(), 5);
-        assertEq(docHandler.getMinAnnualAmount(), 5);
-        assertEq(docHandler.getMaxAnnualAmount(), 5);
+        IFeeHandler(address(docHandler)).setFeeRateParams(5, 5, 5, 5);
+        assertEq(IFeeHandler(address(docHandler)).getMinFeeRate(), 5);
+        assertEq(IFeeHandler(address(docHandler)).getMaxFeeRate(), 5);
+        assertEq(IFeeHandler(address(docHandler)).getMinAnnualAmount(), 5);
+        assertEq(IFeeHandler(address(docHandler)).getMaxAnnualAmount(), 5);
     }
 
     function testDocHandlerSetFeeCollectorAddress() external {
         address newFeeCollector = makeAddr("newFeeCollector");
         vm.prank(OWNER);
-        docHandler.setFeeCollectorAddress(newFeeCollector);
-        assertEq(docHandler.getFeeCollectorAddress(), newFeeCollector);
+        IFeeHandler(address(docHandler)).setFeeCollectorAddress(newFeeCollector);
+        assertEq(IFeeHandler(address(docHandler)).getFeeCollectorAddress(), newFeeCollector);
     }
 }

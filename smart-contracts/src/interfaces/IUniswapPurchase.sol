@@ -6,11 +6,11 @@ import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces
 import {ICoinPairPrice} from "./ICoinPairPrice.sol";
 
 /**
- * @title IDexSwaps
+ * @title IUniswapPurchase
  * @author BitChill team: Antonio Rodríguez-Ynyesto
  * @dev Interface for DEX swapping
  */
-interface IDexSwaps {
+interface IUniswapPurchase {
     /*//////////////////////////////////////////////////////////////
                            TYPE DECLARATIONS
     //////////////////////////////////////////////////////////////*/
