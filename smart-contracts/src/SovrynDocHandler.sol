@@ -132,7 +132,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         }
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(address(this), iSusdToRepay);
-        if (docRedeemed > 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
+        if (docRedeemed >= docToRedeem) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, iSusdToRepay);
         else revert SovrynDocLending__RedeemUnderlyingFailed();
     }
 
