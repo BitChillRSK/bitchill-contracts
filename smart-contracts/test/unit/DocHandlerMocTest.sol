@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
 import "../Constants.sol";
 
@@ -19,7 +20,7 @@ contract DocHandlerMocTest is DcaDappTest {
     ////////////////////////////
 
     function testDocHandlerSupportsInterface() external {
-        assertEq(docHandler.supportsInterface(type(ITokenHandler).interfaceId), true);
+        assertEq(IERC165(address(docHandler)).supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
     function testDocHandlerModifyMinPurchaseAmount() external {

@@ -40,10 +40,6 @@ interface ITokenHandler {
      * @param user The user making the withdrawal.
      */
     function withdrawToken(address user, uint256 amount) external;
-    /**
-     * @dev to comply with ERC165
-     */
-    function supportsInterface(bytes4 interfaceID) external view returns (bool);
 
     /**
      * @dev modifies the minimum amount of the token that can be spent in each purchase

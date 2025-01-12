@@ -31,6 +31,10 @@ dex:
 	@echo "Executing DexSwaps tests..."
 	$(FORGE_CMD) --no-match-contract MockContractsTest
 
+coverage:
+	@echo "Calculating coverage excluding invariant tests..."
+	forge coverage --no-match-test invariant
+
 # Help target
 help:
 	@echo "Available targets:"

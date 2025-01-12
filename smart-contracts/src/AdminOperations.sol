@@ -3,19 +3,22 @@ pragma solidity ^0.8.19;
 
 import {IAdminOperations} from "./interfaces/IAdminOperations.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
+import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 // import {InterfaceChecker} from "./InterfaceChecker.sol";
-import {Test, console} from "forge-std/Test.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
  * @title AdminOperations
  * @dev Contract to manage administrative tasks and token handlers
  */
 contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , InterfaceChecker */ {
+    using Address for address;
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
+
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN");
     bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER");
 
@@ -44,12 +47,13 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         external
         onlyRole(ADMIN_ROLE)
     {
-        if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
+        // if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
+        if (!address(handler).isContract()) revert AdminOperations__EoaCannotBeHandler(handler);
         if (bytes(s_protocolNames[lendingProtocolIndex]).length == 0) {
             revert AdminOperations__LendingProtocolNotAllowed(lendingProtocolIndex);
         }
 
-        ITokenHandler tokenHandler = ITokenHandler(handler);
+        IERC165 tokenHandler = IERC165(handler);
 
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
             bytes32 key = _encodeKey(token, lendingProtocolIndex);
@@ -161,13 +165,13 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
      * @dev Checks if a given address has a smart contract
      * @param addr The address of the token.
      */
-    function isContract(address addr) private view returns (bool) {
-        uint32 size;
-        assembly {
-            size := extcodesize(addr)
-        }
-        return (size > 0);
-    }
+    // function isContract(address addr) private view returns (bool) {
+    //     uint32 size;
+    //     assembly {
+    //         size := extcodesize(addr)
+    //     }
+    //     return (size > 0);
+    // }
 
     // function supportsFunction(address contractAddress, bytes4 functionSignature) public view returns (bool) {
     //     (bool success, bytes memory data) = contractAddress.staticcall(abi.encodeWithSelector(functionSignature));

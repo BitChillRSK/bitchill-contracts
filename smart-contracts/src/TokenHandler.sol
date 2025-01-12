@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {FeeHandler} from "./FeeHandler.sol";
 import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
@@ -12,7 +13,7 @@ import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
  * @title TokenHandler
  * @dev Base contract for handling various tokens.
  */
-abstract contract TokenHandler is ITokenHandler, Ownable, FeeHandler, DcaManagerAccessControl {
+abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, DcaManagerAccessControl {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -85,8 +86,8 @@ abstract contract TokenHandler is ITokenHandler, Ownable, FeeHandler, DcaManager
         emit TokenHandler__TokenWithdrawn(address(i_stableToken), user, withdrawalAmount);
     }
 
-    function supportsInterface(bytes4 interfaceID) external pure override returns (bool) {
-        return interfaceID == type(ITokenHandler).interfaceId;
+    function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
+        return interfaceID == type(ITokenHandler).interfaceId || super.supportsInterface(interfaceID);
     }
 
     function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
