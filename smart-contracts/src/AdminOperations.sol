@@ -6,7 +6,6 @@ import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-// import {InterfaceChecker} from "./InterfaceChecker.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
@@ -47,9 +46,8 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         external
         onlyRole(ADMIN_ROLE)
     {
-        // if (!isContract(handler)) revert AdminOperations__EoaCannotBeHandler(handler);
         if (!address(handler).isContract()) revert AdminOperations__EoaCannotBeHandler(handler);
-        if (bytes(s_protocolNames[lendingProtocolIndex]).length == 0) {
+        if (lendingProtocolIndex != 0 && bytes(s_protocolNames[lendingProtocolIndex]).length == 0) {
             revert AdminOperations__LendingProtocolNotAllowed(lendingProtocolIndex);
         }
 
@@ -58,7 +56,6 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
             bytes32 key = _encodeKey(token, lendingProtocolIndex);
             s_tokenHandler[key] = handler;
-            // _addLendingProtocolToToken(token, lendingProtocol);
             emit AdminOperations__TokenHandlerUpdated(token, lendingProtocolIndex, handler);
         } else {
             revert AdminOperations__ContractIsNotTokenHandler(handler);
@@ -149,29 +146,6 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     function _encodeKey(address token, uint256 lendingProtocolIndex) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(token, lendingProtocolIndex));
     }
-
-    /**
-     * @dev Adds a lending protocol to a token's allowlist
-     * @param token The address of the token.
-     * @param lendingProtocol The name of the lending protocol
-     */
-    // function _addLendingProtocolToToken(address token, string memory lendingProtocol) private {
-    //     if (keccak256(abi.encode(lendingProtocol)) != keccak256(abi.encode(""))) {
-    //         s_tokenProtocols[token].push(lendingProtocol);
-    //     }
-    // }
-
-    /**
-     * @dev Checks if a given address has a smart contract
-     * @param addr The address of the token.
-     */
-    // function isContract(address addr) private view returns (bool) {
-    //     uint32 size;
-    //     assembly {
-    //         size := extcodesize(addr)
-    //     }
-    //     return (size > 0);
-    // }
 
     // function supportsFunction(address contractAddress, bytes4 functionSignature) public view returns (bool) {
     //     (bool success, bytes memory data) = contractAddress.staticcall(abi.encodeWithSelector(functionSignature));

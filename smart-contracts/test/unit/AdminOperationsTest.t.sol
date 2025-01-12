@@ -78,4 +78,13 @@ contract AdminOperationsTest is DcaDappTest {
             address(newTropykusDocHandlerMoc)
         );
     }
+
+    function testAssignTokenHandlerFailsLendingProtocolNotAdded() external {
+        bytes memory encodedRevert =
+            abi.encodeWithSelector(IAdminOperations.AdminOperations__LendingProtocolNotAllowed.selector, 3);
+        vm.expectRevert(encodedRevert);
+        // vm.prank(OWNER);
+        vm.prank(ADMIN);
+        adminOperations.assignOrUpdateTokenHandler(address(docToken), 3, address(docHandler));
+    }
 }
