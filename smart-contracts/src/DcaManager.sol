@@ -420,7 +420,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
         if (scheduleId != dcaSchedule.scheduleId) revert DcaManager__ScheduleIdAndIndexMismatch();
 
-        // If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
+        // @notice: If this is not the first purchase for this schedule, check that period has elapsed before making a new purchase
         uint256 lastPurchaseTimestamp = dcaSchedule.lastPurchaseTimestamp;
         uint256 purchasePeriod = dcaSchedule.purchasePeriod;
         if (lastPurchaseTimestamp > 0 && block.timestamp - lastPurchaseTimestamp < purchasePeriod) {
@@ -433,7 +433,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             revert DcaManager__ScheduleBalanceNotEnoughForPurchase(token, dcaSchedule.tokenBalance);
         }
         dcaSchedule.tokenBalance -= dcaSchedule.purchaseAmount;
-        dcaSchedule.lastPurchaseTimestamp = block.timestamp;
+        // dcaSchedule.lastPurchaseTimestamp = block.timestamp;
+        dcaSchedule.lastPurchaseTimestamp += lastPurchaseTimestamp == 0 ? block.timestamp : purchasePeriod; // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
 
         return (dcaSchedule.purchaseAmount, purchasePeriod, dcaSchedule.lendingProtocolIndex);
     }
