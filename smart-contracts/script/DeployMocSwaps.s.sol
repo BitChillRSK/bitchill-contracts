@@ -24,10 +24,64 @@ contract DeployMocSwaps is Script {
         (address docToken, address mocProxy, address kDocToken) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
+
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
-            TropykusDocHandlerMoc docHandlerMoc = new TropykusDocHandlerMoc(
+
+        if (block.chainid == 31337) {
+            if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+                TropykusDocHandlerMoc docHandlerMoc = new TropykusDocHandlerMoc(
+                    address(dcaManager),
+                    docToken,
+                    kDocToken,
+                    MIN_PURCHASE_AMOUNT,
+                    FEE_COLLECTOR,
+                    mocProxy,
+                    IFeeHandler.FeeSettings({
+                        minFeeRate: MIN_FEE_RATE,
+                        maxFeeRate: MAX_FEE_RATE,
+                        minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                        maxAnnualAmount: MAX_ANNUAL_AMOUNT
+                    })
+                );
+                docHandlerMocAddress = address(docHandlerMoc);
+            } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+                SovrynDocHandlerMoc docHandlerMoc = new SovrynDocHandlerMoc(
+                    address(dcaManager),
+                    docToken,
+                    kDocToken,
+                    MIN_PURCHASE_AMOUNT,
+                    FEE_COLLECTOR,
+                    mocProxy,
+                    IFeeHandler.FeeSettings({
+                        minFeeRate: MIN_FEE_RATE,
+                        maxFeeRate: MAX_FEE_RATE,
+                        minAnnualAmount: MIN_ANNUAL_AMOUNT,
+                        maxAnnualAmount: MAX_ANNUAL_AMOUNT
+                    })
+                );
+                docHandlerMocAddress = address(docHandlerMoc);
+            } else {
+                revert("Invalid lending protocol");
+            }
+
+            // For local or fork tests:
+            if (block.chainid == 31337 || block.chainid == 30 || block.chainid == 31) {
+                // adminOperations.setAdminRole(ADMIN); // Only for tests!!!
+                // adminOperations.setSwapperRole(SWAPPER); // Only for tests!!!
+                adminOperations.transferOwnership(OWNER); // Only for tests!!!
+                dcaManager.transferOwnership(OWNER); // Only for tests!!!
+                Ownable(docHandlerMocAddress).transferOwnership(OWNER); // Only for tests!!!
+            }
+
+            // For back-end and front-end devs to test:
+            // rbtcDca.transferOwnership(0x8191c3a9DF486A09d8087E99A1b2b6885Cc17214); // Carlos
+            // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
+
+            vm.stopBroadcast();
+        } else if (block.chainid == 31 || block.chainid == 30) {
+            vm.startBroadcast();
+            TropykusDocHandlerMoc tropykusDocHandlerMoc = new TropykusDocHandlerMoc(
                 address(dcaManager),
                 docToken,
                 kDocToken,
@@ -41,9 +95,8 @@ contract DeployMocSwaps is Script {
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
                 })
             );
-            docHandlerMocAddress = address(docHandlerMoc);
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            SovrynDocHandlerMoc docHandlerMoc = new SovrynDocHandlerMoc(
+            docHandlerMocAddress = address(tropykusDocHandlerMoc); // @notice on live networks return values don't matter
+            new SovrynDocHandlerMoc(
                 address(dcaManager),
                 docToken,
                 kDocToken,
@@ -57,25 +110,9 @@ contract DeployMocSwaps is Script {
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
                 })
             );
-            docHandlerMocAddress = address(docHandlerMoc);
-        } else {
-            revert("Invalid lending protocol");
+            // Transfer ownership????
         }
 
-        // For local or fork tests:
-        if (block.chainid == 31337 || block.chainid == 30 || block.chainid == 31) {
-            // adminOperations.setAdminRole(ADMIN); // Only for tests!!!
-            // adminOperations.setSwapperRole(SWAPPER); // Only for tests!!!
-            adminOperations.transferOwnership(OWNER); // Only for tests!!!
-            dcaManager.transferOwnership(OWNER); // Only for tests!!!
-            Ownable(docHandlerMocAddress).transferOwnership(OWNER); // Only for tests!!!
-        }
-
-        // For back-end and front-end devs to test:
-        // rbtcDca.transferOwnership(0x8191c3a9DF486A09d8087E99A1b2b6885Cc17214); // Carlos
-        // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
-
-        vm.stopBroadcast();
         return (adminOperations, docHandlerMocAddress, dcaManager, helperConfig);
     }
 }

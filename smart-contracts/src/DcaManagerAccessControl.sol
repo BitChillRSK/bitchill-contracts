@@ -8,14 +8,8 @@ import {IDcaManagerAccessControl} from "src/interfaces/IDcaManagerAccessControl.
  * @dev Base contract for handling DCA Manager access control
  */
 abstract contract DcaManagerAccessControl is IDcaManagerAccessControl {
-    //////////////////////
-    // State variables ///
-    //////////////////////
     address public immutable i_dcaManager; // The DCA manager contract
 
-    //////////////////////
-    // Modifiers /////////
-    //////////////////////
     modifier onlyDcaManager() {
         if (msg.sender != i_dcaManager) revert DcaManagerAccessControl__OnlyDcaManagerCanCall();
         _;

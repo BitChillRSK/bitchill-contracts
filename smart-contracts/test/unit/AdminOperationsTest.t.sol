@@ -15,6 +15,8 @@ contract AdminOperationsTest is DcaDappTest {
         super.setUp();
     }
 
+    event AdminOperations__LendingProtocolAdded(uint256 indexed index, string indexed name);
+
     /*//////////////////////////////////////////////////////////////
                          ADMIN OPERATIONS TESTS
     //////////////////////////////////////////////////////////////*/
@@ -79,12 +81,41 @@ contract AdminOperationsTest is DcaDappTest {
         );
     }
 
-    function testAssignTokenHandlerFailsLendingProtocolNotAdded() external {
+    function testSetRoles() external {
+        vm.prank(OWNER);
+        adminOperations.setAdminRole(address(1));
+        assert(adminOperations.hasRole(adminOperations.ADMIN_ROLE(), address(1)));
+        vm.prank(ADMIN);
+        adminOperations.setSwapperRole(address(2));
+        assert(adminOperations.hasRole(adminOperations.SWAPPER_ROLE(), address(2)));
+    }
+
+    function testAssignTokenHandlerFailsIfLendingProtocolNotAdded() external {
         bytes memory encodedRevert =
             abi.encodeWithSelector(IAdminOperations.AdminOperations__LendingProtocolNotAllowed.selector, 3);
         vm.expectRevert(encodedRevert);
-        // vm.prank(OWNER);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(docToken), 3, address(docHandler));
+    }
+
+    function testAddOrUpdateLendingProtocol() external {
+        vm.expectEmit(true, true, true, false);
+        emit AdminOperations__LendingProtocolAdded(3, "dummyProtocol");
+        vm.prank(ADMIN);
+        adminOperations.addOrUpdateLendingProtocol("dummyProtocol", 3);
+        assertEq(adminOperations.getLendingProtocolIndex("dummyProtocol"), 3);
+        assertEq(adminOperations.getLendingProtocolName(3), "dummyProtocol");
+    }
+
+    function testLendingProtocolIndexCannotBeZero() external {
+        vm.expectRevert(IAdminOperations.AdminOperations__LendingProtocolIndexCannotBeZero.selector);
+        vm.prank(ADMIN);
+        adminOperations.addOrUpdateLendingProtocol("dummyProtocol", 0);
+    }
+
+    function testLendingProtocolStringNonEmpty() external {
+        vm.expectRevert(IAdminOperations.AdminOperations__LendingProtocolNameNotSet.selector);
+        vm.prank(ADMIN);
+        adminOperations.addOrUpdateLendingProtocol("", 3);
     }
 }
