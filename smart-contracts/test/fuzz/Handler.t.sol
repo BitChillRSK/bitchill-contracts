@@ -363,7 +363,7 @@ contract Handler is Test {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawAllAccmulatedRbtc(s_lendingProtocolIndex);
+        dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
         vm.stopPrank();
     }
 

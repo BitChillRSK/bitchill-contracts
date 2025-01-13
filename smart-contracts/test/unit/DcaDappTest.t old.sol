@@ -449,7 +449,7 @@ pragma solidity ^0.8.19;
 //         this.testSinglePurchase();
 //         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
 //         vm.prank(USER);
-//         dcaManager.withdrawAllAccmulatedRbtc();
+//         dcaManager.withdrawAllAccumulatedRbtc();
 //         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 //         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / BTC_PRICE);
 //     }
@@ -458,7 +458,7 @@ pragma solidity ^0.8.19;
 //         uint256 totalDocSpent = this.testSeveralPurchasesWithSeveralSchedules(); // 5 purchases
 //         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
 //         vm.prank(USER);
-//         dcaManager.withdrawAllAccmulatedRbtc();
+//         dcaManager.withdrawAllAccumulatedRbtc();
 //         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 //         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
 //     }
@@ -467,7 +467,7 @@ pragma solidity ^0.8.19;
 //         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
 //         vm.expectRevert(ITokenHandler.TokenHandler__NoAccumulatedRbtcToWithdraw.selector);
 //         vm.prank(USER);
-//         dcaManager.withdrawAllAccmulatedRbtc();
+//         dcaManager.withdrawAllAccumulatedRbtc();
 //         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 //         assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
 //     }
