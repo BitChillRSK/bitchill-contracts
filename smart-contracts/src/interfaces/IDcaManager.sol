@@ -217,7 +217,7 @@ interface IDcaManager {
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
      * @param lendingProtocolIndex The lending protocol that held the tokens before they were spent on rBTC purchases
      */
-    function withdrawAllAccmulatedRbtc(uint256 lendingProtocolIndex) external;
+    function withdrawAllAccumulatedRbtc(uint256 lendingProtocolIndex) external;
 
     /**
      * @dev modifies the minimum period that can be set for purchases

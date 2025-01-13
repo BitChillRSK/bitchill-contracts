@@ -300,7 +300,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies for a given lending protocol (0 if none)
      * @param lendingProtocolIndex The lending protocol that held the tokens before they were spent on rBTC purchases
      */
-    function withdrawAllAccmulatedRbtc(uint256 lendingProtocolIndex) external override nonReentrant {
+    function withdrawAllAccumulatedRbtc(uint256 lendingProtocolIndex) external override nonReentrant {
         address[] memory depositedTokens = s_usersDepositedTokens[msg.sender];
         for (uint256 i; i < depositedTokens.length; ++i) {
             if (s_adminOperations.getTokenHandler(depositedTokens[i], lendingProtocolIndex) != address(0)) {
