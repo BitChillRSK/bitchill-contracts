@@ -166,7 +166,7 @@ contract InvariantTest is StdInvariant, Test {
             vm.prank(users[i]);
             sumOfUsersBalances += docHandlerMoc.getAccumulatedRbtcBalance();
         }
-        // We can't just user an assertEq because charging fees causes a slight precision loss
+        // We can't just use an assertEq because charging fees causes a slight precision loss
         assertApproxEqRel(
             address(docHandlerMoc).balance,
             sumOfUsersBalances,
