@@ -90,7 +90,7 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     }
 
     /**
-     * @dev Adds a lending protocol to the system by assigining an index to its name
+     * @dev Adds a lending protocol to the system by assigning an index to its name
      * @param lowerCaseName The name of the lending protocol in lower case
      * @param index The index to be assigned to it
      * @notice The index cannot be zero, since all elements in a mapping map to 0 by default
