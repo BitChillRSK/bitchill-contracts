@@ -147,6 +147,24 @@ contract DocLendingTest is DcaDappTest {
         assertEq(withdrawableInterest, 0);
     }
 
+    function testWithdrawInterestFailsIfNoYield() external {
+        vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
+        uint256 withdrawableInterestBeforeWithdrawal =
+            dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
+        uint256 userDocBalanceBeforeInterestWithdrawal = docToken.balanceOf(USER);
+        assertGt(withdrawableInterestBeforeWithdrawal, 0);
+        bytes memory encodedRevert =
+            abi.encodeWithSelector(IDcaManager.DcaManager__TokenDoesNotYieldInterest.selector, address(docToken));
+        vm.expectRevert(encodedRevert);
+        vm.prank(USER);
+        dcaManager.withdrawInterestFromTokenHandler(address(docToken), 0);
+        uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
+        assertEq(userDocBalanceAfterInterestWithdrawal, userDocBalanceBeforeInterestWithdrawal);
+        uint256 withdrawableInterestAfterWithdrawal =
+            dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
+        assertEq(withdrawableInterestBeforeWithdrawal, withdrawableInterestAfterWithdrawal);
+    }
+
     function testWithdrawTokenAndInterest() external {
         vm.warp(block.timestamp + 10 weeks); // Jump to 10 weeks in the future (for example) so that some interest has been generated.
         uint256 withdrawableInterest =
