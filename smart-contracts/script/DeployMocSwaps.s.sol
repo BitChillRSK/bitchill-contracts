@@ -17,19 +17,23 @@ contract DeployMocSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
+    bool lendingProtocolIsTropykus =
+        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
+    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+
     address docHandlerMocAddress;
 
     function run() external returns (AdminOperations, address, DcaManager, MocHelperConfig) {
         MocHelperConfig helperConfig = new MocHelperConfig();
-        (address docToken, address mocProxy, address kDocToken) = helperConfig.activeNetworkConfig();
+        (address docToken, address mocProxy, address kDocToken, address iSusdToken) = helperConfig.activeNetworkConfig();
 
         vm.startBroadcast();
 
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
 
-        if (block.chainid == 31337) {
-            if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (block.chainid == 31337 || isFork()) {
+            if (lendingProtocolIsTropykus) {
                 TropykusDocHandlerMoc docHandlerMoc = new TropykusDocHandlerMoc(
                     address(dcaManager),
                     docToken,
@@ -45,11 +49,11 @@ contract DeployMocSwaps is Script {
                     })
                 );
                 docHandlerMocAddress = address(docHandlerMoc);
-            } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+            } else if (lendingProtocolIsSovryn) {
                 SovrynDocHandlerMoc docHandlerMoc = new SovrynDocHandlerMoc(
                     address(dcaManager),
                     docToken,
-                    kDocToken,
+                    kDocToken, // On local tests kDocToken is a place holder for the address of the lending token
                     MIN_PURCHASE_AMOUNT,
                     FEE_COLLECTOR,
                     mocProxy,
@@ -79,8 +83,7 @@ contract DeployMocSwaps is Script {
             // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
 
             vm.stopBroadcast();
-        } else if (block.chainid == 31 || block.chainid == 30) {
-            vm.startBroadcast();
+        } else if (block.chainid == 31 /* || block.chainid == 30*/ ) {
             TropykusDocHandlerMoc tropykusDocHandlerMoc = new TropykusDocHandlerMoc(
                 address(dcaManager),
                 docToken,
@@ -96,10 +99,11 @@ contract DeployMocSwaps is Script {
                 })
             );
             docHandlerMocAddress = address(tropykusDocHandlerMoc); // @notice on live networks return values don't matter
+            /*SovrynDocHandlerMoc sovrynDocHandlerMoc = */
             new SovrynDocHandlerMoc(
                 address(dcaManager),
                 docToken,
-                kDocToken,
+                iSusdToken,
                 MIN_PURCHASE_AMOUNT,
                 FEE_COLLECTOR,
                 mocProxy,
@@ -110,7 +114,11 @@ contract DeployMocSwaps is Script {
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
                 })
             );
-            // Transfer ownership????
+            adminOperations.transferOwnership(0x226E865Ab298e542c5e5098694eFaFfe111F93D3);
+            dcaManager.transferOwnership(0x226E865Ab298e542c5e5098694eFaFfe111F93D3);
+            vm.stopBroadcast();
+        } else {
+            revert("Chain not valid!");
         }
 
         return (adminOperations, docHandlerMocAddress, dcaManager, helperConfig);

@@ -11,11 +11,16 @@ import {Script} from "forge-std/Script.sol";
 contract MocHelperConfig is Script {
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     address mockLendingTokenAddress;
+    bool lendingProtocolIsTropykus =
+        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
+    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
 
     struct NetworkConfig {
         address docTokenAddress;
         address mocProxyAddress;
-        address lendingTokenAddress;
+        // address lendingTokenAddress;
+        address kDocAddress;
+        address iSusdAddress;
     }
 
     NetworkConfig public activeNetworkConfig;
@@ -35,40 +40,52 @@ contract MocHelperConfig is Script {
         // else if Sepolia y RSK
     }
 
-    function getRootstockTestnetConfig() public view returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
-            RootstockTestnetNetworkConfig = NetworkConfig({
-                docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
-                mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
-                lendingTokenAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914 // Address of the kDOC proxy contract in Rootstock testnet
-            });
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            RootstockTestnetNetworkConfig = NetworkConfig({
-                docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
-                mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
-                lendingTokenAddress: 0x74e00A8CeDdC752074aad367785bFae7034ed89f // Address of the iSUSD proxy contract in Rootstock testnet
-            });
-        } else {
-            revert("Invalid lending protocol");
-        }
+    function getRootstockTestnetConfig() public pure returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
+        // if (lendingProtocolIsTropykus) {
+        //     RootstockTestnetNetworkConfig = NetworkConfig({
+        //         docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
+        //         mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
+        //         lendingTokenAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914 // Address of the kDOC proxy contract in Rootstock testnet
+        //     });
+        // } else if (lendingProtocolIsSovryn) {
+        //     RootstockTestnetNetworkConfig = NetworkConfig({
+        //         docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
+        //         mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
+        //         lendingTokenAddress: 0x74e00A8CeDdC752074aad367785bFae7034ed89f // Address of the iSUSD proxy contract in Rootstock testnet
+        //     });
+        // } else {
+        //     revert("Invalid lending protocol");
+        // }
+        RootstockTestnetNetworkConfig = NetworkConfig({
+            docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
+            mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F, // Address of the MoC proxy contract in Rootstock testnet
+            kDocAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914, // Address of the kDOC proxy contract in Rootstock testnet
+            iSusdAddress: 0x74e00A8CeDdC752074aad367785bFae7034ed89f // Address of the iSUSD proxy contract in Rootstock testnet
+        });
     }
 
-    function getRootstockMainnetConfig() public view returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
-            RootstockMainnetNetworkConfig = NetworkConfig({
-                docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
-                mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
-                lendingTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2 // Address of the kDOC proxy contract in Rootstock mainnet
-            });
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            RootstockMainnetNetworkConfig = NetworkConfig({
-                docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
-                mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
-                lendingTokenAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock mainnet
-            });
-        } else {
-            revert("Invalid lending protocol");
-        }
+    function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
+        // if (lendingProtocolIsTropykus) {
+        //     RootstockMainnetNetworkConfig = NetworkConfig({
+        //         docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
+        //         mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
+        //         lendingTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2 // Address of the kDOC proxy contract in Rootstock mainnet
+        //     });
+        // } else if (lendingProtocolIsSovryn) {
+        //     RootstockMainnetNetworkConfig = NetworkConfig({
+        //         docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
+        //         mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
+        //         lendingTokenAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock mainnet
+        //     });
+        // } else {
+        //     revert("Invalid lending protocol");
+        // }
+        RootstockMainnetNetworkConfig = NetworkConfig({
+            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock testnet
+            mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock testnet
+            kDocAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2, // Address of the kDOC proxy contract in Rootstock testnet
+            iSusdAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock testnet
+        });
     }
 
     function getOrCreateAnvilConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
@@ -80,10 +97,10 @@ contract MocHelperConfig is Script {
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (lendingProtocolIsTropykus) {
             MockKdocToken mockLendingToken = new MockKdocToken(address(mockDocToken));
             mockLendingTokenAddress = address(mockLendingToken);
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+        } else if (lendingProtocolIsSovryn) {
             MockIsusdToken mockLendingToken = new MockIsusdToken(address(mockDocToken));
             mockLendingTokenAddress = address(mockLendingToken);
         } else {
@@ -95,10 +112,34 @@ contract MocHelperConfig is Script {
         emit HelperConfig__CreatedMockMocProxy(address(mockMocProxy));
         emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress);
 
+        // anvilNetworkConfig = NetworkConfig({
+        //     docTokenAddress: address(mockDocToken),
+        //     mocProxyAddress: address(mockMocProxy),
+        //     lendingTokenAddress: mockLendingTokenAddress
+        // });
+
+        // if (lendingProtocolIsTropykus) {
+        //     anvilNetworkConfig = NetworkConfig({
+        //         docTokenAddress: address(mockDocToken),
+        //         mocProxyAddress: address(mockMocProxy),
+        //         kDocAddress: mockLendingTokenAddress,
+        //         iSusdAddress: address(0)
+        //     });
+        // } else if (lendingProtocolIsSovryn) {
+        //     anvilNetworkConfig = NetworkConfig({
+        //         docTokenAddress: address(mockDocToken),
+        //         mocProxyAddress: address(mockMocProxy),
+        //         kDocAddress: address(0),
+        //         iSusdAddress: mockLendingTokenAddress
+        //     });
+        // } else {
+        //     revert("Invalid lending protocol");
+        // }
         anvilNetworkConfig = NetworkConfig({
             docTokenAddress: address(mockDocToken),
             mocProxyAddress: address(mockMocProxy),
-            lendingTokenAddress: mockLendingTokenAddress
+            kDocAddress: mockLendingTokenAddress,
+            iSusdAddress: address(0) // we will discard this argument
         });
     }
 
