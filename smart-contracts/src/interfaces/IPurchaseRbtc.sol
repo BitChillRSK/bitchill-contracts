@@ -14,8 +14,8 @@ interface IPurchaseRbtc {
     event PurchaseRbtc__RbtcBought(
         address indexed user,
         address indexed tokenSpent,
-        uint256 indexed rBtcBought,
-        bytes32 scheduleId,
+        uint256 rBtcBought,
+        bytes32 indexed scheduleId,
         uint256 amountSpent
     );
     event PurchaseRbtc__SuccessfulRbtcBatchPurchase(
