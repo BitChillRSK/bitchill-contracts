@@ -25,9 +25,9 @@ interface IDcaManager {
     event DcaManager__TokenBalanceUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed amount);
     event DcaManager__TokenWithdrawn(address indexed user, address indexed token, uint256 indexed amount);
     // event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 indexed amount);
-    event DcaManager__RbtcBought(
-        address indexed user, bytes32 indexed scheduleId, uint256 indexed tokenAmount, uint256 rbtcAmount
-    );
+    // event DcaManager__RbtcBought(
+    //     address indexed user, bytes32 indexed scheduleId, uint256 indexed tokenAmount, uint256 rbtcAmount
+    // );
     event DcaManager__rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
     event DcaManager__PurchaseAmountSet(
         address indexed user, bytes32 indexed scheduleId, uint256 indexed purchaseAmount
