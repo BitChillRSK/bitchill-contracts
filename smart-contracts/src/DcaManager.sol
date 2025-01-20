@@ -456,9 +456,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     function _withdrawInterest(address token, uint256 lendingProtocolIndex) internal {
-        bytes32 protocolNameHash =
-            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
-        if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
+        _checkTokenYieldsInterest(token, lendingProtocolIndex);
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
         // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
@@ -472,12 +470,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         ITokenLending(address(tokenHandler)).withdrawInterest(msg.sender, lockedTokenAmount);
     }
 
-    // function _isTokenDeposited(address token) internal view returns (bool) {
-    // for (uint256 i; i < s_usersDepositedTokens[msg.sender].length; ++i) {
-    //     if (s_usersDepositedTokens[msg.sender][i] == token) return true;
-    // }
-    // return false;
-    // }
+    function _checkTokenYieldsInterest(address token, uint256 lendingProtocolIndex) internal view {
+        bytes32 protocolNameHash =
+            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
+        if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
+    }
 
     //////////////////////
     // Getter functions //
@@ -556,9 +553,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         override
         returns (uint256)
     {
-        bytes32 protocolNameHash =
-            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
-        if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
+        _checkTokenYieldsInterest(token, lendingProtocolIndex);
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
         // if (!tokenHandler.depositsYieldInterest()) revert DcaManager__TokenDoesNotYieldInterest(token);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
