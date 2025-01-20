@@ -25,6 +25,12 @@ test:
 moc:
 	@echo "Executing MocSwaps tests..."
 	$(FORGE_CMD)
+moc-tropykus:
+	@echo "Executing MocSwaps Tropykus tests..."
+	LENDING_PROTOCOL=tropykus $(FORGE_CMD)
+moc-sovryn:
+	@echo "Executing MocSwaps Sovryn tests..."
+	LENDING_PROTOCOL=sovryn $(FORGE_CMD)
 
 # DexSwaps specific tests
 dex:
