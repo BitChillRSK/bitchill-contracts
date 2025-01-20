@@ -129,7 +129,7 @@ contract DcaDappTest is Test {
             DeployMocSwaps deployContracts = new DeployMocSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
-            (address docTokenAddress, address mocProxyAddress, address lendingTokenAddress) =
+            (address docTokenAddress, address mocProxyAddress, address lendingTokenAddress,) =
                 helperConfig.activeNetworkConfig();
 
             docToken = MockDocToken(docTokenAddress);
@@ -167,10 +167,21 @@ contract DcaDappTest is Test {
                 // bytes32 balance = vm.load(address(mockDocToken), balanceSlot);
                 // emit log_uint(uint256(balance));
 
-                vm.prank(USER);
-                console.log("Gas provided to mintDoc:", gasleft());
+                // Foundry's EVM handles gas slightly differntly from how RSK's does it,
+                // causing an OutOfGas error due to hitting transfer() function's 2300 cap when rBTC is transferred to a proxy contract
+                // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address
+                // MocInrate address: 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3
+                // Slot in MocInrate where the address of ComissionSplitter is stored: 214
+                vm.store(
+                    address(0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3),
+                    bytes32(uint256(214)),
+                    bytes32(uint256(uint160(USER)))
+                );
+                // vm.pauseGasMetering();
                 // mockMocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
+                vm.prank(USER);
                 mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
+                // vm.resumeGasMetering();
                 // mockMocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
             }
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
