@@ -60,7 +60,11 @@ contract DcaDappTest is Test {
     address docHandlerAddress;
     uint256 s_lendingProtocolIndex;
     uint256 s_btcPrice;
-    ICoinPairPrice mocOracle = ICoinPairPrice(0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD); // RSK mainnet address of MoC oracle
+    ICoinPairPrice mocOracle;
+    address mocOracleMainnet = 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD;
+    address mocOracleTestnet = 0xbffBD993FF1d229B0FfE55668F2009d20d4F7C5f;
+    address mocInRateMainnet = 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3;
+    address mocInRateTestnet = 0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60;
 
     //////////////////////
     // Events ////////////
@@ -175,10 +179,9 @@ contract DcaDappTest is Test {
                 // Foundry's EVM handles gas slightly differntly from how RSK's does it,
                 // causing an OutOfGas error due to hitting transfer() function's 2300 cap when rBTC is transferred to a proxy contract
                 // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address
-                // MocInrate address: 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3
                 // Slot in MocInrate where the address of ComissionSplitter is stored: 214
                 vm.store(
-                    address(0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3),
+                    address(mocInRateMainnet),
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(makeAddr("Dummy commision receiver"))))
                 );
@@ -188,17 +191,19 @@ contract DcaDappTest is Test {
                 mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
                 // vm.resumeGasMetering();
                 // mockMocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
-
+                mocOracle = ICoinPairPrice(mocOracleMainnet);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             } else if (block.chainid == 31) {
-                // MocInrate address in RSK testnet: 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3
                 vm.store(
-                    address(0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60),
+                    address(mocInRateTestnet),
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(makeAddr("Dummy commision receiver"))))
                 );
                 vm.prank(USER);
                 mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
+
+                mocOracle = ICoinPairPrice(mocOracleTestnet);
+                s_btcPrice = mocOracle.getPrice() / 1e18;
             }
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             DexHelperConfig helperConfig;
