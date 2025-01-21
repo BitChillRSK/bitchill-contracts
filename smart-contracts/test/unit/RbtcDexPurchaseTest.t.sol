@@ -57,7 +57,7 @@ pragma solidity ^0.8.19;
 //             vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
 //         }
 //         vm.prank(USER);
-//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / s_btcPrice) * numOfPurchases);
 //     }
 
 //     function testRevertPurchasetIfDocRunsOut() external {

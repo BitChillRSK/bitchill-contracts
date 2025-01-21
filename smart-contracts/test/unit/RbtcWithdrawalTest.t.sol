@@ -37,11 +37,16 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / BTC_PRICE);
+            // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / s_btcPrice);
+            assertApproxEqRel( // MoC takes some commission so strict equality us not possible
+                rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
+                netPurchaseAmount / s_btcPrice,
+                0.25e16 // Allow a maximum difference of 0.25%
+            );
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
-                netPurchaseAmount / BTC_PRICE,
+                netPurchaseAmount / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -54,14 +59,14 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-        // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+        // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
-                totalDocSpent / BTC_PRICE,
+                totalDocSpent / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }

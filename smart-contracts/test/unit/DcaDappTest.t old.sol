@@ -244,7 +244,7 @@ pragma solidity ^0.8.19;
 //         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
 //         vm.expectEmit(true, true, true, false);
-//         emit TokenHandler__RbtcBought(USER, address(mockDocToken), netPurchaseAmount / BTC_PRICE, netPurchaseAmount);
+//         emit TokenHandler__RbtcBought(USER, address(mockDocToken), netPurchaseAmount / s_btcPrice, netPurchaseAmount);
 //         vm.prank(OWNER);
 //         dcaManager.buyRbtc(USER, address(mockDocToken), SCHEDULE_INDEX);
 
@@ -254,7 +254,7 @@ pragma solidity ^0.8.19;
 //         vm.stopPrank();
 //         // Check that DOC was substracted and rBTC was added to user's balances
 //         assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, DOC_TO_SPEND);
-//         assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+//         assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
 //     }
 
 //     function testCannotBuyIfPeriodNotElapsed() external {
@@ -288,7 +288,7 @@ pragma solidity ^0.8.19;
 //             vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
 //         }
 //         vm.prank(USER);
-//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
+//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / s_btcPrice) * numOfPurchases);
 //     }
 
 //     function testRevertPurchasetIfDocRunsOut() external {
@@ -336,7 +336,7 @@ pragma solidity ^0.8.19;
 //                 vm.stopPrank();
 //                 // Check that DOC was substracted and rBTC was added to user's balances
 //                 assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
-//                 assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+//                 assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
 
 //                 totalDocSpent += netPurchaseAmount;
 
@@ -344,8 +344,8 @@ pragma solidity ^0.8.19;
 //             }
 //         }
 //         vm.prank(USER);
-//         // assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / BTC_PRICE) * numOfPurchases);
-//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+//         // assertEq(docTokenHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / s_btcPrice) * numOfPurchases);
+//         assertEq(docTokenHandler.getAccumulatedRbtcBalance(), totalDocSpent / s_btcPrice);
 //     }
 
 //     function testOnlyOwnerCanCallDcaManagerToPurchase() external {
@@ -413,26 +413,26 @@ pragma solidity ^0.8.19;
 //             emit TokenHandler__RbtcBought(USER, address(mockDocToken), 0, 0); // Never mind the actual values on this test
 //         }
 //         vm.expectEmit(true, true, true, false);
-//         emit TokenHandler__SuccessfulRbtcBatchPurchase(address(mockDocToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount);
+//         emit TokenHandler__SuccessfulRbtcBatchPurchase(address(mockDocToken), totalNetPurchaseAmount / s_btcPrice, totalNetPurchaseAmount);
 //         vm.prank(OWNER);
 //         dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
 
 //         uint256 postDocTokenHandlerBalance = address(docTokenHandler).balance;
 
 //         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
-//         assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+//         assertEq(postDocTokenHandlerBalance - prevDocTokenHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
 
 //         vm.prank(USER);
 //         uint256 userAccumulatedRbtcPost = docTokenHandler.getAccumulatedRbtcBalance();
 //         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
-//         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
+//         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / s_btcPrice);
 
 //         vm.warp(block.timestamp + 5 weeks); // warp to a time far in the future so all schedules are long due for a new purchase
 //         vm.prank(OWNER);
 //         dcaManager.batchBuyRbtc(users, address(mockDocToken), scheduleIndexes, purchaseAmounts, purchasePeriods);
 //         uint256 postDocTokenHandlerBalance2 = address(docTokenHandler).balance;
 //         // After a second purchase, we have the same increment
-//         assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+//         assertEq(postDocTokenHandlerBalance2 - postDocTokenHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
 
 //     }
 
@@ -451,7 +451,7 @@ pragma solidity ^0.8.19;
 //         vm.prank(USER);
 //         dcaManager.withdrawAllAccumulatedRbtc();
 //         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-//         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / BTC_PRICE);
+//         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, netPurchaseAmount / s_btcPrice);
 //     }
 
 //     function testWithdrawRbtcAfterSeveralPurchases() external {
@@ -460,7 +460,7 @@ pragma solidity ^0.8.19;
 //         vm.prank(USER);
 //         dcaManager.withdrawAllAccumulatedRbtc();
 //         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-//         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / BTC_PRICE);
+//         assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
 //     }
 
 //     function testCannotWithdrawBeforePurchasing() external {

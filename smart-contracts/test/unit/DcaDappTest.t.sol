@@ -7,6 +7,7 @@ import {DcaManager} from "../../src/DcaManager.sol";
 import {DcaManagerAccessControl} from "../../src/DcaManagerAccessControl.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {IDocHandler} from "../../src/interfaces/IDocHandler.sol";
+import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 // import {TropykusDocHandlerDex} from "../../src/TropykusDocHandlerDex.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
@@ -58,6 +59,8 @@ contract DcaDappTest is Test {
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     address docHandlerAddress;
     uint256 s_lendingProtocolIndex;
+    uint256 s_btcPrice;
+    ICoinPairPrice mocOracle = ICoinPairPrice(0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD); // RSK mainnet address of MoC oracle
 
     //////////////////////
     // Events ////////////
@@ -160,7 +163,9 @@ contract DcaDappTest is Test {
                 vm.prank(address(docHandler));
                 docToken.approve(mocProxyAddress, type(uint256).max);
                 docToken.mint(USER, USER_TOTAL_DOC);
-            } else if (block.chainid == 30 || block.chainid == 31) {
+
+                s_btcPrice = BTC_PRICE;
+            } else if (block.chainid == 30) {
                 // Fork tests
                 // bytes32 balanceSlot = keccak256(abi.encode(USER, uint256(DOC_BALANCES_SLOT)));
                 // vm.store(address(mockDocToken), balanceSlot, bytes32(USER_TOTAL_DOC));
@@ -175,7 +180,7 @@ contract DcaDappTest is Test {
                 vm.store(
                     address(0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3),
                     bytes32(uint256(214)),
-                    bytes32(uint256(uint160(USER)))
+                    bytes32(uint256(uint160(makeAddr("Dummy commision receiver"))))
                 );
                 // vm.pauseGasMetering();
                 // mockMocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
@@ -183,6 +188,17 @@ contract DcaDappTest is Test {
                 mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
                 // vm.resumeGasMetering();
                 // mockMocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
+
+                s_btcPrice = mocOracle.getPrice() / 1e18;
+            } else if (block.chainid == 31) {
+                // MocInrate address in RSK testnet: 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3
+                vm.store(
+                    address(0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60),
+                    bytes32(uint256(214)),
+                    bytes32(uint256(uint160(makeAddr("Dummy commision receiver"))))
+                );
+                vm.prank(USER);
+                mockMocProxy.mintDoc{value: 0.051 ether}(0.05 ether);
             }
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             DexHelperConfig helperConfig;
@@ -328,7 +344,7 @@ contract DcaDappTest is Test {
         // emit TokenHandler__RbtcBought(
         //     USER,
         //     address(mockDocToken),
-        //     netPurchaseAmount / BTC_PRICE,
+        //     netPurchaseAmount / s_btcPrice,
         //     dcaDetails[SCHEDULE_INDEX].scheduleId,
         //     netPurchaseAmount
         // );
@@ -345,11 +361,11 @@ contract DcaDappTest is Test {
         assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, DOC_TO_SPEND);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+            assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
-                netPurchaseAmount / BTC_PRICE,
+                netPurchaseAmount / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -386,14 +402,14 @@ contract DcaDappTest is Test {
                 vm.stopPrank();
                 // Check that DOC was substracted and rBTC was added to user's balances
                 assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
-                // assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+                // assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
 
                 if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-                    assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / BTC_PRICE);
+                    assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
                 } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
                     assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                         RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
-                        netPurchaseAmount / BTC_PRICE,
+                        netPurchaseAmount / s_btcPrice,
                         0.5e16 // Allow a maximum difference of 0.5%
                     );
                 }
@@ -408,14 +424,14 @@ contract DcaDappTest is Test {
         console.log("Total DOC spent :", totalDocSpent);
         console.log("Total DOC redeemed :", totalDocRedeemed);
         vm.prank(USER);
-        // assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+        // assertEq(docHandler.getAccumulatedRbtcBalance(), totalDocSpent / s_btcPrice);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(), totalDocSpent / BTC_PRICE);
+            assertEq(IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(), totalDocSpent / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
-                totalDocSpent / BTC_PRICE,
+                totalDocSpent / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -472,11 +488,11 @@ contract DcaDappTest is Test {
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
-                address(docToken), totalNetPurchaseAmount / BTC_PRICE, totalNetPurchaseAmount
+                address(docToken), totalNetPurchaseAmount / s_btcPrice, totalNetPurchaseAmount
             );
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
-                address(docToken), (totalNetPurchaseAmount * 995) / (1000 * BTC_PRICE), totalNetPurchaseAmount
+                address(docToken), (totalNetPurchaseAmount * 995) / (1000 * s_btcPrice), totalNetPurchaseAmount
             );
         }
 
@@ -493,18 +509,18 @@ contract DcaDappTest is Test {
         );
 
         // The balance of the DOC token handler contract gets incremented in exactly the purchased amount of rBTC
-        // assertEq(postDocHandlerBalance - prevDocHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+        // assertEq(postDocHandlerBalance - prevDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
 
         uint256 postDocHandlerBalance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             postDocHandlerBalance = address(docHandler).balance;
-            assertEq(postDocHandlerBalance - prevDocHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+            assertEq(postDocHandlerBalance - prevDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             postDocHandlerBalance = wrBtcToken.balanceOf(address(docHandler));
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 postDocHandlerBalance - prevDocHandlerBalance,
-                totalNetPurchaseAmount / BTC_PRICE,
+                totalNetPurchaseAmount / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -513,14 +529,14 @@ contract DcaDappTest is Test {
         uint256 userAccumulatedRbtcPost = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
 
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
-        // assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
+        // assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / s_btcPrice);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / BTC_PRICE);
+            assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, totalNetPurchaseAmount / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 userAccumulatedRbtcPost - userAccumulatedRbtcPrev,
-                totalNetPurchaseAmount / BTC_PRICE,
+                totalNetPurchaseAmount / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
@@ -542,16 +558,16 @@ contract DcaDappTest is Test {
         uint256 postDocHandlerBalance2;
 
         // After a second purchase, we have the same increment
-        // assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+        // assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             postDocHandlerBalance2 = address(docHandler).balance;
-            assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / BTC_PRICE);
+            assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             postDocHandlerBalance2 = wrBtcToken.balanceOf(address(docHandler));
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 postDocHandlerBalance2 - postDocHandlerBalance,
-                totalNetPurchaseAmount / BTC_PRICE,
+                totalNetPurchaseAmount / s_btcPrice,
                 0.5e16 // Allow a maximum difference of 0.5%
             );
         }
