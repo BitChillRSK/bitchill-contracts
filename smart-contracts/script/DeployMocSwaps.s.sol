@@ -99,8 +99,7 @@ contract DeployMocSwaps is Script {
                 })
             );
             docHandlerMocAddress = address(tropykusDocHandlerMoc); // @notice on live networks return values don't matter
-            /*SovrynDocHandlerMoc sovrynDocHandlerMoc = */
-            new SovrynDocHandlerMoc(
+            SovrynDocHandlerMoc sovrynDocHandlerMoc = new SovrynDocHandlerMoc(
                 address(dcaManager),
                 docToken,
                 iSusdToken,
@@ -114,6 +113,10 @@ contract DeployMocSwaps is Script {
                     maxAnnualAmount: MAX_ANNUAL_AMOUNT
                 })
             );
+            adminOperations.setAdminRole(tx.origin);
+            adminOperations.assignOrUpdateTokenHandler(docToken, TROPYKUS_INDEX, address(tropykusDocHandlerMoc));
+            adminOperations.assignOrUpdateTokenHandler(docToken, SOVRYN_INDEX, address(sovrynDocHandlerMoc));
+            adminOperations.setAdminRole(0x226E865Ab298e542c5e5098694eFaFfe111F93D3);
             adminOperations.transferOwnership(0x226E865Ab298e542c5e5098694eFaFfe111F93D3);
             dcaManager.transferOwnership(0x226E865Ab298e542c5e5098694eFaFfe111F93D3);
             vm.stopBroadcast();
