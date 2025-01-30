@@ -36,6 +36,7 @@ interface ITokenLending is ITokenHandler {
     error TokenLending__LendingTokenToRepayExceedsUsersBalance(
         address user, uint256 lendingTokenAmountToRepay, uint256 lendingTokenUserbalance
     );
+    // error TokenLending__RedeemUnderlyingFailed(); Tropykus returns an error code when redemptions attempts fail, but Sovryn does not, so this custom error goes to the specific contracts
     error TokenLending__BatchRedeemDocFailed();
 
     /*//////////////////////////////////////////////////////////////
