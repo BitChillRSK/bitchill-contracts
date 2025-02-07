@@ -19,9 +19,11 @@ contract DocLendingTest is DcaDappTest {
     ///// DOC Lending tests ////
     ////////////////////////////
     function testDepositedDocIsLent() external {
+        uint256 ltDocBalanceBeforeDeposit = docToken.balanceOf(address(lendingToken));
         super.depositDoc();
+        uint256 ltDocBalanceAfterDeposit = docToken.balanceOf(address(lendingToken));
         assertEq(docToken.balanceOf(address(docHandler)), 0); // DOC balance in handler contract is 0 because DOC is lent to lending protocol
-        assertEq(docToken.balanceOf(address(lendingToken)), 2 * DOC_TO_DEPOSIT); // Twice the DOC to deposit since a schedule is created in setUp()
+        assertEq(ltDocBalanceAfterDeposit - ltDocBalanceBeforeDeposit, DOC_TO_DEPOSIT);
     }
 
     function testDocDepositIncreasesLendingTokenBalance() external {
