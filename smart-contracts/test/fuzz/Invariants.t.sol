@@ -141,15 +141,15 @@ contract InvariantTest is StdInvariant, Test {
             sumOfUsersKdoc += docHandlerMoc.getUsersLendingTokenBalance(users[i]);
         }
         console.log("Interest Factor: ", interestFactor);
-        console.log("exchangeRateStored: ", mockKdocToken.exchangeRateStored());
+        console.log("exchangeRateCurrent: ", mockKdocToken.exchangeRateCurrent());
         console.log("sumOfUsersDepositedDoc: ", sumOfUsersDepositedDoc);
         console.log("sumOfUsersKdoc: ", sumOfUsersKdoc);
         console.log(
-            "Total DOC in Tropykus: ", sumOfUsersKdoc * mockKdocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS
+            "Total DOC in Tropykus: ", sumOfUsersKdoc * mockKdocToken.exchangeRateCurrent() / EXCHANGE_RATE_DECIMALS
         );
 
         assertGe(
-            sumOfUsersKdoc * mockKdocToken.exchangeRateStored() / EXCHANGE_RATE_DECIMALS,
+            sumOfUsersKdoc * mockKdocToken.exchangeRateCurrent() / EXCHANGE_RATE_DECIMALS,
             // sumOfUsersDepositedDoc * interestFactor / 1e18
             sumOfUsersDepositedDoc
         );

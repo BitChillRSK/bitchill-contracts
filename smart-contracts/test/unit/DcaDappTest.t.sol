@@ -176,7 +176,7 @@ contract DcaDappTest is Test {
                 // bytes32 balance = vm.load(address(mockDocToken), balanceSlot);
                 // emit log_uint(uint256(balance));
 
-                // Foundry's EVM handles gas slightly differntly from how RSK's does it,
+                // Foundry's EVM handles gas slightly differently from how RSK's does it,
                 // causing an OutOfGas error due to hitting transfer() function's 2300 cap when rBTC is transferred to a proxy contract
                 // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address
                 // Slot in MocInrate where the address of ComissionSplitter is stored: 214
@@ -288,6 +288,7 @@ contract DcaDappTest is Test {
     }
 
     function withdrawDoc() internal {
+        // vm.warp(block.timestamp + 10 weeks); // Esto no soluciona nada porque usamos exchangeRateCurrent y en el fork no hay nadie que actualice la tasa de cambio para que podamos leerla.
         vm.startPrank(USER);
         vm.expectEmit(true, true, true, false);
         emit TokenHandler__TokenWithdrawn(address(docToken), USER, DOC_TO_DEPOSIT);

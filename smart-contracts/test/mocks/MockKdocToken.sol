@@ -25,12 +25,12 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function mint(uint256 amount) public returns (uint256) {
         require(i_docToken.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
         i_docToken.transferFrom(msg.sender, address(this), amount); // Deposit DOC into Tropykus
-        _mint(msg.sender, amount * DECIMALS / exchangeRateStored()); //  Mint kDOC to user that deposited DOC (in our case, the DocHandler contract)
+        _mint(msg.sender, amount * DECIMALS / exchangeRateCurrent()); //  Mint kDOC to user that deposited DOC (in our case, the DocHandler contract)
         return 0;
     }
 
     function redeemUnderlying(uint256 amount) public returns (uint256) {
-        uint256 kDocToBurn = amount * DECIMALS / exchangeRateStored();
+        uint256 kDocToBurn = amount * DECIMALS / exchangeRateCurrent();
         require(balanceOf(msg.sender) >= kDocToBurn, "Insufficient balance");
         i_docToken.transfer(msg.sender, amount);
         _burn(msg.sender, kDocToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
@@ -41,7 +41,7 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
      * @dev Returns the current exchange rate between DOC and kDOC.
      * The exchange rate increases linearly over time at 5% per year.
      */
-    function exchangeRateStored() public view returns (uint256) {
+    function exchangeRateCurrent() public view returns (uint256) {
         uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
         uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
 
@@ -54,7 +54,7 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
     function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
         // console.log("getSupplierSnapshotStored: balance = ", balanceOf(user));
-        uint256 underlyingAmount = balanceOf(user) * exchangeRateStored() / DECIMALS;
+        uint256 underlyingAmount = balanceOf(user) * exchangeRateCurrent() / DECIMALS;
         // console.log("getSupplierSnapshotStored: underlyingAmount = ", underlyingAmount);
         return (0, underlyingAmount, 0, 0);
     }

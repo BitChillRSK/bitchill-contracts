@@ -84,7 +84,7 @@ contract TropykusDocHandlerMoc is TokenHandler, TokenLending, PurchaseMoc, ITrop
         override(TokenHandler, ITokenHandler)
         onlyDcaManager
     {
-        uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
+        uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateCurrent());
         if (docInTropykus < withdrawalAmount) {
             revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInTropykus);
         }
@@ -97,7 +97,7 @@ contract TropykusDocHandlerMoc is TokenHandler, TokenLending, PurchaseMoc, ITrop
     }
 
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
-        uint256 exchangeRate = i_kDocToken.exchangeRateStored();
+        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
         uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         uint256 kDocToRepay = docInterestAmount * EXCHANGE_RATE_DECIMALS / exchangeRate;
@@ -129,7 +129,7 @@ contract TropykusDocHandlerMoc is TokenHandler, TokenLending, PurchaseMoc, ITrop
     //////////////////////////////////////////////////////////////*/
 
     function _redeemDoc(address user, uint256 docToRedeem) internal override {
-        uint256 exchangeRate = i_kDocToken.exchangeRateStored(); // esto devuelve la tasa de cambio
+        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent(); // esto devuelve la tasa de cambio
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
@@ -151,7 +151,7 @@ contract TropykusDocHandlerMoc is TokenHandler, TokenLending, PurchaseMoc, ITrop
         if (totalDocToRedeem > underlyingAmount) {
             revert TokenLending__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 totalKdocToRepay = _docToLendingToken(totalDocToRedeem, i_kDocToken.exchangeRateStored());
+        uint256 totalKdocToRepay = _docToLendingToken(totalDocToRedeem, i_kDocToken.exchangeRateCurrent());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
