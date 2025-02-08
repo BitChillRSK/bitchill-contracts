@@ -82,8 +82,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         onlyDcaManager
     {
         uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateCurrent());
-        if (docInTropykus < withdrawalAmount - 1) {
-            // TODO: decide what to do with this -1
+        if (docInTropykus < withdrawalAmount) {
             revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInTropykus);
         }
         _redeemDoc(user, withdrawalAmount);
@@ -112,12 +111,12 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
 
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
         external
-        view
+        //view
         override
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
-        uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateStored());
+        uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateCurrent());
         docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 

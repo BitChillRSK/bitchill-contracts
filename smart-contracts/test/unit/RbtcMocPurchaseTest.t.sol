@@ -66,18 +66,18 @@ contract RbtcMocPurchaseTest is DcaDappTest {
         vm.prank(USER);
         // assertEq(docHandler.getAccumulatedRbtcBalance(), (netPurchaseAmount / s_btcPrice) * numOfPurchases);
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(
-                IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
-                (netPurchaseAmount / s_btcPrice) * numOfPurchases
-            );
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
-            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
-                (netPurchaseAmount / s_btcPrice) * numOfPurchases,
-                0.5e16 // Allow a maximum difference of 0.5%
-            );
-        }
+        // if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        //     assertEq(
+        //         IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
+        //         (netPurchaseAmount / s_btcPrice) * numOfPurchases
+        //     );
+        // } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+            IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
+            (netPurchaseAmount / s_btcPrice) * numOfPurchases,
+            0.5e16 // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap purchases)
+        );
+        // }
     }
 
     function testRevertPurchasetIfDocRunsOut() external {

@@ -12,6 +12,7 @@ import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
+import {console} from "forge-std/Test.sol";
 
 contract DeployMocSwaps is Script {
     address OWNER = makeAddr(OWNER_STRING);
@@ -50,6 +51,7 @@ contract DeployMocSwaps is Script {
                 );
                 docHandlerMocAddress = address(docHandlerMoc);
             } else if (lendingProtocolIsSovryn) {
+                if (block.chainid != 31337) kDocToken = iSusdToken;
                 SovrynDocHandlerMoc docHandlerMoc = new SovrynDocHandlerMoc(
                     address(dcaManager),
                     docToken,

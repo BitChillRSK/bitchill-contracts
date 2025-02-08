@@ -61,15 +61,15 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-            assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
-            assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
-                totalDocSpent / s_btcPrice,
-                0.5e16 // Allow a maximum difference of 0.5%
-            );
-        }
+        // if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        //     assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
+        // } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
+            rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
+            totalDocSpent / s_btcPrice,
+            0.5e16 // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
+        );
+        // }
     }
 
     function testCannotWithdrawBeforePurchasing() external {

@@ -38,7 +38,22 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     }
 
     /**
-     * @dev Returns the current exchange rate between DOC and kDOC.
+     * @dev Returns the stored exchange rate between DOC and kDOC.
+     * The exchange rate increases linearly over time at 5% per year.
+     */
+    function exchangeRateStored() public view returns (uint256) {
+        uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
+        uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
+
+        // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
+        // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
+        uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
+
+        return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
+    }
+
+    /**
+     * @dev Returns the current exchange rate between DOC and kDOC. (same mocking behaviour as exchangeRateStored())
      * The exchange rate increases linearly over time at 5% per year.
      */
     function exchangeRateCurrent() public view returns (uint256) {

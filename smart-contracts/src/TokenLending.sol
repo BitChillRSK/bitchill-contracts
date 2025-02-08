@@ -8,6 +8,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {FeeHandler} from "./FeeHandler.sol";
 import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+
 /**
  * @title TokenLending
  */
@@ -32,7 +34,9 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 lendingTokenAmount)
     {
-        lendingTokenAmount = docAmount * i_exchangeRateDecimals / exchangeRate;
+        // lendingTokenAmount = docAmount * i_exchangeRateDecimals / exchangeRate;
+        // lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
+        lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate);
     }
 
     function _lendingTokenToDoc(uint256 lendingTokenAmount, uint256 exchangeRate)
@@ -40,6 +44,8 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 docAmount)
     {
-        docAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
+        // docAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
+        // Using OpenZeppelin's Math library for precise division rounding up
+        docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
     }
 }
