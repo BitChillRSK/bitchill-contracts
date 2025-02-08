@@ -125,13 +125,11 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     //////////////////////////////////////////////////////////////*/
 
     function _redeemDoc(address user, uint256 docToRedeem) internal virtual {
-        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent(); // esto devuelve la tasa de cambio
+        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
-            revert TokenLending__LendingTokenToRepayExceedsUsersBalance(
-                user, docToRedeem * exchangeRate, usersKdocBalance
-            );
+            revert TokenLending__LendingTokenToRepayExceedsUsersBalance(user, kDocToRepay, usersKdocBalance);
         }
         s_kDocBalances[user] -= kDocToRepay;
         uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
