@@ -188,9 +188,9 @@ interface IDcaManager {
     /**
      * @notice Withdraw the token accumulated by a user as interest through all the DCA strategies using that token
      * @param token The token address
-     * @param lendingProtocolIndex: the lending protocol index
+     * @param lendingProtocolIndexes Array of lending protocol indexes to withdraw interest from
      */
-    function withdrawInterestFromTokenHandler(address token, uint256 lendingProtocolIndex) external;
+    function withdrawAllAccumulatedInterest(address token, uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
@@ -215,9 +215,9 @@ interface IDcaManager {
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
-     * @param lendingProtocolIndex The lending protocol that held the tokens before they were spent on rBTC purchases
+     * @param lendingProtocolIndexes Array of lending protocol indexes where the user has positions
      */
-    function withdrawAllAccumulatedRbtc(uint256 lendingProtocolIndex) external;
+    function withdrawAllAccumulatedRbtc(uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @dev modifies the minimum period that can be set for purchases

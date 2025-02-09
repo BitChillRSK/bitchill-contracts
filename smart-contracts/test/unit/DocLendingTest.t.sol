@@ -206,7 +206,9 @@ contract DocLendingTest is DcaDappTest {
         uint256 userDocBalanceBeforeInterestWithdrawal = docToken.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
         vm.prank(USER);
-        dcaManager.withdrawInterestFromTokenHandler(address(docToken), s_lendingProtocolIndex);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        dcaManager.withdrawAllAccumulatedInterest(address(docToken), lendingProtocolIndexes);
         uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
         console.log("userDocBalanceAfterInterestWithdrawal:", userDocBalanceAfterInterestWithdrawal);
         // assertEq(userDocBalanceAfterInterestWithdrawal - userDocBalanceBeforeInterestWithdrawal, withdrawableInterest);
@@ -241,7 +243,9 @@ contract DocLendingTest is DcaDappTest {
             abi.encodeWithSelector(IDcaManager.DcaManager__TokenDoesNotYieldInterest.selector, address(docToken));
         vm.expectRevert(encodedRevert);
         vm.prank(USER);
-        dcaManager.withdrawInterestFromTokenHandler(address(docToken), 0);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = 0;
+        dcaManager.withdrawAllAccumulatedInterest(address(docToken), lendingProtocolIndexes);
         uint256 userDocBalanceAfterInterestWithdrawal = docToken.balanceOf(USER);
         assertEq(userDocBalanceAfterInterestWithdrawal, userDocBalanceBeforeInterestWithdrawal);
         uint256 withdrawableInterestAfterWithdrawal =

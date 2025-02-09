@@ -363,14 +363,18 @@ contract Handler is Test {
             vm.stopPrank();
             return;
         }
-        dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
         vm.stopPrank();
     }
 
     function withdrawInterestFromTropykusDocHandlerMoc(uint256 userSeed) external {
         address user = s_users[userSeed % s_users.length];
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
         vm.startPrank(user);
-        dcaManager.withdrawInterestFromTokenHandler(address(mockDocToken), s_lendingProtocolIndex);
+        dcaManager.withdrawAllAccumulatedInterest(address(mockDocToken), lendingProtocolIndexes);
         vm.stopPrank();
     }
 }

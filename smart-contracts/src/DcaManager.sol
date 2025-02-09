@@ -297,14 +297,14 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies for a given lending protocol (0 if none)
-     * @param lendingProtocolIndex The lending protocol that held the tokens before they were spent on rBTC purchases
+     * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
+     * @param lendingProtocolIndexes Array of lending protocol indexes where the user has positions
      */
-    function withdrawAllAccumulatedRbtc(uint256 lendingProtocolIndex) external override nonReentrant {
+    function withdrawAllAccumulatedRbtc(uint256[] calldata lendingProtocolIndexes) external override nonReentrant {
         address[] memory depositedTokens = s_usersDepositedTokens[msg.sender];
         for (uint256 i; i < depositedTokens.length; ++i) {
-            if (s_adminOperations.getTokenHandler(depositedTokens[i], lendingProtocolIndex) != address(0)) {
-                IPurchaseRbtc(address(_handler(depositedTokens[i], lendingProtocolIndex))).withdrawAccumulatedRbtc(
+            for (uint256 j; j < lendingProtocolIndexes.length; ++j) {
+                IPurchaseRbtc(address(_handler(depositedTokens[i], lendingProtocolIndexes[j]))).withdrawAccumulatedRbtc(
                     msg.sender
                 );
             }
@@ -330,14 +330,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     /**
      * @dev Users can withdraw the stablecoin interests accrued by the deposits they made
      * @param token The address of the token to withdraw
-     * @param lendingProtocolIndex: the lending protocol index
+     * @param lendingProtocolIndexes Array of lending protocol indexes to withdraw interest from
      */
-    function withdrawInterestFromTokenHandler(address token, uint256 lendingProtocolIndex)
+    function withdrawAllAccumulatedInterest(address token, uint256[] calldata lendingProtocolIndexes)
         external
         override
         nonReentrant
     {
-        _withdrawInterest(token, lendingProtocolIndex);
+        for (uint256 i; i < lendingProtocolIndexes.length; ++i) {
+            _withdrawInterest(token, lendingProtocolIndexes[i]);
+        }
     }
 
     /**

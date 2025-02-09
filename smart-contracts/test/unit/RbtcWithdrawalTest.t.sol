@@ -33,7 +33,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
@@ -57,7 +59,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
 
@@ -76,7 +80,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.expectRevert(IPurchaseRbtc.PurchaseRbtc__NoAccumulatedRbtcToWithdraw.selector);
         vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(s_lendingProtocolIndex);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
     }
