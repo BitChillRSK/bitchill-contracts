@@ -89,7 +89,6 @@ contract MocHelperConfig is Script {
     }
 
     function getOrCreateAnvilConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
-        // Check to see if we already have an active network config
         if (activeNetworkConfig.docTokenAddress != address(0)) {
             return activeNetworkConfig;
         }
@@ -112,40 +111,26 @@ contract MocHelperConfig is Script {
         emit HelperConfig__CreatedMockMocProxy(address(mockMocProxy));
         emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress);
 
-        // anvilNetworkConfig = NetworkConfig({
-        //     docTokenAddress: address(mockDocToken),
-        //     mocProxyAddress: address(mockMocProxy),
-        //     lendingTokenAddress: mockLendingTokenAddress
-        // });
-
-        // if (lendingProtocolIsTropykus) {
-        //     anvilNetworkConfig = NetworkConfig({
-        //         docTokenAddress: address(mockDocToken),
-        //         mocProxyAddress: address(mockMocProxy),
-        //         kDocAddress: mockLendingTokenAddress,
-        //         iSusdAddress: address(0)
-        //     });
-        // } else if (lendingProtocolIsSovryn) {
-        //     anvilNetworkConfig = NetworkConfig({
-        //         docTokenAddress: address(mockDocToken),
-        //         mocProxyAddress: address(mockMocProxy),
-        //         kDocAddress: address(0),
-        //         iSusdAddress: mockLendingTokenAddress
-        //     });
-        // } else {
-        //     revert("Invalid lending protocol");
-        // }
-        anvilNetworkConfig = NetworkConfig({
-            docTokenAddress: address(mockDocToken),
-            mocProxyAddress: address(mockMocProxy),
-            kDocAddress: mockLendingTokenAddress,
-            iSusdAddress: address(0) // we will discard this argument
-        });
+        if (lendingProtocolIsTropykus) {
+            anvilNetworkConfig = NetworkConfig({
+                docTokenAddress: address(mockDocToken),
+                mocProxyAddress: address(mockMocProxy),
+                kDocAddress: mockLendingTokenAddress,
+                iSusdAddress: address(0)
+            });
+        } else if (lendingProtocolIsSovryn) {
+            anvilNetworkConfig = NetworkConfig({
+                docTokenAddress: address(mockDocToken),
+                mocProxyAddress: address(mockMocProxy),
+                kDocAddress: address(0),
+                iSusdAddress: mockLendingTokenAddress
+            });
+        }
     }
 
-    function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
-        return activeNetworkConfig;
-    }
+    // function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
+    //     return activeNetworkConfig;
+    // }
 
     // MAINNET CONTRACTS
     // DOC: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db

@@ -67,7 +67,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         onlyDcaManager
     {
         // Redeem DOC (repaying kDOC)
-        _redeemDoc(buyer, purchaseAmount);
+        purchaseAmount = _redeemDoc(buyer, purchaseAmount); // TODO: Check if this is correct
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
@@ -169,7 +169,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     }
 
     // Define abstract functions to be implemented by child contracts
-    function _redeemDoc(address buyer, uint256 amount) internal virtual;
+    function _redeemDoc(address buyer, uint256 amount) internal virtual returns (uint256);
 
     function _batchRedeemDoc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal

@@ -57,9 +57,13 @@ contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount) internal override(SovrynDocHandler, PurchaseMoc) {
+    function _redeemDoc(address user, uint256 amount)
+        internal
+        override(SovrynDocHandler, PurchaseMoc)
+        returns (uint256)
+    {
         // Call SovrynDocHandler's version of _redeemDoc
-        SovrynDocHandler._redeemDoc(user, amount);
+        return SovrynDocHandler._redeemDoc(user, amount);
     }
 
     /**

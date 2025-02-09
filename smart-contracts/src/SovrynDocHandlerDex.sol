@@ -62,9 +62,13 @@ contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount) internal override(PurchaseUniswap, SovrynDocHandler) {
+    function _redeemDoc(address user, uint256 amount)
+        internal
+        override(PurchaseUniswap, SovrynDocHandler)
+        returns (uint256)
+    {
         // Call SovrynDocHandler's version of _redeemDoc
-        SovrynDocHandler._redeemDoc(user, amount);
+        return SovrynDocHandler._redeemDoc(user, amount);
     }
 
     /**

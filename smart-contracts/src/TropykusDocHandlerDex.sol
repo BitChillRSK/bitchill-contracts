@@ -57,9 +57,13 @@ contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount) internal override(TropykusDocHandler, PurchaseUniswap) {
+    function _redeemDoc(address user, uint256 amount)
+        internal
+        override(TropykusDocHandler, PurchaseUniswap)
+        returns (uint256)
+    {
         // Call TropykusDocHandler's version of _redeemDoc
-        TropykusDocHandler._redeemDoc(user, amount);
+        return TropykusDocHandler._redeemDoc(user, amount);
     }
 
     /**

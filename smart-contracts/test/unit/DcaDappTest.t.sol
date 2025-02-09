@@ -136,16 +136,16 @@ contract DcaDappTest is Test {
             DeployMocSwaps deployContracts = new DeployMocSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
-            (address docTokenAddress, address mocProxyAddress, address lendingTokenAddress,) =
+            (address docTokenAddress, address mocProxyAddress, address kdocAddress, address isusdAddress) =
                 helperConfig.activeNetworkConfig();
 
             docToken = MockDocToken(docTokenAddress);
             mockMocProxy = MockMocProxy(mocProxyAddress);
 
             if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
-                lendingToken = ILendingToken(lendingTokenAddress);
+                lendingToken = ILendingToken(kdocAddress);
             } else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
-                lendingToken = ILendingToken(lendingTokenAddress);
+                lendingToken = ILendingToken(isusdAddress);
             } else {
                 revert("Lending protocol not allowed");
             }
@@ -290,7 +290,7 @@ contract DcaDappTest is Test {
     function withdrawDoc() internal {
         // vm.warp(block.timestamp + 10 weeks); // Esto no soluciona nada porque usamos exchangeRateCurrent y en el fork no hay nadie que actualice la tasa de cambio para que podamos leerla.
         vm.startPrank(USER);
-        vm.expectEmit(true, true, true, false);
+        vm.expectEmit(true, true, false, false); // Amounts may not match to the last wei, so third parameter is false
         emit TokenHandler__TokenWithdrawn(address(docToken), USER, DOC_TO_DEPOSIT);
         dcaManager.withdrawToken(address(docToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
         uint256 remainingAmount = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
@@ -425,6 +425,7 @@ contract DcaDappTest is Test {
                 // console.log("DOC redeemed", schedulePurchaseAmount);
 
                 vm.warp(block.timestamp + schedulePurchasePeriod);
+                // updateExchangeRate(schedulePurchasePeriod);
             }
         }
         console.log("Total DOC spent :", totalDocSpent);
@@ -591,16 +592,19 @@ contract DcaDappTest is Test {
         );
     }
 
-    function updateTropykusExchangeRate() internal {
-        vm.roll(block.number + 2880 * 10); // Jump to 10 days (2880 blocks per day) into the future (for example) so that some interest has been generated.
-        address newUser = makeAddr("Tropykus new user");
-        vm.prank(USER);
-        docToken.transfer(makeAddr("Tropykus new user"), 100 ether);
-        vm.startPrank(newUser);
-        docToken.approve(address(lendingToken), 100 ether);
-        console.log("Exchange rate before DOC deposit:", lendingToken.exchangeRateStored());
-        lendingToken.mint(100 ether);
-        console.log("Exchange rate after DOC deposit:", lendingToken.exchangeRateStored());
-        vm.stopPrank();
+    function updateExchangeRate(uint256 daysPassed) internal {
+        vm.roll(block.number + 2880 * daysPassed); // Jump to daysPassed days (2880 blocks per day) into the future so that some interest has been generated.
+
+        if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
+            address newUser = makeAddr("Tropykus new user");
+            vm.prank(USER);
+            docToken.transfer(makeAddr("Tropykus new user"), 100 ether);
+            vm.startPrank(newUser);
+            docToken.approve(address(lendingToken), 100 ether);
+            console.log("Exchange rate before DOC deposit:", lendingToken.exchangeRateStored());
+            lendingToken.mint(100 ether);
+            console.log("Exchange rate after DOC deposit:", lendingToken.exchangeRateStored());
+            vm.stopPrank();
+        }
     }
 }

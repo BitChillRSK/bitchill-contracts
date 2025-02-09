@@ -97,12 +97,12 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
         uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
-        // _redeemDoc(user, docInterestAmount);
-        s_kDocBalances[user] -= kDocToRepay;
-        uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
-        if (result == 0) emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
-        else revert TropykusDocLending__RedeemUnderlyingFailed(result);
+        // uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
+        _redeemDoc(user, docInterestAmount, exchangeRate);
+        // s_kDocBalances[user] -= kDocToRepay;
+        // uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
+        // if (result == 0) emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
+        // else revert TropykusDocLending__RedeemUnderlyingFailed(result);
         i_stableToken.safeTransfer(user, docInterestAmount);
 
         // bool transferSuccess = i_stableToken.safeTransfer(user, docInterestAmount);
@@ -123,9 +123,11 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    function _redeemDoc(address user, uint256 docToRedeem) internal virtual returns (uint256) {
+        return _redeemDoc(user, docToRedeem, i_kDocToken.exchangeRateCurrent());
+    }
 
-    function _redeemDoc(address user, uint256 docToRedeem) internal virtual {
-        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
+    function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
@@ -135,6 +137,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
         if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
+        return docToRedeem;
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)

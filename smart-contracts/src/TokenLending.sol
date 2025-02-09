@@ -47,5 +47,6 @@ abstract contract TokenLending is ITokenLending {
         // docAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
         // Using OpenZeppelin's Math library for precise division rounding up
         docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
+        // docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals);
     }
 }
