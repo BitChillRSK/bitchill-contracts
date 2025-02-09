@@ -57,9 +57,18 @@ contract DeployMocSwaps is Script {
     }
 
     function getEnvironment() internal view returns (Environment) {
+        // First check if this is a real deployment
+        bool isRealDeployment = vm.envOr("REAL_DEPLOYMENT", false);
+
+        if (isRealDeployment) {
+            if (block.chainid == 31) return Environment.TESTNET;
+            if (block.chainid == 30) return Environment.MAINNET;
+            revert("Unsupported chain for deployment");
+        }
+
+        // If not a real deployment, handle test environments
         if (block.chainid == 31337) return Environment.LOCAL;
         if (isFork()) return Environment.FORK;
-        if (block.chainid == 31) return Environment.TESTNET;
         revert("Unsupported chain");
     }
 
@@ -108,10 +117,13 @@ contract DeployMocSwaps is Script {
         Environment environment = getEnvironment();
         Protocol protocol = getProtocol();
 
+        console.log("Environment:", uint256(environment)); // 0=LOCAL, 1=FORK, 2=TESTNET, 3=MAINNET
+        console.log("Protocol:", uint256(protocol)); // 0=TROPYKUS, 1=SOVRYN
+        console.log("Chain ID:", block.chainid);
+
         MocHelperConfig helperConfig = new MocHelperConfig();
         (address docToken, address mocProxy, address kDocToken, address iSusdToken) = helperConfig.activeNetworkConfig();
 
-        console.log("Protocol:", uint256(protocol)); // 0 for TROPYKUS, 1 for SOVRYN
         console.log("iSusdToken address:", iSusdToken);
         console.log("kDocToken address:", kDocToken);
 
@@ -119,38 +131,47 @@ contract DeployMocSwaps is Script {
 
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-
         address feeCollector = getFeeCollector(environment);
+        address docHandlerMocAddress;
 
-        // Use appropriate lending token based on protocol
-        address lendingToken = protocol == Protocol.TROPYKUS ? kDocToken : iSusdToken;
-        console.log("Selected lendingToken address:", lendingToken);
-        address docHandlerMocAddress =
-            deployDocHandler(protocol, address(dcaManager), docToken, lendingToken, mocProxy, feeCollector);
+        // For local or fork environments, deploy only the selected protocol's handler
+        if (environment == Environment.LOCAL || environment == Environment.FORK) {
+            console.log("Deploying single handler for local/fork environment");
+            address lendingToken = protocol == Protocol.TROPYKUS ? kDocToken : iSusdToken;
+            docHandlerMocAddress =
+                deployDocHandler(protocol, address(dcaManager), docToken, lendingToken, mocProxy, feeCollector);
 
-        // Handle ownership and roles based on environment
-        if (environment != Environment.MAINNET) {
             address owner = adminAddresses[environment];
             adminOperations.transferOwnership(owner);
             dcaManager.transferOwnership(owner);
             Ownable(docHandlerMocAddress).transferOwnership(owner);
         }
+        // For live networks (testnet/mainnet), deploy both handlers
+        else if (environment == Environment.TESTNET || environment == Environment.MAINNET) {
+            console.log("Deploying both handlers for live network");
 
-        // Handle testnet-specific setup
-        if (environment == Environment.TESTNET) {
+            // First register the lending protocols
+            adminOperations.setAdminRole(tx.origin);
+            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
+            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
+
             address tropykusHandler =
                 deployDocHandler(Protocol.TROPYKUS, address(dcaManager), docToken, kDocToken, mocProxy, feeCollector);
+            console.log("Tropykus handler deployed at:", tropykusHandler);
+
             address sovrynHandler =
                 deployDocHandler(Protocol.SOVRYN, address(dcaManager), docToken, iSusdToken, mocProxy, feeCollector);
+            console.log("Sovryn handler deployed at:", sovrynHandler);
 
-            adminOperations.setAdminRole(tx.origin);
+            // Now assign the handlers
             adminOperations.assignOrUpdateTokenHandler(docToken, TROPYKUS_INDEX, tropykusHandler);
             adminOperations.assignOrUpdateTokenHandler(docToken, SOVRYN_INDEX, sovrynHandler);
-            adminOperations.setAdminRole(adminAddresses[Environment.TESTNET]);
-        }
 
-        if (environment == Environment.MAINNET) {
-            // See what to do in this case!
+            if (environment == Environment.TESTNET) {
+                adminOperations.setAdminRole(adminAddresses[Environment.TESTNET]);
+            }
+            // Return the handler address matching the protocol parameter for consistency
+            docHandlerMocAddress = protocol == Protocol.TROPYKUS ? tropykusHandler : sovrynHandler;
         }
 
         vm.stopBroadcast();
