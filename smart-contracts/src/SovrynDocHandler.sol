@@ -9,7 +9,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TokenLending} from "src/TokenLending.sol";
-import {console} from "forge-std/console.sol";
 /**
  * @title SovrynDocHandler
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
@@ -88,8 +87,6 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
             revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInSovryn);
         }
         withdrawalAmount = _redeemDoc(user, withdrawalAmount);
-        console.log("DOC balance of this contract", i_stableToken.balanceOf(address(this)));
-        console.log("Withdrawal amount", withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
     }
 
@@ -142,15 +139,11 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _docToLendingToken(docToRedeem, exchangeRate);
-        console.log("usersIsusdBalance", usersIsusdBalance);
-        console.log("iSusdToRepay", iSusdToRepay);
         if (iSusdToRepay > usersIsusdBalance) {
             revert TokenLending__LendingTokenToRepayExceedsUsersBalance(user, iSusdToRepay, usersIsusdBalance);
         }
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(docRecipient, iSusdToRepay);
-        console.log("docToRedeem", docToRedeem);
-        console.log("docRedeemed", docRedeemed);
         // if (docRedeemed < docToRedeem) revert SovrynDocLending__RedeemUnderlyingFailed();
         // @notice If a withdrawal is done right after the funds have been deposited, 1 wei less is obtained, so this check made the tx revert
         // From now on, we'll trust that Sovryn returns the correct amount of DOC
