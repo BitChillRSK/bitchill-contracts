@@ -48,8 +48,8 @@ contract DeployMocSwaps is Script {
         // Fee collector addresses
         feeCollectorAddresses[Environment.LOCAL] = makeAddr(FEE_COLLECTOR_STRING);
         feeCollectorAddresses[Environment.FORK] = makeAddr(FEE_COLLECTOR_STRING);
-        feeCollectorAddresses[Environment.TESTNET] = 0x6804b6C71C055695A6e7Ddf454e12e897885e6f4; // Replace with actual testnet address
-        feeCollectorAddresses[Environment.MAINNET] = 0x6804b6C71C055695A6e7Ddf454e12e897885e6f4; // Replace with actual mainnet address
+        feeCollectorAddresses[Environment.TESTNET] = 0x226E865Ab298e542c5e5098694eFaFfe111F93D3; // 0x6804b6C71C055695A6e7Ddf454e12e897885e6f4
+        feeCollectorAddresses[Environment.MAINNET] = 0x226E865Ab298e542c5e5098694eFaFfe111F93D3; // Replace with actual mainnet address
     }
 
     function getFeeCollector(Environment environment) internal view returns (address) {
