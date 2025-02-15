@@ -97,6 +97,9 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_iSusdToken.tokenPrice();
         uint256 totalDocInLending = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
+        if (totalDocInLending <= docLockedInDcaSchedules) {
+            return; // No interest to withdraw
+        }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         // uint256 iSusdToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
         _redeemDoc(user, docInterestAmount, exchangeRate, user);

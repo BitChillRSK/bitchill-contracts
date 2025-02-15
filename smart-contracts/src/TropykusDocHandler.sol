@@ -96,6 +96,9 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
         uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
+        if (totalDocInLending <= docLockedInDcaSchedules) {
+            return; // No interest to withdraw
+        }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         // uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
         _redeemDoc(user, docInterestAmount, exchangeRate);
