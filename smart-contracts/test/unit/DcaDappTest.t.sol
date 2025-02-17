@@ -114,6 +114,11 @@ contract DcaDappTest is Test {
     //MockMocProxy
     event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
 
+    //TokenLending
+    event TokenLending__WithdrawalAmountAdjusted(
+        address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
+    );
+
     //////////////////////
     // Errors ////////////
     //////////////////////

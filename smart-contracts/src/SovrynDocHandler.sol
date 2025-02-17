@@ -81,11 +81,12 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         onlyDcaManager
     {
         uint256 docInSovryn = _lendingTokenToDoc(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
-        // @notice: Edge case where the calculated DOC amount is 1 wei less than expected due to rounding errors in Sovryn
-        if (docInSovryn == withdrawalAmount - 1) withdrawalAmount--;
+
         if (docInSovryn < withdrawalAmount) {
-            revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInSovryn);
+            emit TokenLending__WithdrawalAmountAdjusted(user, withdrawalAmount, docInSovryn);
+            withdrawalAmount = docInSovryn;
         }
+
         withdrawalAmount = _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);
     }

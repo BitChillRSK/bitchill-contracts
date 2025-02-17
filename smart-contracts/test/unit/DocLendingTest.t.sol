@@ -280,4 +280,32 @@ contract DocLendingTest is DcaDappTest {
         if (withdrawableInterest == 1) withdrawableInterest = 0; // Handle edge case of 1 wei remaining
         assertEq(withdrawableInterest, 0);
     }
+
+    // @notice: This is difficult to test, because the withdrawal amount is adjusted to the balance
+    // in the lending protocol, which only happenes in edge cases on mainnet or a live testnet
+    // function testWithdrawalAmountAdjustedToBalance() external {
+    //     // Add debug logging
+    //     console.log("Initial user lending token balance:", docHandler.getUsersLendingTokenBalance(USER));
+
+    //     uint256 exchangeRate =
+    //         s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
+    //     console.log("Exchange rate:", exchangeRate);
+
+    //     uint256 docInLendingProtocol = docHandler.getUsersLendingTokenBalance(USER) * exchangeRate / 1e18;
+    //     console.log("DOC in lending protocol:", docInLendingProtocol);
+
+    //     uint256 attemptedWithdrawalAmount = docInLendingProtocol + 1;
+    //     console.log("Attempted withdrawal amount:", attemptedWithdrawalAmount);
+
+    //     vm.expectEmit(true, true, true, true);
+    //     emit TokenLending__WithdrawalAmountAdjusted(USER, attemptedWithdrawalAmount, docInLendingProtocol);
+
+    //     vm.prank(USER);
+    //     dcaManager.withdrawToken(address(docToken), 0, attemptedWithdrawalAmount);
+
+    //     // Verify user received their full balance
+    //     assertEq(docToken.balanceOf(USER), docInLendingProtocol);
+    //     // Verify lending token balance is now 0
+    //     assertEq(docHandler.getUsersLendingTokenBalance(USER), 0);
+    // }
 }

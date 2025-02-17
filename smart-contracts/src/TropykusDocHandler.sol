@@ -83,7 +83,8 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     {
         uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateCurrent());
         if (docInTropykus < withdrawalAmount) {
-            revert TokenLending__WithdrawalAmountExceedsLendingTokenBalance(user, withdrawalAmount, docInTropykus);
+            emit TokenLending__WithdrawalAmountAdjusted(user, withdrawalAmount, docInTropykus);
+            withdrawalAmount = docInTropykus;
         }
         _redeemDoc(user, withdrawalAmount);
         super.withdrawToken(user, withdrawalAmount);

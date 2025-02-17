@@ -1,0 +1,215 @@
+No files changed, compilation skipped
+
+Ran 1 test for test/unit/DocLendingTest.t.sol:DocLendingTest
+[FAIL: log != expected log] testWithdrawalAmountAdjustedToBalance() (gas: 51961)
+Logs:
+  iSusdToken address: 0x0000000000000000000000000000000000000000
+  kDocToken address: 0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496
+  Deploying single handler for local/fork environment
+
+Traces:
+  [63267888] DocLendingTest::setUp()
+    ├─ [36355567] → new DeployMocSwaps@0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+    │   ├─ [0] VM::addr(<pk>) [staticcall]
+    │   │   └─ ← [Return] owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266]
+    │   ├─ [0] VM::label(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266], "owner")
+    │   │   └─ ← [Return]
+    │   ├─ [0] VM::addr(<pk>) [staticcall]
+    │   │   └─ ← [Return] owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266]
+    │   ├─ [0] VM::label(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266], "owner")
+    │   │   └─ ← [Return]
+    │   ├─ [0] VM::addr(<pk>) [staticcall]
+    │   │   └─ ← [Return] feeCollector: [0x0ae039EbCFe635f3Ede0F574ea8a6A9aaC3254e7]
+    │   ├─ [0] VM::label(feeCollector: [0x0ae039EbCFe635f3Ede0F574ea8a6A9aaC3254e7], "feeCollector")
+    │   │   └─ ← [Return]
+    │   ├─ [0] VM::addr(<pk>) [staticcall]
+    │   │   └─ ← [Return] feeCollector: [0x0ae039EbCFe635f3Ede0F574ea8a6A9aaC3254e7]
+    │   ├─ [0] VM::label(feeCollector: [0x0ae039EbCFe635f3Ede0F574ea8a6A9aaC3254e7], "feeCollector")
+    │   │   └─ ← [Return]
+    │   └─ ← [Return] 180235 bytes of code
+    ├─ [25492789] DeployMocSwaps::run()
+    │   ├─ [0] VM::envOr("REAL_DEPLOYMENT", false) [staticcall]
+    │   │   └─ ← [Return] <env var value>
+    │   ├─ [0] VM::envString("LENDING_PROTOCOL") [staticcall]
+    │   │   └─ ← [Return] <env var value>
+    │   ├─ [0] console::9710a9d0(00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000c456e7669726f6e6d656e743a0000000000000000000000000000000000000000) [staticcall]
+    │   │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    │   ├─ [0] console::9710a9d0(00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000950726f746f636f6c3a0000000000000000000000000000000000000000000000) [staticcall]
+    │   │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    │   ├─ [0] console::9710a9d0(00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000007a690000000000000000000000000000000000000000000000000000000000000009436861696e2049443a0000000000000000000000000000000000000000000000) [staticcall]
+    │   │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    │   ├─ [15815307] → new MocHelperConfig@0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    │   │   ├─ [0] VM::envString("LENDING_PROTOCOL") [staticcall]
+    │   │   │   └─ ← [Return] <env var value>
+    │   │   ├─ [0] VM::startBroadcast()
+    │   │   │   └─ ← [Return]
+    │   │   ├─ [2284652] → new MockDocToken@0x34A1D3fff3958843C43aD80F30b94c510645C316
+    │   │   │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38])
+    │   │   │   └─ ← [Return] 11050 bytes of code
+    │   │   ├─ [320460] → new MockMocProxy@0x90193C961A926261B756D1E5bb255e67ff9498A1
+    │   │   │   └─ ← [Return] 1488 bytes of code
+    │   │   ├─ [2744114] → new MockKdocToken@0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496
+    │   │   │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38])
+    │   │   │   └─ ← [Return] 13344 bytes of code
+    │   │   ├─ [0] VM::stopBroadcast()
+    │   │   │   └─ ← [Return]
+    │   │   ├─ emit HelperConfig__CreatedMockDocToken(docTokenAddress: MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316])
+    │   │   ├─ emit HelperConfig__CreatedMockMocProxy(mocProxyAddress: MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1])
+    │   │   ├─ emit HelperConfig__CreatedMockLendingToken(lendingTokenAddress: MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496])
+    │   │   └─ ← [Return] 51030 bytes of code
+    │   ├─ [1441] MocHelperConfig::activeNetworkConfig() [staticcall]
+    │   │   └─ ← [Return] MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], 0x0000000000000000000000000000000000000000
+    │   ├─ [0] console::log("iSusdToken address:", 0x0000000000000000000000000000000000000000) [staticcall]
+    │   │   └─ ← [Stop]
+    │   ├─ [0] console::log("kDocToken address:", MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496]) [staticcall]
+    │   │   └─ ← [Stop]
+    │   ├─ [0] VM::startBroadcast()
+    │   │   └─ ← [Return]
+    │   ├─ [1717538] → new AdminOperations@0xBb2180ebd78ce97360503434eD37fcf4a1Df61c3
+    │   │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38])
+    │   │   └─ ← [Return] 8459 bytes of code
+    │   ├─ [4158339] → new DcaManager@0xDB8cFf278adCCF9E9b5da745B44E754fC4EE3C76
+    │   │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38])
+    │   │   └─ ← [Return] 20315 bytes of code
+    │   ├─ [0] console::log("Deploying single handler for local/fork environment") [staticcall]
+    │   │   └─ ← [Stop]
+    │   ├─ [3598553] → new TropykusDocHandlerMoc@0x50EEf481cae4250d252Ae577A09bF514f224C6C4
+    │   │   ├─ emit OwnershipTransferred(previousOwner: 0x0000000000000000000000000000000000000000, newOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38])
+    │   │   └─ ← [Return] 17169 bytes of code
+    │   ├─ [2854] AdminOperations::transferOwnership(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   ├─ emit OwnershipTransferred(previousOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38], newOwner: owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   └─ ← [Stop]
+    │   ├─ [2788] DcaManager::transferOwnership(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   ├─ emit OwnershipTransferred(previousOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38], newOwner: owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   └─ ← [Stop]
+    │   ├─ [2832] TropykusDocHandlerMoc::transferOwnership(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   ├─ emit OwnershipTransferred(previousOwner: DefaultSender: [0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38], newOwner: owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   │   └─ ← [Stop]
+    │   ├─ [0] VM::stopBroadcast()
+    │   │   └─ ← [Return]
+    │   └─ ← [Return] AdminOperations: [0xBb2180ebd78ce97360503434eD37fcf4a1Df61c3], TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], DcaManager: [0xDB8cFf278adCCF9E9b5da745B44E754fC4EE3C76], MocHelperConfig: [0x104fBc016F4bb334D775a19E8A6510109AC63E00]
+    ├─ [1441] MocHelperConfig::activeNetworkConfig() [staticcall]
+    │   └─ ← [Return] MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], 0x0000000000000000000000000000000000000000
+    ├─ [0] VM::deal(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], 10000000000000000000 [1e19])
+    │   └─ ← [Return]
+    ├─ [25279] MockDocToken::approve(MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], 2000000000000000000000 [2e21])
+    │   ├─ emit Approval(owner: DocLendingTest: [0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496], spender: MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], value: 2000000000000000000000 [2e21])
+    │   └─ ← [Return] true
+    ├─ [0] VM::deal(MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], 1000000000000000000000 [1e21])
+    │   └─ ← [Return]
+    ├─ [0] VM::prank(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    │   └─ ← [Return]
+    ├─ [25279] MockDocToken::approve(MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], 115792089237316195423570985008687907853269984665640564039457584007913129639935 [1.157e77])
+    │   ├─ emit Approval(owner: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], spender: MockMocProxy: [0x90193C961A926261B756D1E5bb255e67ff9498A1], value: 115792089237316195423570985008687907853269984665640564039457584007913129639935 [1.157e77])
+    │   └─ ← [Return] true
+    ├─ [47339] MockDocToken::mint(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], 20000000000000000000000 [2e22])
+    │   ├─ emit Transfer(from: 0x0000000000000000000000000000000000000000, to: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], value: 20000000000000000000000 [2e22])
+    │   └─ ← [Stop]
+    ├─ [241820] → new FeeCalculator@0x2e234DAe75C793f67A35089C9d99245E1C58470b
+    │   └─ ← [Return] 766 bytes of code
+    ├─ [0] VM::prank(owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   └─ ← [Return]
+    ├─ [25471] AdminOperations::setAdminRole(ADMIN: [0x183530D9DBB051e4894686C261F39f3aA82aBD83])
+    │   ├─ emit RoleGranted(role: 0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42, account: ADMIN: [0x183530D9DBB051e4894686C261F39f3aA82aBD83], sender: owner: [0x7c8999dC9a822c1f0Df42023113EDB4FDd543266])
+    │   └─ ← [Stop]
+    ├─ [0] VM::startPrank(ADMIN: [0x183530D9DBB051e4894686C261F39f3aA82aBD83])
+    │   └─ ← [Return]
+    ├─ [25727] AdminOperations::setSwapperRole(SWAPPER: [0xDFBA30Da15E5cB9C5d5Bd55e85a2BDE7F3A93029])
+    │   ├─ emit RoleGranted(role: 0xd2761b102bda9831f4af400cc824b8cecb9cc5c1c85c51acb1479db9735fbfc6, account: SWAPPER: [0xDFBA30Da15E5cB9C5d5Bd55e85a2BDE7F3A93029], sender: ADMIN: [0x183530D9DBB051e4894686C261F39f3aA82aBD83])
+    │   └─ ← [Stop]
+    ├─ [49031] AdminOperations::addOrUpdateLendingProtocol("tropykus", 1)
+    │   ├─ emit AdminOperations__LendingProtocolAdded(index: 1, name: 0x6a6f551c19cb7bd689a692a6a8b209cace6dafcdc9dbb27318115e13dd73ab82)
+    │   └─ ← [Stop]
+    ├─ [49031] AdminOperations::addOrUpdateLendingProtocol("sovryn", 2)
+    │   ├─ emit AdminOperations__LendingProtocolAdded(index: 2, name: 0xe2f296e09853748d9d356e2a93ca293867de7c43a6ddcd8a2e71e57901d98255)
+    │   └─ ← [Stop]
+    ├─ [0] VM::stopPrank()
+    │   └─ ← [Return]
+    ├─ [0] VM::expectEmit(true, true, true, false)
+    │   └─ ← [Return]
+    ├─ emit AdminOperations__TokenHandlerUpdated(token: MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], lendingProtocolIndex: 1, newHandler: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    ├─ [0] VM::prank(ADMIN: [0x183530D9DBB051e4894686C261F39f3aA82aBD83])
+    │   └─ ← [Return]
+    ├─ [28198] AdminOperations::assignOrUpdateTokenHandler(MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], 1, TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    │   ├─ [702] TropykusDocHandlerMoc::supportsInterface(0x0bdebe94) [staticcall]
+    │   │   └─ ← [Return] true
+    │   ├─ emit AdminOperations__TokenHandlerUpdated(token: MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], lendingProtocolIndex: 1, newHandler: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    │   └─ ← [Stop]
+    ├─ [0] VM::startPrank(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D])
+    │   └─ ← [Return]
+    ├─ [25279] MockDocToken::approve(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], 2000000000000000000000 [2e21])
+    │   ├─ emit Approval(owner: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], spender: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], value: 2000000000000000000000 [2e21])
+    │   └─ ← [Return] true
+    ├─ [455461] DcaManager::createDcaSchedule(MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], 2000000000000000000000 [2e21], 200000000000000000000 [2e20], 86400 [8.64e4], 1)
+    │   ├─ [1771] AdminOperations::getTokenHandler(MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], 1) [staticcall]
+    │   │   └─ ← [Return] TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4]
+    │   ├─ [172853] TropykusDocHandlerMoc::depositToken(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], 2000000000000000000000 [2e21])
+    │   │   ├─ [1263] MockDocToken::allowance(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4]) [staticcall]
+    │   │   │   └─ ← [Return] 2000000000000000000000 [2e21]
+    │   │   ├─ [28779] MockDocToken::transferFrom(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], 2000000000000000000000 [2e21])
+    │   │   │   ├─ emit Approval(owner: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], spender: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], value: 0)
+    │   │   │   ├─ emit Transfer(from: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], to: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], value: 2000000000000000000000 [2e21])
+    │   │   │   └─ ← [Return] true
+    │   │   ├─ emit TokenHandler__TokenDeposited(token: MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], user: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], amount: 2000000000000000000000 [2e21])
+    │   │   ├─ [3263] MockDocToken::allowance(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496]) [staticcall]
+    │   │   │   └─ ← [Return] 0
+    │   │   ├─ [23179] MockDocToken::approve(MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], 2000000000000000000000 [2e21])
+    │   │   │   ├─ emit Approval(owner: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], spender: MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], value: 2000000000000000000000 [2e21])
+    │   │   │   └─ ← [Return] true
+    │   │   ├─ [2952] MockKdocToken::balanceOf(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    │   │   │   └─ ← [Return] 0
+    │   │   ├─ [80274] MockKdocToken::mint(2000000000000000000000 [2e21])
+    │   │   │   ├─ [1263] MockDocToken::allowance(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496]) [staticcall]
+    │   │   │   │   └─ ← [Return] 2000000000000000000000 [2e21]
+    │   │   │   ├─ [28779] MockDocToken::transferFrom(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], 2000000000000000000000 [2e21])
+    │   │   │   │   ├─ emit Approval(owner: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], spender: MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], value: 0)
+    │   │   │   │   ├─ emit Transfer(from: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], to: MockKdocToken: [0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496], value: 2000000000000000000000 [2e21])
+    │   │   │   │   └─ ← [Return] true
+    │   │   │   ├─ emit Transfer(from: 0x0000000000000000000000000000000000000000, to: TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4], value: 100000000000000000000000 [1e23])
+    │   │   │   └─ ← [Return] 0
+    │   │   ├─ [952] MockKdocToken::balanceOf(TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4])
+    │   │   │   └─ ← [Return] 100000000000000000000000 [1e23]
+    │   │   └─ ← [Stop]
+    │   ├─ [1771] AdminOperations::getTokenHandler(MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], 1) [staticcall]
+    │   │   └─ ← [Return] TropykusDocHandlerMoc: [0x50EEf481cae4250d252Ae577A09bF514f224C6C4]
+    │   ├─ [549] TropykusDocHandlerMoc::getMinPurchaseAmount()
+    │   │   └─ ← [Return] 25000000000000000000 [2.5e19]
+    │   ├─ emit DcaManager__DcaScheduleCreated(user: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], token: MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], scheduleId: 0x1c250ee49ccdf9093a1c1a64c03adb16ea8b7d0d673852d2b37f48aa91b0442c, depositAmount: 2000000000000000000000 [2e21], purchaseAmount: 200000000000000000000 [2e20], purchasePeriod: 86400 [8.64e4])
+    │   └─ ← [Stop]
+    ├─ [0] VM::stopPrank()
+    │   └─ ← [Return]
+    └─ ← [Stop]
+
+  [51961] DocLendingTest::testWithdrawalAmountAdjustedToBalance()
+    ├─ [2932] TropykusDocHandlerMoc::getUsersLendingTokenBalance(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D]) [staticcall]
+    │   └─ ← [Return] 100000000000000000000000 [1e23]
+    ├─ [0] console::9710a9d0(000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000152d02c7e14af68000000000000000000000000000000000000000000000000000000000000000000023496e697469616c2075736572206c656e64696e6720746f6b656e2062616c616e63653a0000000000000000000000000000000000000000000000000000000000) [staticcall]
+    │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    ├─ [3031] MockKdocToken::exchangeRateCurrent()
+    │   └─ ← [Return] 20000000000000000 [2e16]
+    ├─ [0] console::9710a9d0(000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000470de4df820000000000000000000000000000000000000000000000000000000000000000000e45786368616e676520726174653a000000000000000000000000000000000000) [staticcall]
+    │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    ├─ [932] TropykusDocHandlerMoc::getUsersLendingTokenBalance(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D]) [staticcall]
+    │   └─ ← [Return] 100000000000000000000000 [1e23]
+    ├─ [0] console::9710a9d0(000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000006c6b935b8bbd4000000000000000000000000000000000000000000000000000000000000000000018444f4320696e206c656e64696e672070726f746f636f6c3a0000000000000000) [staticcall]
+    │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    ├─ [0] console::9710a9d0(000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000006c7974123f64a40000000000000000000000000000000000000000000000000000000000000000001c417474656d70746564207769746864726177616c20616d6f756e743a00000000) [staticcall]
+    │   └─ ← [Revert] revert: unknown selector `0x9710a9d0` for ConsoleCalls
+    ├─ [0] VM::expectEmit(true, true, true, true)
+    │   └─ ← [Return]
+    ├─ emit TokenLending__WithdrawalAmountAdjusted(user: user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D], originalAmount: 2001000000000000000000 [2.001e21], adjustedAmount: 2000000000000000000000 [2e21])
+    ├─ [0] VM::prank(user: [0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D])
+    │   └─ ← [Return]
+    ├─ [8286] DcaManager::withdrawToken(MockDocToken: [0x34A1D3fff3958843C43aD80F30b94c510645C316], 2001000000000000000000 [2.001e21], 1)
+    │   └─ ← [Revert] panic: array out-of-bounds access (0x32)
+    └─ ← [Revert] log != expected log
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 7.31ms (162.50µs CPU time)
+
+Ran 1 test suite in 898.79ms (7.31ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/unit/DocLendingTest.t.sol:DocLendingTest
+[FAIL: log != expected log] testWithdrawalAmountAdjustedToBalance() (gas: 51961)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
