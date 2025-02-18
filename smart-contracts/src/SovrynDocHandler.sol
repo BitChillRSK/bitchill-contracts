@@ -80,14 +80,15 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         override(TokenHandler, ITokenHandler)
         onlyDcaManager
     {
-        uint256 docInSovryn = _lendingTokenToDoc(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
+        uint256 exchangeRate = i_iSusdToken.tokenPrice();
+        uint256 docInSovryn = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
 
         if (docInSovryn < withdrawalAmount) {
             emit TokenLending__WithdrawalAmountAdjusted(user, withdrawalAmount, docInSovryn);
             withdrawalAmount = docInSovryn;
         }
 
-        withdrawalAmount = _redeemDoc(user, withdrawalAmount);
+        withdrawalAmount = _redeemDoc(user, withdrawalAmount, exchangeRate);
         super.withdrawToken(user, withdrawalAmount);
     }
 
@@ -132,9 +133,9 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         return _redeemDoc(user, docToRedeem, i_iSusdToken.tokenPrice(), address(this));
     }
 
-    // function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
-    //     return _redeemDoc(user, docToRedeem, exchangeRate, address(this));
-    // }
+    function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
+        return _redeemDoc(user, docToRedeem, exchangeRate, address(this));
+    }
 
     function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate, address docRecipient)
         internal
@@ -144,7 +145,8 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         uint256 usersIsusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (iSusdToRepay > usersIsusdBalance) {
-            revert TokenLending__LendingTokenToRepayExceedsUsersBalance(user, iSusdToRepay, usersIsusdBalance);
+            emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
+            iSusdToRepay = usersIsusdBalance;
         }
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(docRecipient, iSusdToRepay);

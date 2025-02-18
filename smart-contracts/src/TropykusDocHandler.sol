@@ -81,12 +81,13 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         override(TokenHandler, ITokenHandler)
         onlyDcaManager
     {
-        uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], i_kDocToken.exchangeRateCurrent());
+        uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
+        uint256 docInTropykus = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
         if (docInTropykus < withdrawalAmount) {
             emit TokenLending__WithdrawalAmountAdjusted(user, withdrawalAmount, docInTropykus);
             withdrawalAmount = docInTropykus;
         }
-        _redeemDoc(user, withdrawalAmount);
+        _redeemDoc(user, withdrawalAmount, exchangeRate);
         super.withdrawToken(user, withdrawalAmount);
     }
 
@@ -135,7 +136,8 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
-            revert TokenLending__LendingTokenToRepayExceedsUsersBalance(user, kDocToRepay, usersKdocBalance);
+            emit TokenLending__AmountToRepayAdjusted(user, kDocToRepay, usersKdocBalance);
+            kDocToRepay = usersKdocBalance;
         }
         s_kDocBalances[user] -= kDocToRepay;
         uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
