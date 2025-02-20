@@ -138,6 +138,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         if (kDocToRepay > usersKdocBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, kDocToRepay, usersKdocBalance);
             kDocToRepay = usersKdocBalance;
+            docToRedeem = _lendingTokenToDoc(kDocToRepay, exchangeRate);
         }
         s_kDocBalances[user] -= kDocToRepay;
         uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
