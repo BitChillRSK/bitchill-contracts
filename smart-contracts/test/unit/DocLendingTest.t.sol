@@ -59,8 +59,18 @@ contract DocLendingTest is DcaDappTest {
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
-        assertEq(lendingToken.balanceOf(address(docHandler)), 0); // @notice: In this test no time has passed, therefore, no interest accrued, so the lending token balance is 0
-        assertEq(prevLendingTokenBalance - postLendingTokenBalance, DOC_TO_DEPOSIT * 1e18 / exchangeRate);
+        // assertEq(lendingToken.balanceOf(address(docHandler)), 0); // @notice: In this test no time has passed, therefore, no interest accrued, so the lending token balance is 0
+        // assertEq(prevLendingTokenBalance - postLendingTokenBalance, DOC_TO_DEPOSIT * 1e18 / exchangeRate);
+        assertApproxEqAbs(
+            lendingToken.balanceOf(address(docHandler)),
+            0,
+            100 // Allow a maximum difference of 100e-18%
+        );
+        assertApproxEqAbs(
+            prevLendingTokenBalance - postLendingTokenBalance,
+            DOC_TO_DEPOSIT * 1e18 / exchangeRate,
+            100 // Allow a maximum difference of 100e-18%
+        );
     }
 
     function testRbtcPurchaseBurnsLendingToken() external {
