@@ -103,12 +103,17 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
         // uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
-        _redeemDoc(user, docInterestAmount, exchangeRate);
+
+        // _redeemDoc(user, docInterestAmount, exchangeRate);
+        uint256 docRedeemed = _burnKdoc(user, docInterestAmount, exchangeRate);
+
         // s_kDocBalances[user] -= kDocToRepay;
         // uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
         // if (result == 0) emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
         // else revert TropykusDocLending__RedeemUnderlyingFailed(result);
-        i_stableToken.safeTransfer(user, docInterestAmount);
+
+        // i_stableToken.safeTransfer(user, docInterestAmount);
+        i_stableToken.safeTransfer(user, docRedeemed);
 
         // bool transferSuccess = i_stableToken.safeTransfer(user, docInterestAmount);
         // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);
@@ -145,6 +150,29 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
         return docToRedeem;
+    }
+
+    function _burnKdoc(address user, uint256 docToRedeem, uint256 exchangeRate)
+        internal
+        returns (uint256 docRedeemed)
+    {
+        uint256 usersKdocBalance = s_kDocBalances[user];
+        uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
+        if (kDocToRepay > usersKdocBalance) {
+            emit TokenLending__AmountToRepayAdjusted(user, kDocToRepay, usersKdocBalance);
+            kDocToRepay = usersKdocBalance;
+            docToRedeem = _lendingTokenToDoc(kDocToRepay, exchangeRate);
+        }
+        s_kDocBalances[user] -= kDocToRepay;
+        uint256 docBalanceBefore = i_stableToken.balanceOf(address(this));
+        uint256 result = i_kDocToken.redeem(kDocToRepay);
+        if (result == 0) {
+            uint256 docBalanceAfter = i_stableToken.balanceOf(address(this));
+            docRedeemed = docBalanceAfter - docBalanceBefore;
+            emit TokenLending__SuccessfulDocRedemption(user, docRedeemed, kDocToRepay);
+        } else {
+            revert TropykusDocLending__RedeemUnderlyingFailed(result);
+        }
     }
 
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)

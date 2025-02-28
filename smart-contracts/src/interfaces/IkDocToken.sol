@@ -21,6 +21,14 @@ interface IkDocToken {
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 
     /**
+     * @notice Sender redeems cTokens in exchange for the underlying asset
+     * @dev Accrues interest whether or not the operation succeeds, unless reverted
+     * @param redeemTokens The number of cTokens to redeem into underlying
+     * @return uint 0=success, otherwise a failure (see ErrorReporter.sol for details)
+     */
+    function redeem(uint256 redeemTokens) external returns (uint256);
+
+    /**
      * @dev This function is used to retrieve the amount of DOC corresponding to a user that holds kDOC
      * @param owner the user that owns the DOC deposited into Tropykus
      */
