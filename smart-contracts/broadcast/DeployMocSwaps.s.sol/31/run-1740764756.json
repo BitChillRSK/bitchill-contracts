@@ -290,39 +290,6 @@
     },
     {
       "status": "0x1",
-      "cumulativeGasUsed": "0x3bf32c",
-      "logs": [
-        {
-          "address": "0x36f1cea239c4a72d8f3f3e64c13dd6df5ae2e213",
-          "topics": [
-            "0x2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d",
-            "0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42",
-            "0x00000000000000000000000031e0facea072ee621f22971df5bae3a1317e41a4",
-            "0x00000000000000000000000031e0facea072ee621f22971df5bae3a1317e41a4"
-          ],
-          "data": "0x",
-          "blockHash": "0xa680abc840e517f01acabbfe9bedf25f71956cbb577c84d53ddd1d327d90b39b",
-          "blockNumber": "0x5d6e33",
-          "transactionHash": "0x1613fd55715d9e8d2406d35f6bca2d7a8e96b4e26136332498ac71080437c26c",
-          "transactionIndex": "0x4",
-          "logIndex": "0x0",
-          "removed": false
-        }
-      ],
-      "logsBloom": "0x00000004000000008000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000001000000000000000010000000000000000004000000001000000000000000100000000000000000000000000000000000000001000000000000000000000000000000000000000",
-      "type": "0x0",
-      "transactionHash": "0x1613fd55715d9e8d2406d35f6bca2d7a8e96b4e26136332498ac71080437c26c",
-      "transactionIndex": "0x4",
-      "blockHash": "0xa680abc840e517f01acabbfe9bedf25f71956cbb577c84d53ddd1d327d90b39b",
-      "blockNumber": "0x5d6e33",
-      "gasUsed": "0xaf13",
-      "effectiveGasPrice": "0x5f1957",
-      "from": "0x31e0facea072ee621f22971df5bae3a1317e41a4",
-      "to": "0x36f1cea239c4a72d8f3f3e64c13dd6df5ae2e213",
-      "contractAddress": null
-    },
-    {
-      "status": "0x1",
       "cumulativeGasUsed": "0x3cf3c0",
       "logs": [
         {
@@ -550,11 +517,17 @@
     }
   ],
   "libraries": [],
-  "pending": [],
+  "pending": [
+    "0x1613fd55715d9e8d2406d35f6bca2d7a8e96b4e26136332498ac71080437c26c"
+  ],
   "returns": {
     "0": {
       "internal_type": "contract AdminOperations",
       "value": "0x36f1ceA239c4a72D8f3F3E64C13DD6df5Ae2E213"
+    },
+    "2": {
+      "internal_type": "contract DcaManager",
+      "value": "0xdeD62aC875A4FA371571B1d320Dc171dFC105A22"
     },
     "3": {
       "internal_type": "contract MocHelperConfig",
@@ -563,13 +536,9 @@
     "1": {
       "internal_type": "address",
       "value": "0x6fBBDF5542f6f07f15bfF99962b2386D1f2240a7"
-    },
-    "2": {
-      "internal_type": "contract DcaManager",
-      "value": "0xdeD62aC875A4FA371571B1d320Dc171dFC105A22"
     }
   },
-  "timestamp": 1740764837,
+  "timestamp": 1740764756,
   "chain": 31,
   "commit": "6447025"
 }
