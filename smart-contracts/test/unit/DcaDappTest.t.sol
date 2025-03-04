@@ -31,7 +31,7 @@ import "./TestsHelper.t.sol";
 
 contract DcaDappTest is Test {
     DcaManager dcaManager;
-    MockMocProxy mockMocProxy;
+    MockMocProxy mocProxy;
     // DocHandlerMoc docHandlerMoc;
     // DocHandlerDex docHandlerDex;
     // ITestDocHandler docHandler;
@@ -65,6 +65,9 @@ contract DcaDappTest is Test {
     address mocOracleTestnet = 0xbffBD993FF1d229B0FfE55668F2009d20d4F7C5f;
     address mocInRateMainnet = 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3;
     address mocInRateTestnet = 0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60;
+    address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
+    address kDocAddress;
+    address iSusdAddress;
 
     //////////////////////
     // Events ////////////
@@ -136,33 +139,33 @@ contract DcaDappTest is Test {
         } else {
             revert("Lending protocol not allowed");
         }
+
+        // Deal rBTC funds to user
+        vm.deal(USER, STARTING_RBTC_USER_BALANCE);
+        s_btcPrice = BTC_PRICE;
+
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             MocHelperConfig helperConfig;
             DeployMocSwaps deployContracts = new DeployMocSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
-            (address docTokenAddress, address mocProxyAddress, address kdocAddress, address isusdAddress) =
-                helperConfig.activeNetworkConfig();
+            MocHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
+            // (address docTokenAddress, address mocProxyAddress, kDocAddress, iSusdAddress) =
+            //     helperConfig.activeNetworkConfig();
+
+            address docTokenAddress = networkConfig.docTokenAddress;
+            address mocProxyAddress = networkConfig.mocProxyAddress;
+            kDocAddress = networkConfig.kDocAddress;
+            iSusdAddress = networkConfig.iSusdAddress;
 
             docToken = MockDocToken(docTokenAddress);
-            mockMocProxy = MockMocProxy(mocProxyAddress);
-
-            if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
-                lendingToken = ILendingToken(kdocAddress);
-            } else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
-                lendingToken = ILendingToken(isusdAddress);
-            } else {
-                revert("Lending protocol not allowed");
-            }
-
-            // Deal rBTC funds to user
-            vm.deal(USER, STARTING_RBTC_USER_BALANCE);
+            mocProxy = MockMocProxy(mocProxyAddress);
 
             // Give the MoC proxy contract allowance
             docToken.approve(mocProxyAddress, DOC_TO_DEPOSIT);
 
             // Mint DOC for the user
-            if (block.chainid == 31337) {
+            if (block.chainid == ANVIL_CHAIN_ID) {
                 // Local tests
                 // Deal rBTC funds to MoC contract
                 vm.deal(mocProxyAddress, 1000 ether);
@@ -172,9 +175,7 @@ contract DcaDappTest is Test {
                 vm.prank(address(docHandler));
                 docToken.approve(mocProxyAddress, type(uint256).max);
                 docToken.mint(USER, USER_TOTAL_DOC);
-
-                s_btcPrice = BTC_PRICE;
-            } else if (block.chainid == 30) {
+            } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
                 // Fork tests
                 // bytes32 balanceSlot = keccak256(abi.encode(USER, uint256(DOC_BALANCES_SLOT)));
                 // vm.store(address(mockDocToken), balanceSlot, bytes32(USER_TOTAL_DOC));
@@ -183,29 +184,29 @@ contract DcaDappTest is Test {
 
                 // Foundry's EVM handles gas slightly differently from how RSK's does it,
                 // causing an OutOfGas error due to hitting transfer() function's 2300 cap when rBTC is transferred to a proxy contract
-                // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address
+                // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address or a dummy address
                 // Slot in MocInrate where the address of ComissionSplitter is stored: 214
                 vm.store(
                     address(mocInRateMainnet),
                     bytes32(uint256(214)),
-                    bytes32(uint256(uint160(makeAddr("Dummy commission receiver"))))
+                    bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
                 // vm.pauseGasMetering();
-                // mockMocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
+                // mocProxy.mintDoc{value: RBTC_TO_MINT_DOC * 11 / 10, gas: gasleft()}(RBTC_TO_MINT_DOC);
                 vm.prank(USER);
-                mockMocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
+                mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
                 // vm.resumeGasMetering();
-                // mockMocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
+                // mocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
                 mocOracle = ICoinPairPrice(mocOracleMainnet);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
-            } else if (block.chainid == 31) {
+            } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
                 vm.store(
                     address(mocInRateTestnet),
                     bytes32(uint256(214)),
-                    bytes32(uint256(uint160(makeAddr("Dummy commission receiver"))))
+                    bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
                 vm.prank(USER);
-                mockMocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
+                mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
 
                 mocOracle = ICoinPairPrice(mocOracleTestnet);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
@@ -221,25 +222,62 @@ contract DcaDappTest is Test {
             // MockSwapRouter02 mockSwapRouter02;
 
             address docTokenAddress = networkConfig.docTokenAddress;
-            address lendingTokenAddress = networkConfig.kdocTokenAddress;
+            kDocAddress = networkConfig.kDocAddress;
+            iSusdAddress = networkConfig.iSusdAddress;
+            // address lendingTokenAddress = networkConfig.kdocTokenAddress;
             address wrBtcTokenAddress = networkConfig.wrbtcTokenAddress;
             address swapRouter02Address = networkConfig.swapRouter02Address;
+            address mocProxyAddress = networkConfig.mocProxyAddress;
 
             docToken = MockDocToken(docTokenAddress);
-            lendingToken = ILendingToken(lendingTokenAddress);
+            // lendingToken = ILendingToken(lendingTokenAddress);
             wrBtcToken = MockWrbtcToken(wrBtcTokenAddress);
+            mocProxy = MockMocProxy(mocProxyAddress);
 
             // TODO: Think through the setup for DEX swapping tests
 
-            // Mint DOC for the user
-            docToken.mint(USER, USER_TOTAL_DOC);
-            // Deal 1000 rBTC to the mock SwapRouter02 contract, so that it can deposit rBTC on the mock WRBTC contract
-            // to simulate that the DocHandlerDex contract has received WRBTC after calling the `exactInput()` function
-            vm.deal(swapRouter02Address, 1000 ether);
-
             // mockWrBtcToken.deposit{value: 1E18}();
+
+            // Mint DOC for the user
+            if (block.chainid == ANVIL_CHAIN_ID) {
+                // Local tests
+                docToken.mint(USER, USER_TOTAL_DOC);
+                // Deal 1000 rBTC to the mock SwapRouter02 contract, so that it can deposit rBTC on the mock WRBTC contract
+                // to simulate that the DocHandlerDex contract has received WRBTC after calling the `exactInput()` function
+                vm.deal(swapRouter02Address, 1000 ether);
+            } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
+                vm.store(
+                    address(mocInRateMainnet),
+                    bytes32(uint256(214)),
+                    bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
+                );
+                vm.prank(USER);
+                mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
+                console.log("DOC minted by user:", docToken.balanceOf(USER) / 1e18);
+                mocOracle = ICoinPairPrice(mocOracleMainnet);
+                s_btcPrice = mocOracle.getPrice() / 1e18;
+            } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
+                vm.store(
+                    address(mocInRateTestnet),
+                    bytes32(uint256(214)),
+                    bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
+                );
+                vm.prank(USER);
+                mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
+
+                mocOracle = ICoinPairPrice(mocOracleTestnet);
+                s_btcPrice = mocOracle.getPrice() / 1e18;
+            }
         } else {
             revert("Invalid deploy environment");
+        }
+
+        if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
+            lendingToken = ILendingToken(kDocAddress);
+        } else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
+            lendingToken = ILendingToken(iSusdAddress);
+        } else {
+            revert("Lending protocol not allowed");
         }
 
         // FeeCalculator helper test contract
@@ -496,7 +534,7 @@ contract DcaDappTest is Test {
             emit PurchaseRbtc__RbtcBought(USER, address(docToken), 0, scheduleIds[i], 0); // Never mind the actual values on this test
         }
 
-        vm.expectEmit(true, false, true, false); // the amount of rBTC purchased won't match exactly
+        vm.expectEmit(true, false, false, false); // the amount of rBTC purchased won't match exactly neither the amount of DOC spent in the case of Sovryn due to rounding errors
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
@@ -508,6 +546,7 @@ contract DcaDappTest is Test {
             );
         }
 
+        console.log("DOC balance of handler before calling batchBuyRbtc():", docToken.balanceOf(address(docHandler)));
         // vm.prank(OWNER);
         vm.prank(SWAPPER);
         dcaManager.batchBuyRbtc(
@@ -599,17 +638,28 @@ contract DcaDappTest is Test {
 
     function updateExchangeRate(uint256 daysPassed) internal {
         vm.roll(block.number + 2880 * daysPassed); // Jump to daysPassed days (2880 blocks per day) into the future so that some interest has been generated.
+        vm.warp(block.timestamp + 2880 * daysPassed * 30);
+
+        address newUser = makeAddr("Lending protocol new user");
 
         if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
-            address newUser = makeAddr("Tropykus new user");
             vm.prank(USER);
-            docToken.transfer(makeAddr("Tropykus new user"), 100 ether);
+            docToken.transfer(newUser, 100 ether);
             vm.startPrank(newUser);
             docToken.approve(address(lendingToken), 100 ether);
             console.log("Exchange rate before DOC deposit:", lendingToken.exchangeRateStored());
             lendingToken.mint(100 ether);
             console.log("Exchange rate after DOC deposit:", lendingToken.exchangeRateStored());
             vm.stopPrank();
-        }
+        } // else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
+            //     vm.prank(USER);
+            //     docToken.transfer(newUser, 100 ether);
+            //     vm.startPrank(newUser);
+            //     docToken.approve(address(lendingToken), 100 ether);
+            //     console.log("Exchange rate before DOC deposit:", lendingToken.tokenPrice());
+            //     lendingToken.mint(newUser, 100 ether);
+            //     console.log("Exchange rate after DOC deposit:", lendingToken.tokenPrice());
+            //     vm.stopPrank();
+            // }
     }
 }

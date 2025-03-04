@@ -15,6 +15,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
+import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title PurchaseMoc
@@ -107,11 +108,28 @@ abstract contract PurchaseUniswap is
         (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) =
             _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
-        // Redeem DOC (and repay kDOC)
-        _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
+        console.log(
+            "DOC balance of handler before redeeming DOC",
+            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
+        );
+
+        // Redeem DOC (and repay lending token)
+        uint256 docRedeemed = _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
+        totalDocAmountToSpend = docRedeemed - aggregatedFee;
+
+        console.log("DOC redeemed (PurchaseUniswap.sol)", docRedeemed);
+        console.log(
+            "DOC balance of handler after redeeming DOC",
+            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
+        );
 
         // Charge fees
         _transferFee(i_purchasingToken, aggregatedFee);
+
+        console.log(
+            "DOC balance of handler after transferring fee",
+            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
+        );
 
         // Swap DOC for wrBTC
         uint256 wrBtcPurchased = _swapDocForWrbtc(totalDocAmountToSpend);
@@ -205,7 +223,7 @@ abstract contract PurchaseUniswap is
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (docAmountToSpend /* * PRECISION */ * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
+        minimumRbtcAmount = (docAmountToSpend * PRECISION * 99) / (100 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
     }
 
     // Define abstract functions to be implemented by child contracts
@@ -213,7 +231,8 @@ abstract contract PurchaseUniswap is
 
     function _batchRedeemDoc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        virtual;
+        virtual
+        returns (uint256);
 
     // function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
     //     internal

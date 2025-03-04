@@ -68,6 +68,7 @@ contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         override(TropykusDocHandler, PurchaseMoc)
+        returns (uint256)
     {
         // Call TropykusDocHandler's version of _batchRedeemDoc
         TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);

@@ -30,9 +30,9 @@ contract MocHelperConfig is Script {
     event HelperConfig__CreatedMockLendingToken(address lendingTokenAddress);
 
     constructor() {
-        if (block.chainid == 30) {
+        if (block.chainid == RSK_MAINNET_CHAIN_ID) {
             activeNetworkConfig = getRootstockMainnetConfig();
-        } else if (block.chainid == 31) {
+        } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
             activeNetworkConfig = getRootstockTestnetConfig();
         } else {
             activeNetworkConfig = getOrCreateAnvilConfig();
@@ -95,7 +95,7 @@ contract MocHelperConfig is Script {
 
         vm.startBroadcast();
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
-        MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
+        MockMocProxy mocProxy = new MockMocProxy(address(mockDocToken));
         if (lendingProtocolIsTropykus) {
             MockKdocToken mockLendingToken = new MockKdocToken(address(mockDocToken));
             mockLendingTokenAddress = address(mockLendingToken);
@@ -108,33 +108,33 @@ contract MocHelperConfig is Script {
         vm.stopBroadcast();
 
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));
-        emit HelperConfig__CreatedMockMocProxy(address(mockMocProxy));
+        emit HelperConfig__CreatedMockMocProxy(address(mocProxy));
         emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress);
 
         if (lendingProtocolIsTropykus) {
             anvilNetworkConfig = NetworkConfig({
                 docTokenAddress: address(mockDocToken),
-                mocProxyAddress: address(mockMocProxy),
+                mocProxyAddress: address(mocProxy),
                 kDocAddress: mockLendingTokenAddress,
                 iSusdAddress: address(0)
             });
         } else if (lendingProtocolIsSovryn) {
             anvilNetworkConfig = NetworkConfig({
                 docTokenAddress: address(mockDocToken),
-                mocProxyAddress: address(mockMocProxy),
+                mocProxyAddress: address(mocProxy),
                 kDocAddress: address(0),
                 iSusdAddress: mockLendingTokenAddress
             });
         }
     }
 
-    // function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
-    //     return activeNetworkConfig;
-    // }
+    function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
+        return activeNetworkConfig;
+    }
 
     // MAINNET CONTRACTS
     // DOC: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db
     // rUSDT: 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96
-    // WRBTC: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d
+    // WRBTC: 0x542fDARSK_TESTNET_CHAIN_ID7RSK_TESTNET_CHAIN_ID8eBF1d3DEAf76E0b632741A7e677d
     // Swap router 02: 0x0B14ff67f0014046b4b99057Aec4509640b3947A
 }

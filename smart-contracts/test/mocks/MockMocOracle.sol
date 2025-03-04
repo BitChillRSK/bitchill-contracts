@@ -8,7 +8,7 @@ contract MockMocOracle {
     uint256 private s_price;
 
     constructor() {
-        s_price = BTC_PRICE;
+        s_price = BTC_PRICE * 1e18;
     }
 
     // Mock function to simulate i_MocOracle.getPrice()

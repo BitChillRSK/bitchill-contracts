@@ -19,6 +19,7 @@ contract DocLendingTest is DcaDappTest {
     ///// DOC Lending tests ////
     ////////////////////////////
     function testDepositedDocIsLent() external {
+        console.log("lending token:", address(lendingToken));
         uint256 ltDocBalanceBeforeDeposit = docToken.balanceOf(address(lendingToken));
         super.depositDoc();
         uint256 ltDocBalanceAfterDeposit = docToken.balanceOf(address(lendingToken));
@@ -83,7 +84,7 @@ contract DocLendingTest is DcaDappTest {
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        if (block.chainid != 31337) {
+        if (block.chainid != ANVIL_CHAIN_ID) {
             startingExchangeRate = s_lendingProtocolIndex == TROPYKUS_INDEX
                 ? lendingToken.exchangeRateCurrent()
                 : lendingToken.tokenPrice();
@@ -118,7 +119,7 @@ contract DocLendingTest is DcaDappTest {
 
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        if (block.chainid != 31337) {
+        if (block.chainid != ANVIL_CHAIN_ID) {
             startingExchangeRate = s_lendingProtocolIndex == TROPYKUS_INDEX
                 ? lendingToken.exchangeRateCurrent()
                 : lendingToken.tokenPrice();
@@ -129,7 +130,7 @@ contract DocLendingTest is DcaDappTest {
         super.makeSeveralPurchasesWithSeveralSchedules();
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
-        if (block.chainid != 31337) updateExchangeRate(1);
+        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
         console.log("Final exchange rate:", exchangeRate);
@@ -165,7 +166,7 @@ contract DocLendingTest is DcaDappTest {
 
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        if (block.chainid != 31337) {
+        if (block.chainid != ANVIL_CHAIN_ID) {
             startingExchangeRate = s_lendingProtocolIndex == TROPYKUS_INDEX
                 ? lendingToken.exchangeRateCurrent()
                 : lendingToken.tokenPrice();
@@ -175,7 +176,7 @@ contract DocLendingTest is DcaDappTest {
         super.makeBatchPurchasesOneUser(); // Batched purchases add up to an amount of DOC_TO_SPEND, this function makes two batch purchases
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
-        if (block.chainid != 31337) updateExchangeRate(1);
+        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
         console.log("Final exchange rate:", exchangeRate);
@@ -207,7 +208,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days); // Jump to 10 days in the future (for example) so that some interest has been generated.
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != 31337 && s_lendingProtocolIndex == TROPYKUS_INDEX) {
+        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
         // }
 
@@ -241,7 +242,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days); // Jump to 10 days into the future (for example) so that some interest has been generated.t has been generated.
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != 31337 && s_lendingProtocolIndex == TROPYKUS_INDEX) {
+        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
         // }
 
@@ -267,7 +268,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days);
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != 31337 && s_lendingProtocolIndex == TROPYKUS_INDEX) {
+        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
         // }
 

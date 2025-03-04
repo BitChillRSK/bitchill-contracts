@@ -142,6 +142,7 @@ contract RbtcMocPurchaseTest is DcaDappTest {
 
     function testBatchPurchasesOneUser() external {
         super.createSeveralDcaSchedules();
+        updateExchangeRate(10);
         super.makeBatchPurchasesOneUser();
     }
 

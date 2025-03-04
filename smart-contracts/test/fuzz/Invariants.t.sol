@@ -25,7 +25,7 @@ contract InvariantTest is StdInvariant, Test {
     // TropykusDocHandlerMocDex docHandlerMocDex;
     MockDocToken mockDocToken;
     MockKdocToken mockKdocToken;
-    MockMocProxy mockMocProxy;
+    MockMocProxy mocProxy;
     DeployMocSwaps deployer;
     MocHelperConfig helperConfig;
     Handler handler;

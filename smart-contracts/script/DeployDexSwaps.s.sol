@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.19;
 
-import {Script} from "forge-std/Script.sol";
+import {DeployBase} from "./DeployBase.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
@@ -17,89 +17,116 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
-contract DeployDexSwaps is Script {
-    address OWNER = makeAddr(OWNER_STRING);
-    address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
-    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
-    address docHandlerDexAddress;
+contract DeployDexSwaps is DeployBase {
+    function deployDocHandlerDex(
+        Protocol protocol,
+        address dcaManager,
+        address docToken,
+        address lendingToken,
+        IUniswapPurchase.UniswapSettings memory uniswapSettings,
+        address feeCollector
+    ) internal returns (address) {
+        IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
+            minFeeRate: MIN_FEE_RATE,
+            maxFeeRate: MAX_FEE_RATE,
+            minAnnualAmount: MIN_ANNUAL_AMOUNT,
+            maxAnnualAmount: MAX_ANNUAL_AMOUNT
+        });
+
+        if (protocol == Protocol.TROPYKUS) {
+            return address(
+                new TropykusDocHandlerDex(
+                    dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
+                )
+            );
+        } else {
+            return address(
+                new SovrynDocHandlerDex(
+                    dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
+                )
+            );
+        }
+    }
 
     function run() external returns (AdminOperations, address, DcaManager, DexHelperConfig) {
         DexHelperConfig helperConfig = new DexHelperConfig();
-
         DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
 
-        address docToken = networkConfig.docTokenAddress;
-        address kDocToken = networkConfig.kdocTokenAddress;
-        address wrBtcToken = networkConfig.wrbtcTokenAddress;
-        address swapRouter02 = networkConfig.swapRouter02Address;
-        address[] memory swapIntermediateTokens = networkConfig.swapIntermediateTokens;
-        uint24[] memory swapPoolFeeRates = networkConfig.swapPoolFeeRates;
-        address mocOracle = networkConfig.mocOracleAddress;
-
         vm.startBroadcast();
-        // After startBroadcast -> "real" tx
+
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
-            TropykusDocHandlerDex docHandlerDex = new TropykusDocHandlerDex(
-                address(dcaManager),
-                docToken,
-                kDocToken,
-                IUniswapPurchase.UniswapSettings({
-                    wrBtcToken: IWRBTC(wrBtcToken),
-                    swapRouter02: ISwapRouter02(swapRouter02),
-                    swapIntermediateTokens: swapIntermediateTokens,
-                    swapPoolFeeRates: swapPoolFeeRates,
-                    mocOracle: ICoinPairPrice(mocOracle)
-                }),
-                MIN_PURCHASE_AMOUNT,
-                FEE_COLLECTOR,
-                IFeeHandler.FeeSettings({
-                    minFeeRate: MIN_FEE_RATE,
-                    maxFeeRate: MAX_FEE_RATE,
-                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
-                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                })
-            );
-            docHandlerDexAddress = address(docHandlerDex);
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            SovrynDocHandlerDex docHandlerDex = new SovrynDocHandlerDex(
-                address(dcaManager),
-                docToken,
-                kDocToken,
-                IUniswapPurchase.UniswapSettings({
-                    wrBtcToken: IWRBTC(wrBtcToken),
-                    swapRouter02: ISwapRouter02(swapRouter02),
-                    swapIntermediateTokens: swapIntermediateTokens,
-                    swapPoolFeeRates: swapPoolFeeRates,
-                    mocOracle: ICoinPairPrice(mocOracle)
-                }),
-                MIN_PURCHASE_AMOUNT,
-                FEE_COLLECTOR,
-                IFeeHandler.FeeSettings({
-                    minFeeRate: MIN_FEE_RATE,
-                    maxFeeRate: MAX_FEE_RATE,
-                    minAnnualAmount: MIN_ANNUAL_AMOUNT,
-                    maxAnnualAmount: MAX_ANNUAL_AMOUNT
-                })
-            );
-            docHandlerDexAddress = address(docHandlerDex);
-        } else {
-            revert("Invalid lending protocol");
-        }
+        address feeCollector = getFeeCollector(environment);
+        address docToken = networkConfig.docTokenAddress;
+        address kDocToken = networkConfig.kDocAddress;
+        address iSusdToken = networkConfig.iSusdAddress;
+        address docHandlerDexAddress;
 
-        // For local tests:
-        if (block.chainid == 31337) {
-            dcaManager.transferOwnership(OWNER); // Only for tests!!!
-            adminOperations.transferOwnership(OWNER); // Only for tests!!!
-            Ownable(docHandlerDexAddress).transferOwnership(OWNER); // Only for tests!!!
-        }
+        IUniswapPurchase.UniswapSettings memory uniswapSettings = IUniswapPurchase.UniswapSettings({
+            wrBtcToken: IWRBTC(networkConfig.wrbtcTokenAddress),
+            swapRouter02: ISwapRouter02(networkConfig.swapRouter02Address),
+            swapIntermediateTokens: networkConfig.swapIntermediateTokens,
+            swapPoolFeeRates: networkConfig.swapPoolFeeRates,
+            mocOracle: ICoinPairPrice(networkConfig.mocOracleAddress)
+        });
 
-        // For back-end and front-end devs to test:
-        // rbtcDca.transferOwnership(0x8191c3a9DF486A09d8087E99A1b2b6885Cc17214); // Carlos
-        // rbtcDca.transferOwnership(0x03B1E454F902771A7071335f44042A3233836BB3); // Pau
+        // address lendingToken = networkConfig.kdocTokenAddress;
+        // address docHandlerDexAddress = deployDocHandlerDex(
+        //     protocol, address(dcaManager), networkConfig.docTokenAddress, lendingToken, uniswapSettings, feeCollector
+        // );
+
+        // if (environment == Environment.LOCAL || environment == Environment.FORK) {
+        //     address owner = adminAddresses[environment];
+        //     adminOperations.transferOwnership(owner);
+        //     dcaManager.transferOwnership(owner);
+        //     Ownable(docHandlerDexAddress).transferOwnership(owner);
+        // }
+
+        // For local or fork environments, deploy only the selected protocol's handler
+        if (environment == Environment.LOCAL || environment == Environment.FORK) {
+            console.log("Deploying single handler for local/fork environment");
+            address lendingToken = protocol == Protocol.TROPYKUS ? kDocToken : iSusdToken;
+            docHandlerDexAddress = deployDocHandlerDex(
+                protocol, address(dcaManager), docToken, lendingToken, uniswapSettings, feeCollector
+            );
+
+            address owner = adminAddresses[environment];
+            adminOperations.transferOwnership(owner);
+            dcaManager.transferOwnership(owner);
+            Ownable(docHandlerDexAddress).transferOwnership(owner);
+        }
+        // For live networks (testnet/mainnet), deploy both handlers
+        else if (environment == Environment.TESTNET || environment == Environment.MAINNET) {
+            console.log("Deploying both handlers for live network");
+
+            // First register the lending protocols
+            adminOperations.setAdminRole(tx.origin);
+            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
+            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
+
+            address tropykusHandler = deployDocHandlerDex(
+                Protocol.TROPYKUS, address(dcaManager), docToken, kDocToken, uniswapSettings, feeCollector
+            );
+            console.log("Tropykus handler deployed at:", tropykusHandler);
+
+            address sovrynHandler = deployDocHandlerDex(
+                Protocol.SOVRYN, address(dcaManager), docToken, iSusdToken, uniswapSettings, feeCollector
+            );
+            console.log("Sovryn handler deployed at:", sovrynHandler);
+
+            // Now assign the handlers
+            adminOperations.assignOrUpdateTokenHandler(docToken, TROPYKUS_INDEX, tropykusHandler);
+            adminOperations.assignOrUpdateTokenHandler(docToken, SOVRYN_INDEX, sovrynHandler);
+
+            if (environment == Environment.TESTNET) {
+                adminOperations.setAdminRole(adminAddresses[Environment.TESTNET]);
+            }
+            // Return the handler address matching the protocol parameter for consistency
+            docHandlerDexAddress = protocol == Protocol.TROPYKUS ? tropykusHandler : sovrynHandler;
+        }
 
         vm.stopBroadcast();
+
         return (adminOperations, docHandlerDexAddress, dcaManager, helperConfig);
     }
 }

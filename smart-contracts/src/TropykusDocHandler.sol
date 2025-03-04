@@ -178,6 +178,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
         virtual
+        returns (uint256)
     {
         (, uint256 underlyingAmount,,) = i_kDocToken.getSupplierSnapshotStored(address(this)); // esto devuelve el DOC retirable por la dirección de nuestro contrato en la última actualización de mercado
         if (totalDocToRedeem > underlyingAmount) {

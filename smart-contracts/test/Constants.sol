@@ -4,6 +4,9 @@ pragma solidity ^0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
 
+uint256 constant ANVIL_CHAIN_ID = 31337;
+uint256 constant RSK_MAINNET_CHAIN_ID = 30;
+uint256 constant RSK_TESTNET_CHAIN_ID = 31;
 string constant OWNER_STRING = "owner";
 string constant USER_STRING = "user";
 string constant ADMIN_STRING = "ADMIN";

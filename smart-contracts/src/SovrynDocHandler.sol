@@ -9,6 +9,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TokenLending} from "src/TokenLending.sol";
+import {Test, console} from "forge-std/Test.sol";
 /**
  * @title SovrynDocHandler
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
@@ -144,12 +145,16 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _docToLendingToken(docToRedeem, exchangeRate);
+        console.log("usersIsusdBalance:", usersIsusdBalance);
+        console.log("iSusd to repay:", iSusdToRepay);
         if (iSusdToRepay > usersIsusdBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
             iSusdToRepay = usersIsusdBalance;
         }
+        console.log("iSusd to repay:", iSusdToRepay);
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(docRecipient, iSusdToRepay);
+        console.log("DOC redeemed:", docRedeemed);
         // if (docRedeemed < docToRedeem) revert SovrynDocLending__RedeemUnderlyingFailed();
         // @notice If a withdrawal is done right after the funds have been deposited, 1 wei less is obtained, so this check made the tx revert
         // From now on, we'll trust that Sovryn returns the correct amount of DOC
@@ -161,6 +166,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
         virtual
+        returns (uint256)
     {
         uint256 underlyingAmount =
             i_iSusdToken.assetBalanceOf(address(this)) + uint256(i_iSusdToken.profitOf(address(this))); // TODO: check if int->uint conversion is OK
@@ -179,5 +185,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         uint256 docRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
         if (docRedeemed > 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
         else revert SovrynDocLending__RedeemUnderlyingFailed();
+        console.log("DOC redeemed (SovrynDocHandler.sol)", docRedeemed);
+        return docRedeemed;
     }
 }

@@ -64,7 +64,7 @@ contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
      */
     function _redeemDoc(address user, uint256 amount)
         internal
-        override(PurchaseUniswap, SovrynDocHandler)
+        override(SovrynDocHandler, PurchaseUniswap)
         returns (uint256)
     {
         // Call SovrynDocHandler's version of _redeemDoc
@@ -79,9 +79,10 @@ contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
      */
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(PurchaseUniswap, SovrynDocHandler)
+        override(SovrynDocHandler, PurchaseUniswap)
+        returns (uint256)
     {
         // Call SovrynDocHandler's version of _batchRedeemDoc
-        SovrynDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        return SovrynDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

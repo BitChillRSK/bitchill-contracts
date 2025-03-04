@@ -75,8 +75,9 @@ contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         override(SovrynDocHandler, PurchaseMoc)
+        returns (uint256)
     {
         // Call SovrynDocHandler's version of _batchRedeemDoc
-        SovrynDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        return SovrynDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

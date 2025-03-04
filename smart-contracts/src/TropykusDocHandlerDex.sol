@@ -75,6 +75,7 @@ contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         override(TropykusDocHandler, PurchaseUniswap)
+        returns (uint256)
     {
         // Call TropykusDocHandler's version of _batchRedeemDoc
         TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);

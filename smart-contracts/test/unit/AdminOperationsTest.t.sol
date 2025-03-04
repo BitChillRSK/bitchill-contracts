@@ -59,7 +59,7 @@ contract AdminOperationsTest is DcaDappTest {
             address(docToken),
             address(lendingToken),
             MIN_PURCHASE_AMOUNT,
-            address(mockMocProxy),
+            address(mocProxy),
             FEE_COLLECTOR,
             IFeeHandler.FeeSettings({
                 minFeeRate: MIN_FEE_RATE,
