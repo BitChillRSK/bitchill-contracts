@@ -70,18 +70,6 @@ contract DeployDexSwaps is DeployBase {
             mocOracle: ICoinPairPrice(networkConfig.mocOracleAddress)
         });
 
-        // address lendingToken = networkConfig.kdocTokenAddress;
-        // address docHandlerDexAddress = deployDocHandlerDex(
-        //     protocol, address(dcaManager), networkConfig.docTokenAddress, lendingToken, uniswapSettings, feeCollector
-        // );
-
-        // if (environment == Environment.LOCAL || environment == Environment.FORK) {
-        //     address owner = adminAddresses[environment];
-        //     adminOperations.transferOwnership(owner);
-        //     dcaManager.transferOwnership(owner);
-        //     Ownable(docHandlerDexAddress).transferOwnership(owner);
-        // }
-
         // For local or fork environments, deploy only the selected protocol's handler
         if (environment == Environment.LOCAL || environment == Environment.FORK) {
             console.log("Deploying single handler for local/fork environment");

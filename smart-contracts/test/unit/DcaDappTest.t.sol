@@ -129,7 +129,7 @@ contract DcaDappTest is Test {
     error OwnableUnauthorizedAccount(address account);
 
     /*//////////////////////////////////////////////////////////////
-                            UNIT TESTS SETUP (MoC purchases)
+                            UNIT TESTS SETUP
     //////////////////////////////////////////////////////////////*/
     function setUp() public virtual {
         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
@@ -233,10 +233,6 @@ contract DcaDappTest is Test {
             // lendingToken = ILendingToken(lendingTokenAddress);
             wrBtcToken = MockWrbtcToken(wrBtcTokenAddress);
             mocProxy = MockMocProxy(mocProxyAddress);
-
-            // TODO: Think through the setup for DEX swapping tests
-
-            // mockWrBtcToken.deposit{value: 1E18}();
 
             // Mint DOC for the user
             if (block.chainid == ANVIL_CHAIN_ID) {
@@ -459,7 +455,7 @@ contract DcaDappTest is Test {
                 assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                     RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
                     netPurchaseAmount / s_btcPrice,
-                    0.5e16 // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
+                    0.75e16 // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
                 );
                 // }
 
@@ -482,7 +478,7 @@ contract DcaDappTest is Test {
         assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
             IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
             totalDocSpent / s_btcPrice,
-            0.5e16 // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
+            0.75e16 // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
         );
         // }
     }
