@@ -65,10 +65,27 @@ Ensure you have the following installed:
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/BitChillRSK/DCAdApp
+git clone git@github.com:BitChillRSK/DCAdApp.git
 cd DCAdApp
 git checkout smart-contracts
 ```
+
+Once cloned, the setup script to initialize the project:
+
+```bash
+./setup.sh
+```
+
+This script initializes Git submodules, applies necessary Solidity version compatibility fixes for Rootstock, and builds the project. See [DEPENDENCY_MODIFICATIONS.md](./DEPENDENCY_MODIFICATIONS.md) for details on the modifications.
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+1. Initialize Git submodules: `git submodule init && git submodule update`
+2. Apply compatibility fixes (see DEPENDENCY_MODIFICATIONS.md)
+3. Build the project: `forge build`
+
 ### Deployment
 Deploy the contracts using Foundry:
 
@@ -88,3 +105,18 @@ For any questions or issues, please contact BitChill's [Smart Contract Developer
 
 ## Disclaimer
 This protocol is unaudited. Use at your own risk. Always perform due diligence before interacting with smart contracts.
+
+## Dependency Management
+
+This project uses Git submodules for dependency management. The following dependencies are included:
+
+- OpenZeppelin Contracts v4.9.3
+- Uniswap V3 Core v1.0.0
+- Uniswap V3 Periphery v1.3.0
+- Uniswap Swap Router Contracts v1.3.0
+
+Due to Rootstock's requirement for Solidity 0.8.19, we've modified the pragma statements in some dependencies. These modifications are documented in [DEPENDENCY_MODIFICATIONS.md](./DEPENDENCY_MODIFICATIONS.md).
+
+## Development
+
+...

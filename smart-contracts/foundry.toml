@@ -9,9 +9,17 @@ remappings = [
     '@uniswap/swap-router-contracts=lib/swap-router-contracts',
 ]
 
-solc_version = "0.8.19"
+# auto_detect_solc = true
+
+# solc_version = "0.8.19"
 evm_version = "london"
-gas_limit = "18446744073709551615" # u64::MAX
+# gas_limit = "18446744073709551615" # u64::MAX
+
+# Add compiler overrides for dependencies
+[profile.default.solc_overrides]
+"lib/swap-router-contracts/contracts/interfaces/IApproveAndCall.sol" = "0.7.6"
+"lib/v3-core/" = "0.7.6"
+"lib/v3-periphery/" = "0.7.6"
 
 [fuzz]
 runs = 1000
