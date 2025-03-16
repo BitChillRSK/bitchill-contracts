@@ -61,10 +61,10 @@ contract DcaDappTest is Test {
     uint256 s_lendingProtocolIndex;
     uint256 s_btcPrice;
     ICoinPairPrice mocOracle;
-    address mocOracleMainnet = 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD;
-    address mocOracleTestnet = 0xbffBD993FF1d229B0FfE55668F2009d20d4F7C5f;
-    address mocInRateMainnet = 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3;
-    address mocInRateTestnet = 0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60;
+    address constant MOC_ORACLE_MAINNET = 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD;
+    address constant MOC_ORACLE_TESTNET = 0xbffBD993FF1d229B0FfE55668F2009d20d4F7C5f;
+    address constant MOC_IN_RATE_MAINNET = 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3;
+    address constant MOC_IN_RATE_TESTNET = 0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60;
     address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
     address kDocAddress;
     address iSusdAddress;
@@ -187,7 +187,7 @@ contract DcaDappTest is Test {
                 // Thus, we need to change for these tests the address to which the rBTC gets sent to an EOA, e.g., the null address or a dummy address
                 // Slot in MocInrate where the address of ComissionSplitter is stored: 214
                 vm.store(
-                    address(mocInRateMainnet),
+                    MOC_IN_RATE_MAINNET,
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
@@ -197,18 +197,18 @@ contract DcaDappTest is Test {
                 mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
                 // vm.resumeGasMetering();
                 // mocProxy.mintDocVendors{value: 0.051 ether}(0.05 ether, payable(address(0)));
-                mocOracle = ICoinPairPrice(mocOracleMainnet);
+                mocOracle = ICoinPairPrice(MOC_ORACLE_MAINNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
                 vm.store(
-                    address(mocInRateTestnet),
+                    address(MOC_IN_RATE_TESTNET),
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
                 vm.prank(USER);
                 mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
 
-                mocOracle = ICoinPairPrice(mocOracleTestnet);
+                mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             }
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
@@ -243,25 +243,25 @@ contract DcaDappTest is Test {
                 vm.deal(swapRouter02Address, 1000 ether);
             } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
                 vm.store(
-                    address(mocInRateMainnet),
+                    address(MOC_IN_RATE_MAINNET),
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
                 vm.prank(USER);
                 mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
                 console.log("DOC minted by user:", docToken.balanceOf(USER) / 1e18);
-                mocOracle = ICoinPairPrice(mocOracleMainnet);
+                mocOracle = ICoinPairPrice(MOC_ORACLE_MAINNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
                 vm.store(
-                    address(mocInRateTestnet),
+                    address(MOC_IN_RATE_TESTNET),
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
                 vm.prank(USER);
                 mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
 
-                mocOracle = ICoinPairPrice(mocOracleTestnet);
+                mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             }
         } else {

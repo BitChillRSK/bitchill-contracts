@@ -93,7 +93,21 @@ contract MocHelperConfig is Script {
             return activeNetworkConfig;
         }
 
-        vm.startBroadcast();
+        // Check if we're already in a broadcast context
+        bool isBroadcasting;
+        try vm.getNonce(msg.sender) returns (uint64) {
+            // If this succeeds, we're already in a broadcast context
+            isBroadcasting = true;
+        } catch {
+            // If it fails, we're not in a broadcast context
+            isBroadcasting = false;
+        }
+
+        // Only start a broadcast if we're not already in one
+        if (!isBroadcasting) {
+            vm.startBroadcast();
+        }
+        
         MockDocToken mockDocToken = new MockDocToken(msg.sender);
         MockMocProxy mocProxy = new MockMocProxy(address(mockDocToken));
         if (lendingProtocolIsTropykus) {
@@ -105,7 +119,11 @@ contract MocHelperConfig is Script {
         } else {
             revert("Invalid lending protocol");
         }
-        vm.stopBroadcast();
+        
+        // Only stop the broadcast if we started it
+        if (!isBroadcasting) {
+            vm.stopBroadcast();
+        }
 
         emit HelperConfig__CreatedMockDocToken(address(mockDocToken));
         emit HelperConfig__CreatedMockMocProxy(address(mocProxy));

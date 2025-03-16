@@ -22,7 +22,7 @@ contract DeployMocSwaps is DeployBase {
         address lendingToken,
         address mocProxy,
         address feeCollector
-    ) internal returns (address) {
+    ) public returns (address) {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
             maxFeeRate: MAX_FEE_RATE,

@@ -25,7 +25,7 @@ contract DeployDexSwaps is DeployBase {
         address lendingToken,
         IUniswapPurchase.UniswapSettings memory uniswapSettings,
         address feeCollector
-    ) internal returns (address) {
+    ) public returns (address) {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
             maxFeeRate: MAX_FEE_RATE,
