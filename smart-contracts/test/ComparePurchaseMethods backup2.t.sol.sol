@@ -196,72 +196,344 @@ contract ComparePurchaseMethods is Test {
         }
     }
     
-    function testCompareIndividualPurchases() public {
-        console2.log("\n=== TESTING INDIVIDUAL PURCHASES ===");
+    function testCompareSwapMethods() public {
+        // Test 1: Compare individual purchases
+        (uint256 mocIndividualGas, uint256 uniIndividualGas) = compareIndividualPurchases();
         
-        // Execute individual purchases for both MoC and Uniswap
-        (uint256 mocIndividualGas, uint256 mocIndividualRbtc) = executeIndividualMocPurchases();
+        // Test 2: Compare batch purchases
+        (uint256 mocBatchGas, uint256 uniBatchGas) = compareBatchPurchases();
+        
+        // Print final comparison
+        printFinalComparison(mocIndividualGas, uniIndividualGas, mocBatchGas, uniBatchGas);
+    }
+    
+    function compareIndividualPurchases() private returns (uint256, uint256) {
+        console2.log("\n=== COMPARING INDIVIDUAL PURCHASES (ONE PER USER) ===");
+        
+        // Execute purchases for MoC
+        (uint256 mocTotalGasUsed, uint256 mocTotalRbtcPurchased) = executeIndividualMocPurchases();
         
         // Reset time for Uniswap purchases
         vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
         
-        (uint256 uniIndividualGas, uint256 uniIndividualRbtc) = executeIndividualUniPurchases();
+        // Execute purchases for Uniswap
+        (uint256 uniTotalGasUsed, uint256 uniTotalRbtcPurchased) = executeIndividualUniPurchases();
         
         // Calculate and print the total DOC spent
         uint256 totalDocSpent = calculateTotalDocSpent();
         console2.log("\nTotal DOC spent per method:", totalDocSpent / 1e18);
         
         // Print rBTC comparison
-        printRbtcComparison(mocIndividualRbtc, uniIndividualRbtc);
+        console2.log("MoC rBTC purchased: %s", _formatRbtc(mocTotalRbtcPurchased));
+        console2.log("Uniswap rBTC purchased: %s", _formatRbtc(uniTotalRbtcPurchased));
+        if(mocTotalRbtcPurchased > uniTotalRbtcPurchased) {
+            console2.log("MoC returns more rBTC by: %s rBTC (%s USD)", _formatRbtc(mocTotalRbtcPurchased - uniTotalRbtcPurchased), _formatUsd(mocTotalRbtcPurchased - uniTotalRbtcPurchased, btcPrice));
+        } else if(uniTotalRbtcPurchased > mocTotalRbtcPurchased) {
+            console2.log("Uniswap returns more rBTC by: %s rBTC (%s USD)", _formatRbtc(uniTotalRbtcPurchased - mocTotalRbtcPurchased), _formatUsd(uniTotalRbtcPurchased - mocTotalRbtcPurchased, btcPrice   ));
+        } else {
+            console2.log("Both methods return the same amount of rBTC");
+        }
 
         // Print gas comparison
-        printGasComparison(mocIndividualGas, uniIndividualGas);
+        printGasComparison(mocTotalGasUsed, uniTotalGasUsed);
         
-        // Print individual-specific conclusion
-        printIndividualConclusion(mocIndividualGas, uniIndividualGas, mocIndividualRbtc, uniIndividualRbtc);
+        return (mocTotalGasUsed, uniTotalGasUsed);
     }
     
-    function testCompareBatchPurchases() public {
-        console2.log("\n=== TESTING BATCH PURCHASES ===");
+    function executeIndividualMocPurchases() private returns (uint256, uint256) {
+        // Get starting balances
+        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            startBalances[i] = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
+            vm.stopPrank();
+        }
         
-        // Execute batch purchases for both MoC and Uniswap
-        (uint256 mocBatchGas, uint256 mocBatchRbtc) = executeMocBatchPurchase();
+        // Execute purchases
+        uint256 totalGasUsed = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.prank(users[i]);
+            bytes32 scheduleId = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            
+            uint256 gasStart = gasleft();
+            vm.prank(SWAPPER);
+            dcaManMoc.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
+            totalGasUsed += (gasStart - gasleft());
+        }
+
+        uint256 totalGasCost = totalGasUsed * tx.gasprice;
         
-        // Reset time for Uniswap batch purchase
+        // Get ending balances and calculate rBTC gained
+        uint256 totalRbtcPurchased = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            uint256 endBalance = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
+            totalRbtcPurchased += (endBalance - startBalances[i]);
+            vm.stopPrank();
+        }
+        
+        // Print results
+        console2.log("MoC Individual Purchases (5 users):");
+        console2.log("  Total Gas used:", totalGasUsed);
+        console2.log("  Total Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(totalGasCost), _weiToSats(totalGasCost), _formatUsd(totalGasCost, btcPrice));
+        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
+        
+        return (totalGasUsed, totalRbtcPurchased);
+    }
+    
+    function executeIndividualUniPurchases() private returns (uint256, uint256) {
+        // Get starting balances
+        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            startBalances[i] = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
+            vm.stopPrank();
+        }
+        
+        // Execute purchases
+        uint256 totalGasUsed = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.prank(users[i]);
+            bytes32 scheduleId = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            
+            uint256 gasStart = gasleft();
+            vm.prank(SWAPPER);
+            dcaManUni.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
+            totalGasUsed += (gasStart - gasleft());
+        }
+        
+        uint256 totalGasCost = totalGasUsed * tx.gasprice;
+
+        // Get ending balances and calculate rBTC gained
+        uint256 totalRbtcPurchased = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            uint256 endBalance = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
+            totalRbtcPurchased += (endBalance - startBalances[i]);
+            vm.stopPrank();
+        }
+        
+        // Print results
+        console2.log("Uniswap Individual Purchases (5 users):");
+        console2.log("  Total Gas used:", totalGasUsed);
+        console2.log("  Total Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(totalGasCost), _weiToSats(totalGasCost), _formatUsd(totalGasCost, btcPrice));
+        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
+        
+        return (totalGasUsed, totalRbtcPurchased);
+    }
+    
+    function compareBatchPurchases() private returns (uint256, uint256) {
+        console2.log("\n=== COMPARING BATCH PURCHASES (ALL USERS AT ONCE) ===");
+        
+        // Execute MoC batch purchase first and capture results
+        (uint256 mocGasUsed, uint256 mocRbtcPurchased) = executeMocBatchPurchase();
+        
+        // Reset time for the next batch
         vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
         
-        (uint256 uniBatchGas, uint256 uniBatchRbtc) = executeUniBatchPurchase();
+        // Execute Uniswap batch purchase and capture results
+        (uint256 uniGasUsed, uint256 uniRbtcPurchased) = executeUniBatchPurchase();
         
         // Calculate and print the total DOC spent
         uint256 totalDocSpent = calculateTotalDocSpent();
         console2.log("\nTotal DOC spent per method:", totalDocSpent / 1e18);
         
         // Print rBTC comparison
-        printRbtcComparison(mocBatchRbtc, uniBatchRbtc);
+        console2.log("MoC rBTC purchased: %s", _formatRbtc(mocRbtcPurchased));
+        console2.log("Uniswap rBTC purchased: %s", _formatRbtc(uniRbtcPurchased));
+        if(mocRbtcPurchased > uniRbtcPurchased) {
+            console2.log("MoC returns more rBTC by: %s rBTC (%s USD)", _formatRbtc(mocRbtcPurchased - uniRbtcPurchased), _formatUsd(mocRbtcPurchased - uniRbtcPurchased, btcPrice));
+        } else if(uniRbtcPurchased > mocRbtcPurchased) {
+            console2.log("Uniswap returns more rBTC by: %s rBTC (%s USD)", _formatRbtc(uniRbtcPurchased - mocRbtcPurchased), _formatUsd(uniRbtcPurchased - mocRbtcPurchased, btcPrice   ));
+        } else {
+            console2.log("Both methods return the same amount of rBTC");
+        }
 
         // Print gas comparison
-        printGasComparison(mocBatchGas, uniBatchGas);
+        printGasComparison(mocGasUsed, uniGasUsed);
         
-        // Print batch-specific conclusion
-        printBatchConclusion(mocBatchGas, uniBatchGas, mocBatchRbtc, uniBatchRbtc);
+        return (mocGasUsed, uniGasUsed);
     }
     
-    // For completeness, we can also have a combined test that runs both and compares them
-    function testCompareAllMethods() public {
-        // Run individual tests first
-        (uint256 mocIndividualGas, uint256 uniIndividualGas, uint256 mocIndividualRbtc, uint256 uniIndividualRbtc) = runIndividualTest();
+    // Break down the batch purchases into separate functions
+    function executeMocBatchPurchase() private returns (uint256, uint256) {
+        // Get starting balances
+        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            startBalances[i] = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
+            vm.stopPrank();
+        }
         
-        // Reset the environment for batch tests
-        setUp(); // This will reset all the state
+        // Prepare batch data
+        address[] memory userArray = new address[](NUM_OF_USERS);
+        uint256[] memory scheduleIndexes = new uint256[](NUM_OF_USERS);
+        bytes32[] memory scheduleIds = new bytes32[](NUM_OF_USERS);
+        uint256[] memory purchaseAmounts = new uint256[](NUM_OF_USERS);
+        uint256[] memory purchasePeriods = new uint256[](NUM_OF_USERS);
         
-        // Run batch tests
-        (uint256 mocBatchGas, uint256 uniBatchGas, uint256 mocBatchRbtc, uint256 uniBatchRbtc) = runBatchTest();
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            userArray[i] = users[i];
+            scheduleIndexes[i] = SCHEDULE_INDEX;
+            
+            vm.startPrank(users[i]);
+            scheduleIds[i] = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            purchaseAmounts[i] = dcaManMoc.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
+            purchasePeriods[i] = dcaManMoc.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
+            vm.stopPrank();
+        }
         
-        // Compare individual vs batch
-        console2.log("\n=== COMPARING INDIVIDUAL VS BATCH METHODS ===");
+        // Execute batch purchase
+        uint256 gasStart = gasleft();
+        vm.prank(SWAPPER);
+        dcaManMoc.batchBuyRbtc(
+            userArray,
+            address(docToken),
+            scheduleIndexes,
+            scheduleIds,
+            purchaseAmounts,
+            purchasePeriods,
+            lendingProtocolIndex
+        );
+        uint256 gasUsed = gasStart - gasleft();
+        uint256 gasCost = gasUsed * tx.gasprice;
+        // Get ending balances and calculate rBTC gained
+        uint256 totalRbtcPurchased = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            uint256 endBalance = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
+            totalRbtcPurchased += (endBalance - startBalances[i]);
+            vm.stopPrank();
+        }
+        
+        // Print results
+        console2.log("MoC Batch Purchase (%d users at once):", NUM_OF_USERS);
+        console2.log("  Gas used:", gasUsed);
+        console2.log("  Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(gasCost), _weiToSats(gasCost), _formatUsd(gasCost, btcPrice));
+        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
+        
+        return (gasUsed, totalRbtcPurchased);
+    }
+    
+    function executeUniBatchPurchase() private returns (uint256, uint256) {
+        // Get starting balances
+        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            startBalances[i] = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
+            vm.stopPrank();
+        }
+        
+        // Prepare batch data
+        address[] memory userArray = new address[](NUM_OF_USERS);
+        uint256[] memory scheduleIndexes = new uint256[](NUM_OF_USERS);
+        bytes32[] memory scheduleIds = new bytes32[](NUM_OF_USERS);
+        uint256[] memory purchaseAmounts = new uint256[](NUM_OF_USERS);
+        uint256[] memory purchasePeriods = new uint256[](NUM_OF_USERS);
+        
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            userArray[i] = users[i];
+            scheduleIndexes[i] = SCHEDULE_INDEX;
+            
+            vm.startPrank(users[i]);
+            scheduleIds[i] = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            purchaseAmounts[i] = dcaManUni.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
+            purchasePeriods[i] = dcaManUni.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
+            vm.stopPrank();
+        }
+        
+        // Execute batch purchase
+        uint256 gasStart = gasleft();
+        vm.prank(SWAPPER);
+        dcaManUni.batchBuyRbtc(
+            userArray,
+            address(docToken),
+            scheduleIndexes,
+            scheduleIds,
+            purchaseAmounts,
+            purchasePeriods,
+            lendingProtocolIndex
+        );
+        uint256 gasUsed = gasStart - gasleft();
+        uint256 gasCost = gasUsed * tx.gasprice;
+        // Get ending balances and calculate rBTC gained
+        uint256 totalRbtcPurchased = 0;
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            uint256 endBalance = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
+            totalRbtcPurchased += (endBalance - startBalances[i]);
+            vm.stopPrank();
+        }
+        
+        // Print results
+        console2.log("Uniswap Batch Purchase (%d users at once):", NUM_OF_USERS);
+        console2.log("  Gas used:", gasUsed);
+        console2.log("  Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(gasCost), _weiToSats(gasCost), _formatUsd(gasCost, btcPrice));
+        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
+        
+        return (gasUsed, totalRbtcPurchased);
+    }
+    
+    function printGasComparison(uint256 mocGasUsed, uint256 uniGasUsed) private view {
+        console2.log("\nGas Comparison:");
+        
+        if (mocGasUsed > uniGasUsed) {
+            uint256 diff = mocGasUsed - uniGasUsed;
+            uint256 percentage = (diff * 10000) / mocGasUsed;
+            console2.log("Uniswap uses less gas by %d.%d%", percentage / 100, percentage % 100);
+        } else if (uniGasUsed > mocGasUsed) {
+            uint256 diff = uniGasUsed - mocGasUsed;
+            uint256 percentage = (diff * 10000) / uniGasUsed;
+            console2.log("MoC uses less gas by %d.%d%", percentage / 100, percentage % 100);
+        } else {
+            console2.log("Both methods use the same amount of gas");
+        }
+        
+        uint256 mocGasCostRbtc = mocGasUsed * tx.gasprice;
+        uint256 uniGasCostRbtc = uniGasUsed * tx.gasprice;
+        if (mocGasCostRbtc > uniGasCostRbtc) {
+            console2.log("MoC is more gas-expensive by: %s rBTC (%d sats, %s USD)", _formatRbtc(mocGasCostRbtc - uniGasCostRbtc), _weiToSats(mocGasCostRbtc - uniGasCostRbtc), _formatUsd(mocGasCostRbtc - uniGasCostRbtc, btcPrice));
+        } else {
+            console2.log("Uniswap is more gas-expensive by: %s rBTC (%d sats, %s USD)", _formatRbtc(uniGasCostRbtc - mocGasCostRbtc), _weiToSats(uniGasCostRbtc - mocGasCostRbtc), _formatUsd(uniGasCostRbtc - mocGasCostRbtc, btcPrice));
+        }
+    }
+    
+    function printFinalComparison(
+        uint256 mocIndividualGas, 
+        uint256 uniIndividualGas, 
+        uint256 mocBatchGas, 
+        uint256 uniBatchGas
+    ) private {
+        console2.log("\n=== FINAL COMPARISON ===");
+        
+        // Recollect rBTC balances to compare the total purchased
+        uint256 mocTotalRbtc = 0;
+        uint256 uniTotalRbtc = 0;
+        
+        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
+            vm.startPrank(users[i]);
+            mocTotalRbtc += IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
+            uniTotalRbtc += IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
+            vm.stopPrank();
+        }
+        
+        // Print rBTC comparison
+        console2.log("rBTC Purchase Analysis:");
+        console2.log("  MoC Total rBTC purchased: %s (%d sats)", _formatRbtc(mocTotalRbtc), mocTotalRbtc / 1e10);
+        console2.log("  Uniswap Total rBTC purchased: %s (%d sats)", _formatRbtc(uniTotalRbtc), uniTotalRbtc / 1e10);
+        
+        if (mocTotalRbtc > uniTotalRbtc) {
+            uint256 diff = mocTotalRbtc - uniTotalRbtc;
+            console2.log("  MoC provided more rBTC overall by: %s (%d sats, %s USD)", 
+                _formatRbtc(diff), diff / 1e10, _formatUsd(diff, btcPrice));
+        } else if (uniTotalRbtc > mocTotalRbtc) {
+            uint256 diff = uniTotalRbtc - mocTotalRbtc;
+            console2.log("  Uniswap provided more rBTC overall by: %s (%d sats, %s USD)", 
+                _formatRbtc(diff), diff / 1e10, _formatUsd(diff, btcPrice));
+        }
         
         // Gas efficiency analysis
-        console2.log("Gas Efficiency Analysis:");
+        console2.log("\nGas Efficiency Analysis:");
         console2.log("  MoC Individual Total Gas: ", mocIndividualGas);
         console2.log("  MoC Batch Total Gas: ", mocBatchGas);
         if (mocIndividualGas > mocBatchGas) {
@@ -276,119 +548,41 @@ contract ComparePurchaseMethods is Test {
             console2.log("  Uniswap Gas Savings with Batch: %d.%d%", savings / 100, savings % 100);
         }
         
-        // rBTC comparison
-        console2.log("\nrBTC Purchasing Analysis:");
-        console2.log("  MoC Individual rBTC: ", _formatRbtc(mocIndividualRbtc));
-        console2.log("  MoC Batch rBTC: ", _formatRbtc(mocBatchRbtc));
-        console2.log("  Uniswap Individual rBTC: ", _formatRbtc(uniIndividualRbtc));
-        console2.log("  Uniswap Batch rBTC: ", _formatRbtc(uniBatchRbtc));
+        console2.log("\nConclusion:");
+        console2.log("This test demonstrates that batch operations significantly reduce gas costs");
+        console2.log("while maintaining similar or better rBTC returns for users.");
         
-        console2.log("\nOverall Recommendation:");
-        console2.log("  - Batch purchases are more gas-efficient than individual purchases");
+        // Add specific insights based on test results
+        if (mocBatchGas < uniBatchGas) {
+            console2.log("MoC batch purchases are more gas-efficient than Uniswap batch purchases.");
+        } else if (uniBatchGas < mocBatchGas) {
+            console2.log("Uniswap batch purchases are more gas-efficient than MoC batch purchases.");
+        }
+        
+        // Final recommendation based on actual test results
+        console2.log("\nRecommendation based on test results:");
+        
+        if (mocTotalRbtc > uniTotalRbtc) {
+            console2.log("  - For optimizing purchased rBTC: Use MoC as it provides better returns");
+        } else if (uniTotalRbtc > mocTotalRbtc) {
+            console2.log("  - For optimizing purchased rBTC: Use Uniswap as it provides better returns");
+        } else {
+            console2.log("  - For optimizing purchased rBTC: Both methods provide similar returns");
+        }
+        
+        if (mocIndividualGas < uniIndividualGas) {
+            console2.log("  - For individual purchases: MoC is more gas-efficient");
+        } else {
+            console2.log("  - For individual purchases: Uniswap is more gas-efficient");
+        }
         
         if (mocBatchGas < uniBatchGas) {
-            console2.log("  - MoC batch processing is more gas-efficient than Uniswap batch processing");
+            console2.log("  - For batch operations: MoC is more gas-efficient");
         } else {
-            console2.log("  - Uniswap batch processing is more gas-efficient than MoC batch processing");
+            console2.log("  - For batch operations: Uniswap is more gas-efficient");
         }
         
-        // Add rBTC-based recommendation
-        if (mocBatchRbtc > uniBatchRbtc) {
-            console2.log("  - For maximizing rBTC returns, MoC provides better results");
-        } else if (uniBatchRbtc > mocBatchRbtc) {
-            console2.log("  - For maximizing rBTC returns, Uniswap provides better results");
-        } else {
-            console2.log("  - Both methods provide similar rBTC returns");
-        }
-    }
-    
-    // Helper functions to run the tests and return results
-    function runIndividualTest() private returns (uint256, uint256, uint256, uint256) {
-        // Similar to testCompareIndividualPurchases but without the logging
-        (uint256 mocGas, uint256 mocRbtc) = executeIndividualMocPurchases();
-        vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
-        (uint256 uniGas, uint256 uniRbtc) = executeIndividualUniPurchases();
-        
-        return (mocGas, uniGas, mocRbtc, uniRbtc);
-    }
-    
-    function runBatchTest() private returns (uint256, uint256, uint256, uint256) {
-        // Similar to testCompareBatchPurchases but without the logging
-        (uint256 mocGas, uint256 mocRbtc) = executeMocBatchPurchase();
-        vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);
-        (uint256 uniGas, uint256 uniRbtc) = executeUniBatchPurchase();
-        
-        return (mocGas, uniGas, mocRbtc, uniRbtc);
-    }
-    
-    // Helper function to print rBTC comparison
-    function printRbtcComparison(uint256 mocRbtc, uint256 uniRbtc) private view {
-        console2.log("MoC rBTC purchased: %s", _formatRbtc(mocRbtc));
-        console2.log("Uniswap rBTC purchased: %s", _formatRbtc(uniRbtc));
-        
-        if(mocRbtc > uniRbtc) {
-            uint256 diff = mocRbtc - uniRbtc;
-            console2.log("MoC returns more rBTC by: %s rBTC (%s USD)", 
-                _formatRbtc(diff), _formatUsd(diff, btcPrice));
-        } else if(uniRbtc > mocRbtc) {
-            uint256 diff = uniRbtc - mocRbtc;
-            console2.log("Uniswap returns more rBTC by: %s rBTC (%s USD)", 
-                _formatRbtc(diff), _formatUsd(diff, btcPrice));
-        } else {
-            console2.log("Both methods return the same amount of rBTC");
-        }
-    }
-    
-    // Helper function to print individual test conclusion
-    function printIndividualConclusion(
-        uint256 mocGas, 
-        uint256 uniGas, 
-        uint256 mocRbtc, 
-        uint256 uniRbtc
-    ) private view {
-        console2.log("\nIndividual Purchases Conclusion:");
-        
-        if (mocRbtc > uniRbtc) {
-            console2.log("  - MoC provides better returns for users in individual purchases");
-        } else if (uniRbtc > mocRbtc) {
-            console2.log("  - Uniswap provides better returns for users in individual purchases");
-        } else {
-            console2.log("  - Both methods provide equal returns for users in individual purchases");
-        }
-        
-        if (mocGas < uniGas) {
-            console2.log("  - MoC is more gas-efficient for individual purchases");
-        } else if (uniGas < mocGas) {
-            console2.log("  - Uniswap is more gas-efficient for individual purchases");
-        } else {
-            console2.log("  - Both methods have equal gas efficiency for individual purchases");
-        }
-    }
-    
-    // Helper function to print batch test conclusion
-    function printBatchConclusion(
-        uint256 mocGas, 
-        uint256 uniGas, 
-        uint256 mocRbtc, 
-        uint256 uniRbtc
-    ) private view {
-        console2.log("\nBatch Purchases Conclusion:");
-        
-        if (mocRbtc > uniRbtc) {
-            console2.log("  - MoC provides better returns for users in batch purchases");
-        } else if (uniRbtc > mocRbtc) {
-            console2.log("  - Uniswap provides better returns for users in batch purchases");
-        } else {
-            console2.log("  - Both methods provide equal returns for users in batch purchases");
-        }
-        
-        if (mocGas < uniGas) {
-            console2.log("  - MoC is more gas-efficient for batch purchases");
-        } else if (uniGas < mocGas) {
-            console2.log("  - Uniswap is more gas-efficient for batch purchases");
-        } else {
-            console2.log("  - Both methods have equal gas efficiency for batch purchases");
-        }
+        console2.log("  - Overall: Batch purchases are significantly more efficient than individual purchases");
     }
 
     // Helper functions for formatting rBTC values with proper decimal places
@@ -463,237 +657,5 @@ contract ComparePurchaseMethods is Test {
             total += docToSpendArray[i];
         }
         return total;
-    }
-
-    function executeIndividualMocPurchases() private returns (uint256, uint256) {
-        // Get starting balances
-        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            startBalances[i] = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
-            vm.stopPrank();
-        }
-        
-        // Execute purchases
-        uint256 totalGasUsed = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.prank(users[i]);
-            bytes32 scheduleId = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            
-            uint256 gasStart = gasleft();
-            vm.prank(SWAPPER);
-            dcaManMoc.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
-            totalGasUsed += (gasStart - gasleft());
-        }
-
-        uint256 totalGasCost = totalGasUsed * tx.gasprice;
-        
-        // Get ending balances and calculate rBTC gained
-        uint256 totalRbtcPurchased = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            uint256 endBalance = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
-            totalRbtcPurchased += (endBalance - startBalances[i]);
-            vm.stopPrank();
-        }
-        
-        // Print results
-        console2.log("MoC Individual Purchases (%d users):", NUM_OF_USERS);
-        console2.log("  Total Gas used:", totalGasUsed);
-        console2.log("  Total Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(totalGasCost), _weiToSats(totalGasCost), _formatUsd(totalGasCost, btcPrice));
-        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
-        
-        return (totalGasUsed, totalRbtcPurchased);
-    }
-    
-    function executeIndividualUniPurchases() private returns (uint256, uint256) {
-        // Get starting balances
-        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            startBalances[i] = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
-            vm.stopPrank();
-        }
-        
-        // Execute purchases
-        uint256 totalGasUsed = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.prank(users[i]);
-            bytes32 scheduleId = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            
-            uint256 gasStart = gasleft();
-            vm.prank(SWAPPER);
-            dcaManUni.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
-            totalGasUsed += (gasStart - gasleft());
-        }
-        
-        uint256 totalGasCost = totalGasUsed * tx.gasprice;
-
-        // Get ending balances and calculate rBTC gained
-        uint256 totalRbtcPurchased = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            uint256 endBalance = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
-            totalRbtcPurchased += (endBalance - startBalances[i]);
-            vm.stopPrank();
-        }
-        
-        // Print results
-        console2.log("Uniswap Individual Purchases (%d users):", NUM_OF_USERS);
-        console2.log("  Total Gas used:", totalGasUsed);
-        console2.log("  Total Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(totalGasCost), _weiToSats(totalGasCost), _formatUsd(totalGasCost, btcPrice));
-        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
-        
-        return (totalGasUsed, totalRbtcPurchased);
-    }
-    
-    function executeMocBatchPurchase() private returns (uint256, uint256) {
-        // Get starting balances
-        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            startBalances[i] = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
-            vm.stopPrank();
-        }
-        
-        // Prepare batch data
-        address[] memory userArray = new address[](NUM_OF_USERS);
-        uint256[] memory scheduleIndexes = new uint256[](NUM_OF_USERS);
-        bytes32[] memory scheduleIds = new bytes32[](NUM_OF_USERS);
-        uint256[] memory purchaseAmounts = new uint256[](NUM_OF_USERS);
-        uint256[] memory purchasePeriods = new uint256[](NUM_OF_USERS);
-        
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            userArray[i] = users[i];
-            scheduleIndexes[i] = SCHEDULE_INDEX;
-            
-            vm.startPrank(users[i]);
-            scheduleIds[i] = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            purchaseAmounts[i] = dcaManMoc.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
-            purchasePeriods[i] = dcaManMoc.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
-            vm.stopPrank();
-        }
-        
-        // Execute batch purchase
-        uint256 gasStart = gasleft();
-        vm.prank(SWAPPER);
-        dcaManMoc.batchBuyRbtc(
-            userArray,
-            address(docToken),
-            scheduleIndexes,
-            scheduleIds,
-            purchaseAmounts,
-            purchasePeriods,
-            lendingProtocolIndex
-        );
-        uint256 gasUsed = gasStart - gasleft();
-        uint256 gasCost = gasUsed * tx.gasprice;
-        
-        // Get ending balances and calculate rBTC gained
-        uint256 totalRbtcPurchased = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            uint256 endBalance = IPurchaseRbtc(handlerMoc).getAccumulatedRbtcBalance();
-            totalRbtcPurchased += (endBalance - startBalances[i]);
-            vm.stopPrank();
-        }
-        
-        // Print results
-        console2.log("MoC Batch Purchase (%d users at once):", NUM_OF_USERS);
-        console2.log("  Gas used:", gasUsed);
-        console2.log("  Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(gasCost), _weiToSats(gasCost), _formatUsd(gasCost, btcPrice));
-        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
-        
-        return (gasUsed, totalRbtcPurchased);
-    }
-    
-    function executeUniBatchPurchase() private returns (uint256, uint256) {
-        // Get starting balances
-        uint256[] memory startBalances = new uint256[](NUM_OF_USERS);
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            startBalances[i] = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
-            vm.stopPrank();
-        }
-        
-        // Prepare batch data
-        address[] memory userArray = new address[](NUM_OF_USERS);
-        uint256[] memory scheduleIndexes = new uint256[](NUM_OF_USERS);
-        bytes32[] memory scheduleIds = new bytes32[](NUM_OF_USERS);
-        uint256[] memory purchaseAmounts = new uint256[](NUM_OF_USERS);
-        uint256[] memory purchasePeriods = new uint256[](NUM_OF_USERS);
-        
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            userArray[i] = users[i];
-            scheduleIndexes[i] = SCHEDULE_INDEX;
-            
-            vm.startPrank(users[i]);
-            scheduleIds[i] = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            purchaseAmounts[i] = dcaManUni.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
-            purchasePeriods[i] = dcaManUni.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
-            vm.stopPrank();
-        }
-        
-        // Execute batch purchase
-        uint256 gasStart = gasleft();
-        vm.prank(SWAPPER);
-        dcaManUni.batchBuyRbtc(
-            userArray,
-            address(docToken),
-            scheduleIndexes,
-            scheduleIds,
-            purchaseAmounts,
-            purchasePeriods,
-            lendingProtocolIndex
-        );
-        uint256 gasUsed = gasStart - gasleft();
-        uint256 gasCost = gasUsed * tx.gasprice;
-        
-        // Get ending balances and calculate rBTC gained
-        uint256 totalRbtcPurchased = 0;
-        for (uint256 i = 0; i < NUM_OF_USERS; i++) {
-            vm.startPrank(users[i]);
-            uint256 endBalance = IPurchaseRbtc(handlerUni).getAccumulatedRbtcBalance();
-            totalRbtcPurchased += (endBalance - startBalances[i]);
-            vm.stopPrank();
-        }
-        
-        // Print results
-        console2.log("Uniswap Batch Purchase (%d users at once):", NUM_OF_USERS);
-        console2.log("  Gas used:", gasUsed);
-        console2.log("  Gas cost: %s rBTC (%d sats, %s USD)", _formatRbtc(gasCost), _weiToSats(gasCost), _formatUsd(gasCost, btcPrice));
-        console2.log("  Total rBTC purchased: %s (%d sats)", _formatRbtc(totalRbtcPurchased), totalRbtcPurchased / 1e10);
-        
-        return (gasUsed, totalRbtcPurchased);
-    }
-    
-    function printGasComparison(uint256 mocGasUsed, uint256 uniGasUsed) private view {
-        console2.log("\nGas Comparison:");
-        
-        if (mocGasUsed > uniGasUsed) {
-            uint256 diff = mocGasUsed - uniGasUsed;
-            uint256 percentage = (diff * 10000) / mocGasUsed;
-            console2.log("Uniswap uses less gas by %d.%d%", percentage / 100, percentage % 100);
-        } else if (uniGasUsed > mocGasUsed) {
-            uint256 diff = uniGasUsed - mocGasUsed;
-            uint256 percentage = (diff * 10000) / uniGasUsed;
-            console2.log("MoC uses less gas by %d.%d%", percentage / 100, percentage % 100);
-        } else {
-            console2.log("Both methods use the same amount of gas");
-        }
-        
-        uint256 mocGasCostRbtc = mocGasUsed * tx.gasprice;
-        uint256 uniGasCostRbtc = uniGasUsed * tx.gasprice;
-        if (mocGasCostRbtc > uniGasCostRbtc) {
-            console2.log("MoC is more gas-expensive by: %s rBTC (%d sats, %s USD)", 
-                _formatRbtc(mocGasCostRbtc - uniGasCostRbtc), 
-                _weiToSats(mocGasCostRbtc - uniGasCostRbtc), 
-                _formatUsd(mocGasCostRbtc - uniGasCostRbtc, btcPrice));
-        } else {
-            console2.log("Uniswap is more gas-expensive by: %s rBTC (%d sats, %s USD)", 
-                _formatRbtc(uniGasCostRbtc - mocGasCostRbtc), 
-                _weiToSats(uniGasCostRbtc - mocGasCostRbtc), 
-                _formatUsd(uniGasCostRbtc - mocGasCostRbtc, btcPrice));
-        }
     }
 } 
