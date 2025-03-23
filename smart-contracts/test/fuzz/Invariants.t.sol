@@ -58,7 +58,7 @@ contract InvariantTest is StdInvariant, Test {
         address docHandlerAddress;
         (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployer.run();
         docHandlerMoc = TropykusDocHandlerMoc(payable(docHandlerAddress));
-        (address docTokenAddress, address mocProxyAddress, address kDocToken, address iSusdToken) =
+        (address docTokenAddress, address mocProxyAddress, address kDocToken, ) =
             helperConfig.activeNetworkConfig();
         mockDocToken = MockDocToken(docTokenAddress);
         mockKdocToken = MockKdocToken(kDocToken);
