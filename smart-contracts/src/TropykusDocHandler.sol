@@ -21,7 +21,6 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     //////////////////////
     // State variables ///
     //////////////////////
-    // IERC20 public immutable i_docToken;
     IkDocToken public immutable i_kDocToken;
     mapping(address user => uint256 balance) internal s_kDocBalances;
     uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
@@ -146,10 +145,18 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
             docToRedeem = _lendingTokenToDoc(kDocToRepay, exchangeRate);
         }
         s_kDocBalances[user] -= kDocToRepay;
+        
+        // Store DOC balance before redemption
+        uint256 docBalanceBefore = i_stableToken.balanceOf(address(this));
+        
         uint256 result = i_kDocToken.redeemUnderlying(docToRedeem);
-        if (result == 0) emit TokenLending__SuccessfulDocRedemption(user, docToRedeem, kDocToRepay);
+        if (result == 0) {
+            uint256 docBalanceAfter = i_stableToken.balanceOf(address(this));
+            uint256 docRedeemed = docBalanceAfter - docBalanceBefore;
+            emit TokenLending__SuccessfulDocRedemption(user, docRedeemed, kDocToRepay);
+            return docRedeemed;
+        }
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
-        return docToRedeem;
     }
 
     function _burnKdoc(address user, uint256 docToRedeem, uint256 exchangeRate)
@@ -193,8 +200,18 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
             s_kDocBalances[users[i]] -= usersRepayedKdoc;
             emit TokenLending__DocRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
         }
+        
+        // Store DOC balance before redemption
+        uint256 docBalanceBefore = i_stableToken.balanceOf(address(this));
+        
         uint256 result = i_kDocToken.redeemUnderlying(totalDocToRedeem);
-        if (result == 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totalKdocToRepay);
+        if (result == 0) {
+            uint256 docBalanceAfter = i_stableToken.balanceOf(address(this));
+            uint256 docRedeemed = docBalanceAfter - docBalanceBefore;
+            
+            emit TokenLending__SuccessfulBatchDocRedemption(docRedeemed, totalKdocToRepay);
+            return docRedeemed;
+        }
         else revert TokenLending__BatchRedeemDocFailed();
     }
 }

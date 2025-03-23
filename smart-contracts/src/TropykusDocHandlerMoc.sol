@@ -71,6 +71,6 @@ contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
         returns (uint256)
     {
         // Call TropykusDocHandler's version of _batchRedeemDoc
-        TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        return TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }
