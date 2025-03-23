@@ -223,7 +223,7 @@ abstract contract PurchaseUniswap is
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = 0; // (docAmountToSpend * PRECISION * 920) / (1000 * i_MocOracle.getPrice()); // TODO: DOUBLE-CHECK MATH!!!
+        minimumRbtcAmount = (docAmountToSpend * PRECISION * 0) / (100 * i_MocOracle.getPrice()); // (docAmountToSpend * PRECISION * 98) / (100 * i_MocOracle.getPrice()); // TODO: Should we make the slippage a parameter?
     }
 
     // Define abstract functions to be implemented by child contracts
