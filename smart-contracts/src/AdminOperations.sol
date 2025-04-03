@@ -71,11 +71,27 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     }
 
     /**
+     * @dev Revokes the swapper role from an address.
+     * @param swapper The address to revoke the swapper role from.
+     */
+    function revokeSwapperRole(address swapper) external onlyRole(ADMIN_ROLE) {
+        _revokeRole(SWAPPER_ROLE, swapper);
+    }
+
+    /**
      * @dev Assigns a new address to the admin role.
      * @param admin The admin address.
      */
     function setAdminRole(address admin) external onlyOwner {
         _grantRole(ADMIN_ROLE, admin);
+    }
+
+    /**
+     * @dev Revokes the admin role from an address.
+     * @param admin The address to revoke the admin role from.
+     */
+    function revokeAdminRole(address admin) external onlyOwner {
+        _revokeRole(ADMIN_ROLE, admin);
     }
 
     /**
@@ -122,23 +138,6 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     }
 
     /**
-     * @param index The index of the lending protocol in lower case
-     * @return Whether the token is lent in any lending protocol
-     */
-    // function tokenIsLent(uint256 index) external view returns (bool) {
-    //     return bytes(s_protocolNames[index]).length != 0;
-    // }
-
-    /**
-     * @dev Retrieves the swapper for a given token.
-     * @param token The address of the token.
-     * @return The swapper address for the given token. If address(0) is returned, the token has no assigned swapper.
-     */
-    // function getSwapper(address token) public view returns (address) {
-    //     return s_swapper[token];
-    // }
-
-    /**
      * @dev Encodes the token and lending protocol
      * @param token The address of the token.
      * @param lendingProtocolIndex The name of the lending protocol (empty string if token will not be lent)
@@ -146,9 +145,4 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     function _encodeKey(address token, uint256 lendingProtocolIndex) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(token, lendingProtocolIndex));
     }
-
-    // function supportsFunction(address contractAddress, bytes4 functionSignature) public view returns (bool) {
-    //     (bool success, bytes memory data) = contractAddress.staticcall(abi.encodeWithSelector(functionSignature));
-    //     return success && data.length > 0;  // success será true si la función existe y no revierte
-    // }
 }
