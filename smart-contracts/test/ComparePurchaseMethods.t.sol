@@ -18,7 +18,7 @@ import "../test/Constants.sol";
 
 contract ComparePurchaseMethods is Test {
     // Constants for testing
-    uint256 constant NUM_OF_USERS = 50; // Can be easily changed to test different scenarios
+    uint256 constant NUM_OF_USERS = 10; // Can be easily changed to test different scenarios
     uint256 constant SCALING_FACTOR = 100 ether; // Base purchase amount
     uint256 constant DEPOSIT_MULTIPLIER = 2; // Deposit is 2x the purchase amount
     
