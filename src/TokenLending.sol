@@ -27,8 +27,12 @@ abstract contract TokenLending is ITokenLending {
     //////////////////////////////////////////////////////////////*/
     // Define abstract functions to be implemented by child contracts
 
-    // function _redeemDoc(address buyer, uint256 amount) internal virtual;
-
+    /**
+     * @notice convert DOC to lending token
+     * @param docAmount: the amount of DOC to convert
+     * @param exchangeRate: the exchange rate of DOC to lending token
+     * @return lendingTokenAmount: the amount of lending token
+     */
     function _docToLendingToken(uint256 docAmount, uint256 exchangeRate)
         internal
         view
@@ -39,6 +43,12 @@ abstract contract TokenLending is ITokenLending {
         lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate);
     }
 
+    /**
+     * @notice convert lending token to DOC
+     * @param lendingTokenAmount: the amount of lending token to convert
+     * @param exchangeRate: the exchange rate of lending token to DOC
+     * @return docAmount: the amount of DOC
+     */
     function _lendingTokenToDoc(uint256 lendingTokenAmount, uint256 exchangeRate)
         internal
         view

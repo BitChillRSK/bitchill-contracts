@@ -9,19 +9,17 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TokenLending} from "src/TokenLending.sol";
-import {Test, console} from "forge-std/Test.sol";
+
 /**
  * @title SovrynDocHandler
  * @notice This abstract contract contains the DOC related functions that are common regardless of the method used to swap DOC for rBTC
  */
-
 abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLending {
     using SafeERC20 for IERC20;
 
     //////////////////////
     // State variables ///
     //////////////////////
-    // IERC20 public immutable i_docToken;
     IiSusdToken public immutable i_iSusdToken;
     mapping(address user => uint256 balance) internal s_iSusdBalances;
     uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
@@ -93,10 +91,20 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         super.withdrawToken(user, withdrawalAmount);
     }
 
+    /**
+     * @notice get the users lending token balance
+     * @param user: the address of the user
+     * @return the users lending token balance
+     */
     function getUsersLendingTokenBalance(address user) external view override returns (uint256) {
         return s_iSusdBalances[user];
     }
 
+    /**
+     * @notice withdraw the interest
+     * @param user: the address of the user
+     * @param docLockedInDcaSchedules: the amount of DOC locked in DCA schedules
+     */
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_iSusdToken.tokenPrice();
         uint256 totalDocInLending = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
@@ -104,17 +112,15 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
             return; // No interest to withdraw
         }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        // uint256 iSusdToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
         _redeemDoc(user, docInterestAmount, exchangeRate, user);
-        // s_iSusdBalances[user] -= iSusdToRepay;
-        // uint256 docRedeemed = i_iSusdToken.burn(user, iSusdToRepay);
-        // if (docRedeemed == 0) revert SovrynDocLending__RedeemUnderlyingFailed();
-        // emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, iSusdToRepay);
-
-        // bool transferSuccess = i_docToken.safeTransfer(user, docInterestAmount);
-        // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);
     }
 
+    /**
+     * @notice get the accrued interest
+     * @param user: the address of the user
+     * @param docLockedInDcaSchedules: the amount of DOC locked in DCA schedules
+     * @return docInterestAmount the amount of accrued interest
+     */
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
         external
         view
@@ -129,15 +135,37 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice redeem DOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _redeemDoc(address user, uint256 docToRedeem) internal virtual returns (uint256) {
         // For buyRbtc(), we want the DOC to come to the contract
         return _redeemDoc(user, docToRedeem, i_iSusdToken.tokenPrice(), address(this));
     }
 
+    /**
+     * @notice redeem DOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @param exchangeRate: the exchange rate of DOC to rBTC
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
         return _redeemDoc(user, docToRedeem, exchangeRate, address(this));
     }
 
+    /**
+     * @notice redeem DOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @param exchangeRate: the exchange rate of DOC to rBTC
+     * @param docRecipient: the address of the recipient of the DOC
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate, address docRecipient)
         internal
         virtual
@@ -145,24 +173,24 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _docToLendingToken(docToRedeem, exchangeRate);
-        console.log("usersIsusdBalance:", usersIsusdBalance);
-        console.log("iSusd to repay:", iSusdToRepay);
         if (iSusdToRepay > usersIsusdBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
             iSusdToRepay = usersIsusdBalance;
         }
-        console.log("iSusd to repay:", iSusdToRepay);
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(docRecipient, iSusdToRepay);
-        console.log("DOC redeemed:", docRedeemed);
-        // if (docRedeemed < docToRedeem) revert SovrynDocLending__RedeemUnderlyingFailed();
-        // @notice If a withdrawal is done right after the funds have been deposited, 1 wei less is obtained, so this check made the tx revert
-        // From now on, we'll trust that Sovryn returns the correct amount of DOC
         if (docRedeemed == 0) revert SovrynDocLending__RedeemUnderlyingFailed();
         emit TokenLending__SuccessfulDocRedemption(user, docRedeemed, iSusdToRepay);
         return docRedeemed;
     }
 
+    /**
+     * @notice batch redeem DOC
+     * @param users: the addresses of the users
+     * @param purchaseAmounts: the amounts of DOC to redeem
+     * @param totalDocToRedeem: the total amount of DOC to redeem
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
         virtual
@@ -185,7 +213,6 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         uint256 docRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
         if (docRedeemed > 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
         else revert SovrynDocLending__RedeemUnderlyingFailed();
-        console.log("DOC redeemed (SovrynDocHandler.sol)", docRedeemed);
         return docRedeemed;
     }
 }

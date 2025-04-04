@@ -188,7 +188,6 @@ contract InvariantTest is StdInvariant, Test {
     //     rbtcDca.ownerGetUsersDcaDetails(USER);
     //     vm.prank(OWNER);
     //     rbtcDca.getUsers();
-    //     rbtcDca.getTotalNumberOfDeposits();
     // }
 
     function removeDuplicates(address[] memory arr) public pure returns (address[] memory) {

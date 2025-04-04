@@ -12,7 +12,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
  * @title AdminOperations
  * @dev Contract to manage administrative tasks and token handlers
  */
-contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , InterfaceChecker */ {
+contract AdminOperations is IAdminOperations, Ownable, AccessControl {
     using Address for address;
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
@@ -22,18 +22,13 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl /* , Interf
     bytes32 public constant SWAPPER_ROLE = keccak256("SWAPPER");
 
     mapping(bytes32 tokenProtocolHash => address tokenHandlerContract) private s_tokenHandler;
-    // mapping(address token => address swapper) private s_swapper;
-    // mapping(address token => string[] protocols) private s_tokenProtocols; // Doesn't seem like we'll need this - TODO: check!
     mapping(string lowerCaseProtocolName => uint256 protocolIndex) private s_protocolIndexes;
     mapping(uint256 protocolIndex => string lowerCaseProtocolName) private s_protocolNames;
     // No lending -> 0
     // "tropykus" -> 1
     // "sovryn" -> 2
 
-    constructor() Ownable() {
-        // _grantRole(ADMIN_ROLE, msg.sender);
-        // _grantRole(SWAPPER_ROLE, msg.sender);
-    }
+    constructor() Ownable() {}
 
     /**
      * @dev Assigns a new TokenHandler to a token.

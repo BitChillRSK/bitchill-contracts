@@ -90,6 +90,37 @@ contract AdminOperationsTest is DcaDappTest {
         assert(adminOperations.hasRole(adminOperations.SWAPPER_ROLE(), address(2)));
     }
 
+    function testRevokeAdminRole() external {
+        vm.prank(OWNER);
+        adminOperations.revokeAdminRole(ADMIN);
+        assertFalse(adminOperations.hasRole(adminOperations.ADMIN_ROLE(), ADMIN));
+    }
+
+    function testRevokeSwapperRole() external {
+        vm.prank(ADMIN);
+        adminOperations.revokeSwapperRole(SWAPPER);
+        assertFalse(adminOperations.hasRole(adminOperations.SWAPPER_ROLE(), address(2)));
+    }
+
+    function testRevokeAdminRoleFailsIfNotOwner() external {
+        // Try to revoke as non-owner
+        vm.prank(ADMIN);
+        vm.expectRevert("Ownable: caller is not the owner");
+        adminOperations.revokeAdminRole(ADMIN);
+    }
+
+    function testRevokeSwapperRoleFailsIfNotAdmin() external {
+        // First set up a swapper
+        vm.prank(ADMIN);
+        adminOperations.setSwapperRole(address(2));
+        assert(adminOperations.hasRole(adminOperations.SWAPPER_ROLE(), address(2)));
+
+        // Try to revoke as non-admin
+        vm.prank(address(3));
+        vm.expectRevert();
+        adminOperations.revokeSwapperRole(address(2));
+    }
+
     function testAssignTokenHandlerFailsIfLendingProtocolNotAdded() external {
         bytes memory encodedRevert =
             abi.encodeWithSelector(IAdminOperations.AdminOperations__LendingProtocolNotAllowed.selector, 3);

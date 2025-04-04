@@ -15,6 +15,10 @@ abstract contract DcaManagerAccessControl is IDcaManagerAccessControl {
         _;
     }
 
+    /**
+     * @notice constructor for the DcaManagerAccessControl contract
+     * @param dcaManagerAddress: the address of the DCA manager contract
+     */
     constructor(address dcaManagerAddress) {
         i_dcaManager = dcaManagerAddress;
     }

@@ -65,21 +65,6 @@ contract MocHelperConfig is Script {
     }
 
     function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
-        // if (lendingProtocolIsTropykus) {
-        //     RootstockMainnetNetworkConfig = NetworkConfig({
-        //         docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
-        //         mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
-        //         lendingTokenAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2 // Address of the kDOC proxy contract in Rootstock mainnet
-        //     });
-        // } else if (lendingProtocolIsSovryn) {
-        //     RootstockMainnetNetworkConfig = NetworkConfig({
-        //         docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
-        //         mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock mainnet
-        //         lendingTokenAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1 // Address of the iSUSD proxy contract in Rootstock mainnet
-        //     });
-        // } else {
-        //     revert("Invalid lending protocol");
-        // }
         RootstockMainnetNetworkConfig = NetworkConfig({
             docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock testnet
             mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370, // Address of the MoC proxy contract in Rootstock testnet

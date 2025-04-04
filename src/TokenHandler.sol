@@ -29,7 +29,7 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
         address feeCollector,
         FeeSettings memory feeSettings
     ) FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress) {
-        i_stableToken = IERC20(tokenAddress); // TODO: remove this parameter!! (can't remember why, potentially: TODO remove comment)
+        i_stableToken = IERC20(tokenAddress);
         s_minPurchaseAmount = minPurchaseAmount;
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
@@ -62,6 +62,7 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
     /**
      * @notice withdraw some or all of the DOC previously deposited
      * @notice This function transfers DOC from this contract back to the user
+     * @param user: the address of the user making the withdrawal
      * @param withdrawalAmount: the amount of DOC to withdraw
      */
     function withdrawToken(address user, uint256 withdrawalAmount) public virtual override onlyDcaManager {
@@ -69,10 +70,19 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
         emit TokenHandler__TokenWithdrawn(address(i_stableToken), user, withdrawalAmount);
     }
 
+    /**
+     * @notice check if the contract supports an interface
+     * @param interfaceID: the interface ID to check
+     * @return true if the contract supports the interface, false otherwise
+     */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == type(ITokenHandler).interfaceId || super.supportsInterface(interfaceID);
     }
 
+    /**
+     * @notice modify the minimum purchase amount
+     * @param minPurchaseAmount: the new minimum purchase amount
+     */
     function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
         s_minPurchaseAmount = minPurchaseAmount;
     }
@@ -81,6 +91,10 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
                                 GETTERS
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice get the minimum purchase amount
+     * @return the minimum purchase amount
+     */
     function getMinPurchaseAmount() external view returns (uint256) {
         return s_minPurchaseAmount;
     }

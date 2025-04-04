@@ -41,8 +41,7 @@ contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
             feeCollector,
             feeSettings
         )
-        /*dcaManagerAddress, */
-        PurchaseMoc(docTokenAddress, mocProxyAddress /*, feeSettings*/ )
+        PurchaseMoc(docTokenAddress, mocProxyAddress)
     {}
 
     /**

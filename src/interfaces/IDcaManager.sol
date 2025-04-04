@@ -237,7 +237,7 @@ interface IDcaManager {
     function getAdminOperationsAddress() external view returns (address);
     function getUsersDepositedTokens(address user) external view returns (address[] memory);
     function getUsers() external view returns (address[] memory);
-    function getTotalNumberOfDeposits() external view returns (uint256);
+    function getAllTimeUserCount() external view returns (uint256);
     function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
         external
         returns (uint256);

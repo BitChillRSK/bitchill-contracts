@@ -20,19 +20,8 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     // State variables ///
     //////////////////////
     IERC20 public immutable i_docToken;
-    IMocProxy public immutable i_mocProxy; // TODO: Make immutable again after adapting everything to 0.8.19?
-    // address public immutable i_dcaManager; // The DCA manager contract
+    IMocProxy public immutable i_mocProxy;
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
-
-    // TODO: SEE WHAT TO DO WITH THIS MODIFIER
-
-    //////////////////////
-    // Modifiers /////////
-    //////////////////////
-    // modifier onlyDcaManager() {
-    //     if (msg.sender != i_dcaManager) revert( /* TokenHandler__OnlyDcaManagerCanCall*/ );
-    //     _;
-    // }
 
     /**
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
@@ -41,17 +30,12 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
      * @param mocProxyAddress the address of the MoC proxy contract on the blockchain of deployment
      */
     constructor(
-        // address dcaManagerAddress,
         address docTokenAddress,
-        // address feeCollector,
         address mocProxyAddress
-    ) 
-    // FeeSettings memory feeSettings
-    /*FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress)*/
+    )
     {
         i_mocProxy = IMocProxy(mocProxyAddress);
         i_docToken = IERC20(docTokenAddress);
-        // i_dcaManager = dcaManagerAddress;
     }
 
     /**
@@ -87,6 +71,13 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         }
     }
 
+    /**
+     * @notice batch buy rBTC
+     * @param buyers: the users on behalf of which the contract is making the rBTC purchase
+     * @param scheduleIds: the schedule ids
+     * @param purchaseAmounts: the amounts to spend on rBTC
+     * @param purchasePeriods: the periods between purchases
+     */
     function batchBuyRbtc(
         address[] memory buyers,
         bytes32[] memory scheduleIds,
@@ -129,6 +120,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     /**
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      * @notice anyone can pay for the transaction to have the rBTC sent to the user
+     * @param user: the user to withdraw the rBTC to
      */
     function withdrawAccumulatedRbtc(address user) external virtual override {
         uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
@@ -141,6 +133,10 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         emit PurchaseRbtc__rBtcWithdrawn(user, rbtcBalance);
     }
 
+    /**
+     * @notice get the accumulated rBTC balance
+     * @return the accumulated rBTC balance
+     */
     function getAccumulatedRbtcBalance() external view override returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
     }
@@ -175,10 +171,4 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         internal
         virtual
         returns (uint256);
-
-    // function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-    //     internal
-    //     view
-    //     virtual
-    //     returns (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend);
 }

@@ -90,10 +90,20 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         super.withdrawToken(user, withdrawalAmount);
     }
 
+    /**
+     * @notice get the users lending token balance
+     * @param user: the address of the user
+     * @return the users lending token balance
+     */
     function getUsersLendingTokenBalance(address user) external view override returns (uint256) {
         return s_kDocBalances[user];
     }
 
+    /**
+     * @notice withdraw the interest
+     * @param user: the address of the user
+     * @param docLockedInDcaSchedules: the amount of DOC locked in DCA schedules
+     */
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_kDocToken.exchangeRateCurrent();
         uint256 totalDocInLending = _lendingTokenToDoc(s_kDocBalances[user], exchangeRate);
@@ -101,21 +111,9 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
             return; // No interest to withdraw
         }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        // uint256 kDocToRepay = _docToLendingToken(docInterestAmount, exchangeRate);
-
-        // _redeemDoc(user, docInterestAmount, exchangeRate);
         uint256 docRedeemed = _burnKdoc(user, docInterestAmount, exchangeRate);
-
-        // s_kDocBalances[user] -= kDocToRepay;
-        // uint256 result = i_kDocToken.redeemUnderlying(docInterestAmount);
-        // if (result == 0) emit TokenLending__SuccessfulInterestWithdrawal(user, docInterestAmount, kDocToRepay);
-        // else revert TropykusDocLending__RedeemUnderlyingFailed(result);
-
-        // i_stableToken.safeTransfer(user, docInterestAmount);
+        
         i_stableToken.safeTransfer(user, docRedeemed);
-
-        // bool transferSuccess = i_stableToken.safeTransfer(user, docInterestAmount);
-        // if (!transferSuccess) revert TokenLending__InterestWithdrawalFailed(user, docInterestAmount);
     }
 
     function getAccruedInterest(address user, uint256 docLockedInDcaSchedules)
@@ -132,10 +130,24 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice redeem DOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _redeemDoc(address user, uint256 docToRedeem) internal virtual returns (uint256) {
         return _redeemDoc(user, docToRedeem, i_kDocToken.exchangeRateCurrent());
     }
 
+    /**
+     * @notice redeem DOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @param exchangeRate: the exchange rate of DOC to lending token
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
         uint256 usersKdocBalance = s_kDocBalances[user];
         uint256 kDocToRepay = _docToLendingToken(docToRedeem, exchangeRate);
@@ -159,6 +171,13 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         else revert TropykusDocLending__RedeemUnderlyingFailed(result);
     }
 
+    /**
+     * @notice burn kDOC
+     * @param user: the address of the user
+     * @param docToRedeem: the amount of DOC to redeem
+     * @param exchangeRate: the exchange rate of DOC to lending token
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _burnKdoc(address user, uint256 docToRedeem, uint256 exchangeRate)
         internal
         returns (uint256 docRedeemed)
@@ -182,6 +201,13 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         }
     }
 
+    /**
+     * @notice batch redeem DOC
+     * @param users: the addresses of the users
+     * @param purchaseAmounts: the amounts of DOC to redeem
+     * @param totalDocToRedeem: the total amount of DOC to redeem
+     * @return docRedeemed: the amount of DOC redeemed
+     */
     function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
         virtual

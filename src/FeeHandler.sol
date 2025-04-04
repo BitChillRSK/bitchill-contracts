@@ -23,7 +23,6 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
     uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
-    // address public immutable i_stableToken; // The stablecoin token to be deposited
 
     constructor(address feeCollector, FeeSettings memory feeSettings) Ownable() {
         s_feeCollector = feeCollector;
@@ -37,6 +36,13 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    /**
+     * @notice set the fee rate parameters
+     * @param minFeeRate: the minimum fee rate
+     * @param maxFeeRate: the maximum fee rate
+     * @param minAnnualAmount: the minimum annual amount
+     * @param maxAnnualAmount: the maximum annual amount
+     */
     function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
         external
         override
@@ -48,26 +54,46 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         if (s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount);
     }
 
+    /**
+     * @notice set the minimum fee rate
+     * @param minFeeRate: the minimum fee rate
+     */
     function setMinFeeRate(uint256 minFeeRate) public override onlyOwner {
         s_minFeeRate = minFeeRate;
         emit FeeHandler__MinFeeRateSet(minFeeRate);
     }
 
+    /**
+     * @notice set the maximum fee rate
+     * @param maxFeeRate: the maximum fee rate
+     */
     function setMaxFeeRate(uint256 maxFeeRate) public override onlyOwner {
         s_maxFeeRate = maxFeeRate;
         emit FeeHandler__MaxFeeRateSet(maxFeeRate);
     }
 
+    /**
+     * @notice set the minimum annual amount
+     * @param minAnnualAmount: the minimum annual amount
+     */
     function setMinAnnualAmount(uint256 minAnnualAmount) public override onlyOwner {
         s_minAnnualAmount = minAnnualAmount;
         emit FeeHandler__MinAnnualAmountSet(minAnnualAmount);
     }
 
+    /**
+     * @notice set the maximum annual amount
+     * @param maxAnnualAmount: the maximum annual amount
+     */
     function setMaxAnnualAmount(uint256 maxAnnualAmount) public override onlyOwner {
         s_maxAnnualAmount = maxAnnualAmount;
         emit FeeHandler__MaxAnnualAmountSet(maxAnnualAmount);
     }
 
+    /**
+     * @notice set the fee collector address
+     * @param feeCollector: the fee collector address
+     */
     function setFeeCollectorAddress(address feeCollector) external override onlyOwner {
         s_feeCollector = feeCollector;
         emit FeeHandler__FeeCollectorAddress(feeCollector);
@@ -76,22 +102,43 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     /*//////////////////////////////////////////////////////////////
                                 GETTERS
     //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @notice get the minimum fee rate
+     * @return the minimum fee rate
+     */
     function getMinFeeRate() public view override returns (uint256) {
         return s_minFeeRate;
     }
 
+    /**
+     * @notice get the maximum fee rate
+     * @return the maximum fee rate
+     */ 
     function getMaxFeeRate() public view override returns (uint256) {
         return s_maxFeeRate;
     }
 
+    /**
+     * @notice get the minimum annual amount
+     * @return the minimum annual amount
+     */     
     function getMinAnnualAmount() public view override returns (uint256) {
         return s_minAnnualAmount;
     }
 
+    /**
+     * @notice get the maximum annual amount
+     * @return the maximum annual amount
+     */
     function getMaxAnnualAmount() public view override returns (uint256) {
         return s_maxAnnualAmount;
     }
 
+    /**
+     * @notice get the fee collector address
+     * @return the fee collector address
+     */
     function getFeeCollectorAddress() external view override returns (address) {
         return s_feeCollector;
     }
@@ -123,6 +170,12 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
+    /**
+     * @notice calculate the fee and net amounts
+     * @param purchaseAmounts: the purchase amounts
+     * @param purchasePeriods: the purchase periods
+     * @return the fee, the net amounts, and the total amount to spend on the rBTC purchase
+     */
     function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
         internal
         view
@@ -141,11 +194,12 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         return (aggregatedFee, netAmountsToSpend, totalAmountToSpend);
     }
 
-    // function transferFee(address feeCollector, uint256 fee) external onlyDcaManager {
+    /**
+     * @notice transfer the fee to the fee collector
+     * @param token: the token to transfer the fee to
+     * @param fee: the fee to transfer
+     */
     function _transferFee(IERC20 token, uint256 fee) internal {
         token.safeTransfer(s_feeCollector, fee);
-
-        // bool feeTransferSuccess = IERC20(i_stableToken).safeTransfer(s_feeCollector, fee);
-        // if (!feeTransferSuccess) revert TokenHandler__FeeTransferFailed(s_feeCollector, i_stableToken, fee);
     }
 }

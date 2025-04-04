@@ -15,7 +15,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
-import {Test, console} from "forge-std/Test.sol";
 
 /**
  * @title PurchaseMoc
@@ -50,8 +49,6 @@ abstract contract PurchaseUniswap is
         address stableTokenAddress, // TODO: modify this to passing the interface
         UniswapSettings memory uniswapSettings
     ) 
-    // FeeSettings memory feeSettings
-    /*FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress)*/
     {
         i_purchasingToken = IERC20(stableTokenAddress);
         i_swapRouter02 = uniswapSettings.swapRouter02;
@@ -96,6 +93,13 @@ abstract contract PurchaseUniswap is
         }
     }
 
+    /**
+     * @notice batch buy rBTC
+     * @param buyers: the users on behalf of which the contract is making the rBTC purchase
+     * @param scheduleIds: the schedule ids
+     * @param purchaseAmounts: the amounts to spend on rBTC
+     * @param purchasePeriods: the periods between purchases
+     */
     function batchBuyRbtc(
         address[] memory buyers,
         bytes32[] memory scheduleIds,
@@ -108,28 +112,12 @@ abstract contract PurchaseUniswap is
         (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) =
             _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
-        console.log(
-            "DOC balance of handler before redeeming DOC",
-            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
-        );
-
         // Redeem DOC (and repay lending token)
         uint256 docRedeemed = _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
         totalDocAmountToSpend = docRedeemed - aggregatedFee;
 
-        console.log("DOC redeemed (PurchaseUniswap.sol)", docRedeemed);
-        console.log(
-            "DOC balance of handler after redeeming DOC",
-            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
-        );
-
         // Charge fees
         _transferFee(i_purchasingToken, aggregatedFee);
-
-        console.log(
-            "DOC balance of handler after transferring fee",
-            i_purchasingToken.balanceOf(0xA8452Ec99ce0C64f20701dB7dD3abDb607c00496)
-        );
 
         // Swap DOC for wrBTC
         uint256 wrBtcPurchased = _swapDocForWrbtc(totalDocAmountToSpend);
@@ -194,6 +182,10 @@ abstract contract PurchaseUniswap is
         emit DexSwaps_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
     }
 
+    /**
+     * @notice get the accumulated rBTC balance
+     * @return the accumulated rBTC balance
+     */
     function getAccumulatedRbtcBalance() external view override returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
     }
@@ -203,14 +195,14 @@ abstract contract PurchaseUniswap is
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @param docAmountToSpend the amount of DOC to swap for BTC
+     * @param docAmountToSpend the amount of DOC to swap for rBTC
+     * @return amountOut the amount of rBTC received
      */
     function _swapDocForWrbtc(uint256 docAmountToSpend) internal returns (uint256 amountOut) {
         // Approve the router to spend DOC.
         TransferHelper.safeApprove(address(i_purchasingToken), address(i_swapRouter02), docAmountToSpend);
 
         // Set up the swap parameters
-        // ISwapRouter02.ExactInputParams memory params = ISwapRouter02.ExactInputParams({
         IV3SwapRouter.ExactInputParams memory params = IV3SwapRouter.ExactInputParams({
             path: s_swapPath,
             recipient: address(this),
@@ -219,7 +211,6 @@ abstract contract PurchaseUniswap is
         });
 
         amountOut = i_swapRouter02.exactInput(params);
-        // amountOut = IV3SwapRouter(address(i_swapRouter02)).exactInput(params);
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
@@ -233,10 +224,4 @@ abstract contract PurchaseUniswap is
         internal
         virtual
         returns (uint256);
-
-    // function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
-    //     internal
-    //     view
-    //     virtual
-    //     returns (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend);
 }
