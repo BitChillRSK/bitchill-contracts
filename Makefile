@@ -1,5 +1,3 @@
-# Makefile
-
 # Variables
 SWAP_TYPE ?= mocSwaps
 TEST_CMD := forge test --no-match-test invariant
@@ -32,6 +30,16 @@ moc-sovryn:
 	@echo "Executing MocSwaps Sovryn tests..."
 	LENDING_PROTOCOL=sovryn $(TEST_CMD)
 
+fork:
+	@echo "Executing fork tests with $(LENDING_PROTOCOL)..."
+	$(TEST_CMD) --fork-url $(RSK_MAINNET_RPC_URL)
+fork-tropykus:
+	@echo "Executing Tropykus fork tests..."
+	LENDING_PROTOCOL=tropykus $(TEST_CMD) --fork-url $(RSK_MAINNET_RPC_URL)
+fork-sovryn:
+	@echo "Executing Sovryn fork tests..."
+	LENDING_PROTOCOL=sovryn $(TEST_CMD) --fork-url $(RSK_MAINNET_RPC_URL)
+
 # DexSwaps specific tests
 dex:
 	@echo "Executing DexSwaps tests..."
@@ -46,6 +54,11 @@ help:
 	@echo "Available targets:"
 	@echo "  make test SWAP_TYPE=mocSwaps   # Run MocSwaps tests"
 	@echo "  make test SWAP_TYPE=dexSwaps   # Run DexSwaps tests"
-	@echo "  make moc                       # Directly run MocSwaps tests"
-	@echo "  make dex                       # Directly run DexSwaps tests"
+	@echo "  make moc                       # Directly run MocSwaps local tests"
+	@echo "  make moc-tropykus              # Run MocSwaps Tropykus local tests"
+	@echo "  make moc-sovryn                # Run MocSwaps Sovryn local tests"
+	@echo "  make dex                       # Directly run DexSwaps local tests"
+	@echo "  make fork                      # Run fork tests"
+	@echo "  make fork-tropykus             # Run Tropykus fork tests"
+	@echo "  make fork-sovryn               # Run Sovryn fork tests"
 	@echo "  make help                      # Show this help message"

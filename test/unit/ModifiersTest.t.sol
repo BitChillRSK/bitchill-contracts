@@ -17,8 +17,6 @@ contract ModifiersTest is DcaDappTest {
     //////////////////////////////////////////////////////////////*/
     function testonlyOwnerCanSetAdminOperations() external {
         address adminOperationsBefore = dcaManager.getAdminOperationsAddress();
-        // bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
-        // vm.expectRevert(encodedRevert);
         vm.expectRevert("Ownable: caller is not the owner"); // Adapt to v4.9.3 Ownable contract
         vm.prank(USER); // User can't
         dcaManager.setAdminOperations(address(dcaManager)); // dummy address, e.g. that of DcaManager
@@ -33,8 +31,6 @@ contract ModifiersTest is DcaDappTest {
     function testonlyOwnerCanModifyMinPurchasePeriod() external {
         uint256 newMinPurchasePeriod = 2 days;
         uint256 minPurchasePeriodBefore = dcaManager.getMinPurchasePeriod();
-        // bytes memory encodedRevert = abi.encodeWithSelector(OwnableUnauthorizedAccount.selector, USER);
-        // vm.expectRevert(encodedRevert);
         vm.expectRevert("Ownable: caller is not the owner"); // Adapt to v4.9.3 Ownable contract
         vm.prank(USER); // User can't
         dcaManager.modifyMinPurchasePeriod(newMinPurchasePeriod); // dummy address, e.g. that of DcaManager

@@ -65,7 +65,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
             if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
-        i_kDocToken.mint(depositAmount);
+        if(i_kDocToken.mint(depositAmount) != 0) revert TokenLending__LendingProtocolDepositFailed();
         uint256 postKdocBalance = i_kDocToken.balanceOf(address(this));
         s_kDocBalances[user] += postKdocBalance - prevKdocBalance;
     }

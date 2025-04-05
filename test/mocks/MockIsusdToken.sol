@@ -26,8 +26,9 @@ contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     function mint(address receiver, uint256 depositAmount) external returns (uint256 mintAmount) {
         require(i_docToken.allowance(msg.sender, address(this)) >= depositAmount, "Insufficient allowance");
         i_docToken.transferFrom(msg.sender, address(this), depositAmount); // Deposit DOC into Tropykus
-        _mint(receiver, depositAmount * DECIMALS / tokenPrice()); //  Mint iSUSD to user that deposited DOC (in our case, the DocHandler contract)
-        return 0;
+        mintAmount = depositAmount * DECIMALS / tokenPrice(); //  Mint iSUSD to user that deposited DOC (in our case, the DocHandler contract)
+        _mint(receiver, mintAmount);
+        return mintAmount;
     }
 
     /**

@@ -12,6 +12,7 @@ interface IiSusdToken {
      *
      * @param depositAmount the amount of DOC to be deposited
      * @param receiver the receiver of iSusdC in return for depositing DOC
+     * @return mintAmount the amount of iSusdC received
      */
     function mint(address receiver, uint256 depositAmount) external returns (uint256 mintAmount);
 

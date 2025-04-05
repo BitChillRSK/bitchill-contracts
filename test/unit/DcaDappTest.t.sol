@@ -357,7 +357,11 @@ contract DcaDappTest is Test {
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
-        vm.expectEmit(true, true, true, true);
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            vm.expectEmit(true, true, true, true);
+        } else {
+            vm.expectEmit(true, true, true, false); // Amounts may not match to the last wei on fork tests
+        }
         emit PurchaseRbtc__RbtcBought(
             USER,
             address(docToken),

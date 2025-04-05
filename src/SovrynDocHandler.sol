@@ -63,10 +63,9 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
             bool approvalSuccess = i_stableToken.approve(address(i_iSusdToken), depositAmount);
             if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
         }
-        uint256 previSusdBalance = i_iSusdToken.balanceOf(address(this));
-        i_iSusdToken.mint(address(this), depositAmount);
-        uint256 postiSusdBalance = i_iSusdToken.balanceOf(address(this));
-        s_iSusdBalances[user] += postiSusdBalance - previSusdBalance;
+        uint256 mintedAmount = i_iSusdToken.mint(address(this), depositAmount);
+        if (mintedAmount == 0) revert TokenLending__LendingProtocolDepositFailed();
+        s_iSusdBalances[user] += mintedAmount;
     }
 
     /**
