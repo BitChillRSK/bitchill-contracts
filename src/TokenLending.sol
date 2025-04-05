@@ -12,20 +12,14 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title TokenLending
+ * @notice Defines functions to convert stablecoin balances to lending token and vice versa
  */
 abstract contract TokenLending is ITokenLending {
-    //////////////////////
-    // State variables ///
-    //////////////////////
-    uint256 immutable i_exchangeRateDecimals; // The minimum amount of this token for periodic purchases
+    uint256 immutable i_exchangeRateDecimals;
 
     constructor(uint256 exchangeRateDecimals) {
         i_exchangeRateDecimals = exchangeRateDecimals;
     }
-    /*//////////////////////////////////////////////////////////////
-                           INTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////*/
-    // Define abstract functions to be implemented by child contracts
 
     /**
      * @notice convert DOC to lending token

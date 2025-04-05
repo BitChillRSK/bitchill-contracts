@@ -11,14 +11,11 @@ import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
 /**
  * @title TokenHandler
- * @dev Base contract for handling various tokens.
+ * @dev Base contract for handling stablecoins.
  */
 abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, DcaManagerAccessControl {
     using SafeERC20 for IERC20;
 
-    //////////////////////
-    // State variables ///
-    //////////////////////
     uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     IERC20 public immutable i_stableToken; // The stablecoin token to be deposited
 

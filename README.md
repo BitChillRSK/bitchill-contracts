@@ -1,110 +1,164 @@
 # BitChill - Smart Contracts
 
 ## Introduction
-BitChill allows users to automate their BTC purchases at regular intervals, providing a disciplined and systematic approach to investing. The protocol supports multiple stablecoins and allows users to create, update, and delete DCA schedules, managing their investments efficiently.
+BitChill is a decentralized protocol that enables users to automate their BTC purchases through Dollar-Cost Averaging (DCA) strategies. The protocol supports the Dollar On Chain stablecoin and Tropykus and Sovryn lending protocols, allowing users to create, update, and delete DCA schedules while potentially earning yield on their deposits.
+
+## Protocol Architecture
+
+### Core Components
+
+1. **DcaManager**
+   - Central contract managing all DCA operations
+   - It is the only contract users shall interact with through BitChill's UI to create, delete or modify their DCA schedules
+   - It is the only contract the CRON job will interact with to trigger the purchases
+   - Keeps track of users' DCA schedules
+   - Implements access control and security checks
+
+2. **Token Handlers**
+   - Base contract: `TokenHandler` abstract contract
+   - Implements core token operations and access control
+   - Stores the stablecoins deposited by the users
+   - Handles deposits and withdrawals of stablecoins
+
+3. **Lending Integration**
+   - `TokenLending` abstract contract
+      - Manages conversion of balances from stablecoins to lending tokens and viceversa
+   - Supports multiple lending protocols (Tropykus, Sovryn)
+   - `TropykusDocHandler` and `SovrynDocHandler`
+      - Implement deposits and withdrawals overriding `TokenHandler` to deposit to and withdraw from lending protocols
+      - Handle withdrawal of accrued interests
+
+4. **Purchase Methods**
+   - `PurchaseMoc`: Direct redemption through Money on Chain
+   - `PurchaseUniswap`: Swaps through Uniswap V3 (currently deprecated)
+   - Both implementations tested and compared for efficiency
+
+### Architecture Design Considerations
+
+The protocol was initially designed with extensibility in mind, supporting multiple purchase methods (MoC and Uniswap). However, after comprehensive testing and analysis, it was determined that:
+
+1. Money on Chain (MoC) provides:
+   - Better gas efficiency overall (slightly worse for small purchases)
+   - More stable pricing
+   - Direct redemption mechanism
+   - No slippage
+
+2. Current Implementation:
+   - Maintains both implementations for future flexibility, since integrating other stablecoins shall require using the Uniswap version. 
+   - Only the MoC version shall be deployed on mainnet for BitChill v1.
+   - Could be optimized by removing the abstraction used to accomodate both methods
+
+### Gas Efficiency Considerations
+
+The current architecture, while extensible, has some gas inefficiencies:
+
+1. Multiple inheritance layers
+2. Redundant code paths for different purchase methods
+
+These are intentional, considering the possibility of adding support for other stablecoins in the future.
 
 ## Features
-1. DCA Schedules
-Users can create, update, and delete DCA schedules. Each schedule defines:
-   - Token: The stablecoin to be used for DCA.
-   - Token balance: The amount of stablecoin to available for DCA on that schedule.
-   - Purchase Amount: The amount of stablecoin to periodically convert to rBTC.
-   - Purchase Period: The interval (in seconds) between each rBTC purchase.
-   - Last purchase timestamp: The timestamp of the most recent purchase.  
-1. Deposits and Withdrawals
-   - Deposit Token: Users can deposit stablecoins into their DCA schedules.
-   - Withdraw Token: Users can withdraw their stablecoins from a DCA schedule.
-   - Withdraw Accumulated rBTC: Users can withdraw the rBTC accumulated through all their DCA strategies.
-   - Withdraw Interest: Users can withdraw the stablecoin interest accrued by their deposits (if applicable).  
-2. Batch Processing
-   - The protocol supports batch processing of rBTC purchases for multiple users, optimizing gas costs and improving efficiency.
-3. Fee Management
-   - Fees are calculated based on the annual spending rate, with a flexible fee rate system to ensure fair charges.
-4. Admin Operations 
-   - Admins can perform several operations, including updating the minimum purchase period and managing the token handler factory.
 
-## Contract Overview
-### DcaManager
-The DcaManager contract manages users' DCA schedules, deposits, withdrawals, and batch processing. Key functions include:
+1. **DCA Schedules**
+   - Create, update, and delete DCA schedules
+   - Multiple schedules per user and token
+   - Configurable purchase amounts and periods
+   - Automatic yield generation on deposits
 
-  - `createDcaSchedule`: Create a new DCA schedule.
-  - `updateDcaSchedule`: Update an existing DCA schedule.
-  - `deleteDcaSchedule`: Delete a DCA schedule and withdraw remaining funds.
-  - `depositToken`: Deposit stablecoins into a DCA schedule.
-  - `withdrawToken`: Withdraw stablecoins from a DCA schedule.
-  - `withdrawRbtcFromTokenHandler`: Withdraw accumulated rBTC from a specific token handler.
-  - `withdrawAllAccumulatedRbtc`: Withdraw all accumulated rBTC across all DCA schedules.
-  - `batchBuyRbtc`: Perform batch rBTC purchases for multiple users.
+2. **Token Management**
+   - Currently only DOC supported
+   - Support for multiple stablecoins
+   - Integration with lending protocols
+   - Interest accrual and withdrawal
+   - Fee management system
 
-### DocTokenHandler
-The DocTokenHandler contract handles the stablecoin (DOC) deposits and manages the minting of kDOC tokens as part of the DCA process. Key functions include:
+3. **Security Features**
+   - Access control for all critical functions
+   - Reentrancy protection
+   - Input validation and error handling
 
-  - `depositToken`: Deposit DOC tokens and mint kDOC.
-  - `buyRbtc`: Convert DOC to rBTC for a single user.
-  - `batchBuyRbtc`: Convert DOC to rBTC for multiple users in a batch process.
+4. **Batch Processing**
+   - Gas-efficient batch purchases
+   - Optimized for multiple users
 
-### AdminOperations
-The AdminOperations contract manages administrative operations such as updating the token handler factory.
+## Security Considerations
 
-## Testing and Security
-The protocol has been thoroughly tested using Foundry, with a focus on ensuring robustness and security. Key invariant tests include:
+### Access Control
+- Role-based access control for all critical functions
+- Owner and admin roles with specific permissions
+- Swapper role for purchase operations
+- DCA manager contract as central authority
 
-  - `invariant_kDocContractDocBalanceEqualsSumOfAllUsers`: Ensures all the DOC deposited in the protocol by users is immediately lent on Tropykus and the amount lent in total equals the balance of all DCA schedules.
+### Reentrancy Protection
+- ReentrancyGuard implementation
+- Checks-Effects-Interactions pattern
+- Safe token transfers using SafeERC20
 
-  - `invariant_DocTokenHandlerRbtcBalanceNearlyEqualsSumOfAllUsers`: Ensures the rBTC balance in the `DocTokenHandler` contract is the same as the sum of all users' purchased rBTC (with a small precision loss due to the charging of fees).
+### Input Validation
+- Comprehensive parameter validation
+- Range checks for amounts and periods
+- Schedule existence verification
+- Balance checks before operations
+
+## Audit Information
+
+### Contract Dependencies
+- Rootstock-compatible compiler version (v0.8.19)
+- OpenZeppelin Contracts v4.9.3
+- Money on Chain Protocol
+
+### Key Security Assumptions
+1. Money on Chain protocol security
+2. Token contract integrity
+3. Lending protocol reliability
+
+### Known Limitations
+1. Gas efficiency trade-offs for extensibility
+2. Potential for future optimization
+3. Dependencies on external protocols
 
 ## Getting Started
 
 ### Prerequisites
-Ensure you have the following installed:
-
 - Rust
 - Foundry
-  
-### Installation
-Clone the repository and install dependencies:
+- Rootstock RPC access
 
+### Installation
 ```bash
 git clone git@github.com:BitChillRSK/DCAdApp.git
 cd DCAdApp
-git checkout smart-contracts
-```
-
-Once cloned, the setup script to initialize the project:
-
-```bash
 ./setup.sh
 ```
 
-This script initializes Git submodules, applies necessary Solidity version compatibility fixes for Rootstock, and builds the project. See [DEPENDENCY_MODIFICATIONS.md](./DEPENDENCY_MODIFICATIONS.md) for details on the modifications.
-
-### Manual Setup
-
-If you prefer to set up manually:
-
-1. Initialize Git submodules: `git submodule init && git submodule update`
-2. Apply compatibility fixes (see DEPENDENCY_MODIFICATIONS.md)
-3. Build the project: `forge build`
-
-### Deployment
-Deploy the contracts using Foundry:
-
+### Testing
 ```bash
-forge script script/DeployContracts.s.sol:DeployContracts --rpc-url  127.0.0.1:8545 --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast
+source .env
+make moc
 ```
 
-### Running Tests
-Run the tests to ensure everything is working correctly:
+## Development Roadmap
 
-```bash
-forge test
-```
+1. **Short Term**
+   - Gas optimization
+   - Code consolidation
+   - Additional test coverage
+
+2. **Medium Term**
+   - New token integrations
+   - Enhanced fee mechanisms
+   - Improved batch processing
+
+3. **Long Term**
+   - Protocol upgrades
+   - Advanced yield strategies
 
 ## Contact
-For any questions or issues, please contact BitChill's [Smart Contract Developer](https://www.linkedin.com/in/antonio-maria-rodriguez-ynyesto-sanchez/).
+For audit-related inquiries or security concerns, please contact:
+- Smart Contract Developer: [Antonio María Rodríguez-Ynyesto Sánchez](https://www.linkedin.com/in/antonio-maria-rodriguez-ynyesto-sanchez/)
 
 ## Disclaimer
-This protocol is unaudited. Use at your own risk. Always perform due diligence before interacting with smart contracts.
+This protocol is currently undergoing security audit. Use at your own risk. Always perform due diligence before interacting with smart contracts.
 
 ## Dependency Management
 
@@ -116,7 +170,3 @@ This project uses Git submodules for dependency management. The following depend
 - Uniswap Swap Router Contracts v1.3.0
 
 Due to Rootstock's requirement for Solidity 0.8.19, we've modified the pragma statements in some dependencies. These modifications are documented in [DEPENDENCY_MODIFICATIONS.md](./DEPENDENCY_MODIFICATIONS.md).
-
-## Development
-
-...

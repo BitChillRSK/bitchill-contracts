@@ -2,7 +2,7 @@
 
 # Variables
 SWAP_TYPE ?= mocSwaps
-FORGE_CMD := forge test --no-match-test invariant
+TEST_CMD := forge test --no-match-test invariant
 
 # Targets
 .PHONY: all test moc dex help
@@ -23,19 +23,19 @@ test:
 
 # MocSwaps specific tests
 moc:
-	@echo "Executing MocSwaps tests..."
-	$(FORGE_CMD)
+	@echo "Executing MocSwaps tests with $(LENDING_PROTOCOL)..."
+	$(TEST_CMD)
 moc-tropykus:
 	@echo "Executing MocSwaps Tropykus tests..."
-	LENDING_PROTOCOL=tropykus $(FORGE_CMD)
+	LENDING_PROTOCOL=tropykus $(TEST_CMD)
 moc-sovryn:
 	@echo "Executing MocSwaps Sovryn tests..."
-	LENDING_PROTOCOL=sovryn $(FORGE_CMD)
+	LENDING_PROTOCOL=sovryn $(TEST_CMD)
 
 # DexSwaps specific tests
 dex:
 	@echo "Executing DexSwaps tests..."
-	$(FORGE_CMD) --no-match-contract MockContractsTest
+	$(TEST_CMD) --no-match-contract MockContractsTest
 
 coverage:
 	@echo "Calculating coverage excluding invariant tests..."
