@@ -22,6 +22,13 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
     uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     IERC20 public immutable i_stableToken; // The stablecoin token to be deposited
 
+    /**
+     * @param dcaManagerAddress: the address of the DCA manager
+     * @param tokenAddress: the address of the token to be deposited
+     * @param minPurchaseAmount: the minimum amount of the token to be deposited
+     * @param feeCollector: the address of the fee collector
+     * @param feeSettings: the fee settings
+     */
     constructor(
         address dcaManagerAddress,
         address tokenAddress,

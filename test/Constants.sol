@@ -2,8 +2,6 @@
 
 pragma solidity ^0.8.19;
 
-// import {Test, console} from "forge-std/Test.sol";
-
 uint256 constant ANVIL_CHAIN_ID = 31337;
 uint256 constant RSK_MAINNET_CHAIN_ID = 30;
 uint256 constant RSK_TESTNET_CHAIN_ID = 31;
@@ -24,5 +22,3 @@ uint256 constant MAX_ANNUAL_AMOUNT = 100_000 ether; // 100,000 DOC
 uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000;
 uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
 uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
-
-// uint256 constant DOC_BALANCES_SLOT = 4;

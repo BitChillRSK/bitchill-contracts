@@ -19,11 +19,6 @@ contract MockWrbtcToken {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    // function deposit() public payable {
-    //     balanceOf[msg.sender] += msg.value;
-    //     emit Deposit(msg.sender, msg.value);
-    // }
-
     function deposit(address depositor) public payable {
         balanceOf[depositor] += msg.value;
         emit Deposit(depositor, msg.value);

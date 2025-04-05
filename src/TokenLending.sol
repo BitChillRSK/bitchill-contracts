@@ -31,7 +31,7 @@ abstract contract TokenLending is ITokenLending {
      * @notice convert DOC to lending token
      * @param docAmount: the amount of DOC to convert
      * @param exchangeRate: the exchange rate of DOC to lending token
-     * @return lendingTokenAmount: the amount of lending token
+     * @return lendingTokenAmount the amount of lending token
      */
     function _docToLendingToken(uint256 docAmount, uint256 exchangeRate)
         internal
@@ -47,7 +47,7 @@ abstract contract TokenLending is ITokenLending {
      * @notice convert lending token to DOC
      * @param lendingTokenAmount: the amount of lending token to convert
      * @param exchangeRate: the exchange rate of lending token to DOC
-     * @return docAmount: the amount of DOC
+     * @return docAmount the amount of DOC
      */
     function _lendingTokenToDoc(uint256 lendingTokenAmount, uint256 exchangeRate)
         internal

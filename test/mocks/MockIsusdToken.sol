@@ -13,7 +13,6 @@ import {console} from "forge-std/Test.sol";
 contract MockIsusdToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     IDocToken immutable i_docToken;
     uint256 constant DECIMALS = 1e18;
-    // uint256 constant STARTING_EXCHANGE_RATE = 50;
     uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 iSUSD tokens, each iSUSD token redeems 0.02 DOC tokens
     uint256 immutable i_deploymentTimestamp;
     uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each iSUSD token increase by 5% annually (mocking behaviour)

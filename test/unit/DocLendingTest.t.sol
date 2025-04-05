@@ -15,9 +15,9 @@ contract DocLendingTest is DcaDappTest {
         super.setUp();
     }
 
-    ////////////////////////////
-    ///// DOC Lending tests ////
-    ////////////////////////////
+    /////////////////////////////
+    ///// DOC Lending tests /////
+    /////////////////////////////
     function testDepositedDocIsLent() external {
         console.log("lending token:", address(lendingToken));
         uint256 ltDocBalanceBeforeDeposit = docToken.balanceOf(address(lendingToken));
@@ -208,9 +208,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days); // Jump to 10 days in the future (for example) so that some interest has been generated.
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
-        // }
 
         uint256 withdrawableInterest =
             dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
@@ -242,9 +240,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days); // Jump to 10 days into the future (for example) so that some interest has been generated.t has been generated.
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
-        // }
 
         uint256 withdrawableInterestBeforeWithdrawal =
             dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);
@@ -268,9 +264,7 @@ contract DocLendingTest is DcaDappTest {
         vm.warp(block.timestamp + 10 days);
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
-        // if (block.chainid != ANVIL_CHAIN_ID && s_lendingProtocolIndex == TROPYKUS_INDEX) {
         updateExchangeRate(10);
-        // }
 
         uint256 withdrawableInterest =
             dcaManager.getInterestAccruedByUser(USER, address(docToken), s_lendingProtocolIndex);

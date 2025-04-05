@@ -40,6 +40,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
 
     /**
      * @param buyer: the user on behalf of which the contract is making the rBTC purchase
+     * @param scheduleId: the schedule id
      * @param purchaseAmount: the amount to spend on rBTC
      * @param purchasePeriod: the period between purchases
      * @notice this function will be called periodically through a CRON job running on a web server
@@ -154,7 +155,6 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         catch {
             revert PurchaseRbtc__RedeemDocRequestFailed();
         }
-        // i_mocProxy.redeemDocRequest(docAmountToSpend);
         uint256 balancePrev = address(this).balance;
         try i_mocProxy.redeemFreeDoc(docAmountToSpend) {}
         catch {

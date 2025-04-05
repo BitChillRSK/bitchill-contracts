@@ -18,6 +18,7 @@ import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
  * @title TropykusDocHandlerDex
+ * @notice This contract handles swaps of DOC for rBTC using Uniswap V3
  */
 contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
     using SafeERC20 for IERC20;

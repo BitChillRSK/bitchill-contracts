@@ -10,7 +10,7 @@ import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
 import "../Constants.sol";
 
-contract DocHandlerMocTest is DcaDappTest {
+contract DocHandlerTest is DcaDappTest {
     function setUp() public override {
         super.setUp();
     }

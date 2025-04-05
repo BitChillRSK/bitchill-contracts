@@ -176,7 +176,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
      * @param user: the address of the user
      * @param docToRedeem: the amount of DOC to redeem
      * @param exchangeRate: the exchange rate of DOC to lending token
-     * @return docRedeemed: the amount of DOC redeemed
+     * @return docRedeemed the amount of DOC redeemed
      */
     function _burnKdoc(address user, uint256 docToRedeem, uint256 exchangeRate)
         internal

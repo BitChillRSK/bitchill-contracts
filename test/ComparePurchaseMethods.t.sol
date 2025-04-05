@@ -62,6 +62,9 @@ contract ComparePurchaseMethods is Test {
     uint256 btcPrice;
 
     function setUp() public {
+        if (block.chainid != RSK_MAINNET_CHAIN_ID) {
+            return;
+        }
         console2.log("Setting up comparison test with %d users", NUM_OF_USERS);
         
         // Initialize arrays for users and amounts
@@ -197,6 +200,9 @@ contract ComparePurchaseMethods is Test {
     }
     
     function testCompareIndividualPurchases() public {
+        if (block.chainid != RSK_MAINNET_CHAIN_ID) {
+            return;
+        }
         console2.log("\n=== TESTING INDIVIDUAL PURCHASES ===");
         
         // Execute individual purchases for both MoC and Uniswap
@@ -222,6 +228,10 @@ contract ComparePurchaseMethods is Test {
     }
     
     function testCompareBatchPurchases() public {
+        if (block.chainid != RSK_MAINNET_CHAIN_ID) {
+            return;
+        }
+
         console2.log("\n=== TESTING BATCH PURCHASES ===");
         
         // Execute batch purchases for both MoC and Uniswap
@@ -248,6 +258,10 @@ contract ComparePurchaseMethods is Test {
     
     // For completeness, we can also have a combined test that runs both and compares them
     function testCompareAllMethods() public {
+        if (block.chainid != RSK_MAINNET_CHAIN_ID) {
+            return;
+        }
+
         // Run individual tests first
         (uint256 mocIndividualGas, uint256 uniIndividualGas, uint256 mocIndividualRbtc, uint256 uniIndividualRbtc) = runIndividualTest();
         

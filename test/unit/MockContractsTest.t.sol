@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import "../Constants.sol";
 
 contract MockContractsTest is DcaDappTest {
     function setUp() public override {
@@ -16,7 +17,7 @@ contract MockContractsTest is DcaDappTest {
                           MOCK MOC PROXY TESTS
     //////////////////////////////////////////////////////////////*/
     function testMockMocProxyRedeemFreeDoc() external {
-        if (block.chainid == 31337) {
+        if (block.chainid == ANVIL_CHAIN_ID) {
             uint256 redeemAmount = 50_000 ether; // redeem 50,000 DOC
             docToken.mint(USER, redeemAmount);
             uint256 rBtcBalancePrev = USER.balance;

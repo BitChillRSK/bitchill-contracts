@@ -139,22 +139,17 @@ contract DcaScheduleTest is DcaDappTest {
         dcaManager.deleteDcaSchedule(address(docToken), scheduleId2);
         // Check only the schedule created in setUp() remains
         assertEq(dcaManager.getMyDcaSchedules(address(docToken)).length, 1);
-        // dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
         vm.stopPrank();
     }
 
     /**
-     * @notice This was just a test to compare options in terms of gas consumptio
+     * @notice This was just a test to compare options in terms of gas consumption
      */
     function testDeleteSeveraldcaSchedules() external {
         super.createSeveralDcaSchedules();
         vm.startPrank(USER);
-        // for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
-        //     bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, NUM_OF_SCHEDULES - 1 - i));
-        //     dcaManager.deleteDcaSchedule(address(docToken), NUM_OF_SCHEDULES - 1 - i, scheduleId);
-        // }
-        for (uint256 i = NUM_OF_SCHEDULES; i > 0; --i) {
-            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, i - 1));
+        for (int256 i = int256(NUM_OF_SCHEDULES) - 1; i >= 0; --i) {
+            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, uint256(i)));
             dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
         }
         vm.stopPrank();
@@ -191,33 +186,6 @@ contract DcaScheduleTest is DcaDappTest {
     }
 
     function testCreateSeveralDcaSchedules() external {
-        // vm.startPrank(USER);
-        // docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
-        // uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
-        // uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
-        // for (uint256 i = 1; i < NUM_OF_SCHEDULES; ++i) { // Start from 1 since schedule 0 is created in setUp
-        //     uint256 scheduleIndex = SCHEDULE_INDEX + i;
-        //     uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
-        //     uint256 userBalanceBeforeDeposit;
-        //     if (dcaManager.getMyDcaSchedules(address(docToken)).length > scheduleIndex) {
-        //         userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
-        //     } else {
-        //         userBalanceBeforeDeposit = 0;
-        //     }
-        //     vm.expectEmit(true, true, true, true);
-        //     emit DcaManager__DcaScheduleCreated(
-        //         USER, address(docToken), scheduleIndex, docToDeposit, purchaseAmount, purchasePeriod
-        //     );
-        //     dcaManager.createDcaSchedule(
-        //         address(docToken), docToDeposit, purchaseAmount, purchasePeriod
-        //     );
-        //     uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
-        //     assertEq(docToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
-        //     assertEq(purchaseAmount, dcaManager.getSchedulePurchaseAmount(address(docToken), scheduleIndex));
-        //     assertEq(purchasePeriod, dcaManager.getSchedulePurchasePeriod(address(docToken), scheduleIndex));
-        // }
-        // vm.stopPrank();
-
         super.createSeveralDcaSchedules();
     }
 
@@ -253,13 +221,4 @@ contract DcaScheduleTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
     }
-
-    // function testScheduleIndexAndIdMismatchReverts() external {
-    //     bytes32 scheduleId = keccak256(
-    //         abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
-    //     );
-    //     vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
-    //     vm.prank(USER);
-    //     dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
-    // }
 }

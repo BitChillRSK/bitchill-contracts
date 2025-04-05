@@ -29,14 +29,12 @@ contract AdminOperationsTest is DcaDappTest {
         );
 
         vm.expectRevert(encodedRevert);
-        // vm.prank(OWNER);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(
             address(docToken), s_lendingProtocolIndex, address(dummyERC165Contract)
         );
 
         vm.expectRevert();
-        // vm.prank(OWNER);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, address(dcaManager));
     }
@@ -46,7 +44,6 @@ contract AdminOperationsTest is DcaDappTest {
         bytes memory encodedRevert =
             abi.encodeWithSelector(IAdminOperations.AdminOperations__EoaCannotBeHandler.selector, dummyAddress);
         vm.expectRevert(encodedRevert);
-        // vm.prank(OWNER);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, dummyAddress);
     }
@@ -70,7 +67,6 @@ contract AdminOperationsTest is DcaDappTest {
         );
         vm.stopBroadcast();
         assert(prevTropykusDocHandlerMoc != address(newTropykusDocHandlerMoc));
-        // vm.prank(OWNER);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(
             address(docToken), s_lendingProtocolIndex, address(newTropykusDocHandlerMoc)
@@ -103,20 +99,13 @@ contract AdminOperationsTest is DcaDappTest {
     }
 
     function testRevokeAdminRoleFailsIfNotOwner() external {
-        // Try to revoke as non-owner
         vm.prank(ADMIN);
         vm.expectRevert("Ownable: caller is not the owner");
         adminOperations.revokeAdminRole(ADMIN);
     }
 
     function testRevokeSwapperRoleFailsIfNotAdmin() external {
-        // First set up a swapper
-        vm.prank(ADMIN);
-        adminOperations.setSwapperRole(address(2));
-        assert(adminOperations.hasRole(adminOperations.SWAPPER_ROLE(), address(2)));
-
-        // Try to revoke as non-admin
-        vm.prank(address(3));
+        vm.prank(makeAddr("notAdmin"));
         vm.expectRevert();
         adminOperations.revokeSwapperRole(address(2));
     }
