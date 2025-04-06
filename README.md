@@ -127,38 +127,45 @@ These are intentional, considering the possibility of adding support for other s
 ### Installation
 ```bash
 git clone git@github.com:BitChillRSK/DCAdApp.git
-cd DCAdApp
+cd bitchill-contracts
+git checkout smart-contracts
 ./setup.sh
 ```
 
 ### Testing
 ```bash
-source .env
-make moc
+make moc-tropykus # Runs all unit tests with Tropykus interactions
+make moc-sovryn # Runs all the unit tests with Sovryn interactions
 ```
 
-## Development Roadmap
+### Deployment
 
-1. **Short Term**
-   - Gas optimization
-   - Code consolidation
-   - Additional test coverage
+To deploy the BitChill smart contracts on Rootstock testnet follow these steps:
 
-2. **Medium Term**
-   - New token integrations
-   - Enhanced fee mechanisms
-   - Improved batch processing
+1. Set up your environment variables in `.env`:
+```bash
+# Required variables
+RSK_TESTNET_RPC_URL=your_rsk_testnet_rpc_url
+PRIVATE_KEY=your_private_key
+BLOCKSCOUT_API_KEY=your_blockscout_api_key
+BLOCKSCOUT_API_URL=https://rootstock-testnet.blockscout.com/api
 
-3. **Long Term**
-   - Protocol upgrades
-   - Advanced yield strategies
+# Deployment configuration
+export SWAP_TYPE=mocSwaps  # or dexSwaps
+export REAL_DEPLOYMENT=true  # Set to true for actual deployment on a live network
+```
 
-## Contact
-For audit-related inquiries or security concerns, please contact:
-- Smart Contract Developer: [Antonio María Rodríguez-Ynyesto Sánchez](https://www.linkedin.com/in/antonio-maria-rodriguez-ynyesto-sanchez/)
-
-## Disclaimer
-This protocol is currently undergoing security audit. Use at your own risk. Always perform due diligence before interacting with smart contracts.
+2. Deploy the contracts:
+```bash
+forge script script/DeployMocSwaps.s.sol \
+  --rpc-url $RSK_TESTNET_RPC_URL \
+  --private-key $PRIVATE_KEY \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url $BLOCKSCOUT_API_URL \
+  --legacy
+```
 
 ## Dependency Management
 
@@ -170,3 +177,12 @@ This project uses Git submodules for dependency management. The following depend
 - Uniswap Swap Router Contracts v1.3.0
 
 Due to Rootstock's requirement for Solidity 0.8.19, we've modified the pragma statements in some dependencies. These modifications are documented in [DEPENDENCY_MODIFICATIONS.md](./DEPENDENCY_MODIFICATIONS.md).
+
+For a complete list of contract addresses used in the protocol (including both mainnet and testnet), please refer to [ADDRESSES.md](./ADDRESSES.md).
+
+## Contact
+For audit-related inquiries or security concerns, please contact:
+- Smart Contract Developer: [Antonio Rodríguez-Ynyesto](https://www.linkedin.com/in/antonio-maria-rodriguez-ynyesto-sanchez/)
+
+## Disclaimer
+This protocol is currently undergoing security audit. Use at your own risk. Always perform due diligence before interacting with smart contracts.

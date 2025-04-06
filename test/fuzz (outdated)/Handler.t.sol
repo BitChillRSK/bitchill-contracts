@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 // import {Test, console} from "forge-std/Test.sol";
 // import {DcaManager} from "../../src/DcaManager.sol";
