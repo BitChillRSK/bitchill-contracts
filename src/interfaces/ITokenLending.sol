@@ -16,7 +16,7 @@ interface ITokenLending is ITokenHandler {
         address indexed user, uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed
     );
     event TokenLending__SuccessfulBatchUnderlyingRedemption(uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed);
-    event TokenLending__UnderlyingRedeemedInterestBearingRepayed(
+    event TokenLending__UnderlyingRedeemedLendingTokenRepayed(
         address indexed user, uint256 underlyingRedeemed, uint256 indexed lendingTokenRepayed
     );
     event TokenLending__SuccessfulInterestWithdrawal(
@@ -34,7 +34,7 @@ interface ITokenLending is ITokenHandler {
     //////////////////////////////////////////////////////////////*/
 
     error TokenLending__UnderlyingRedeemAmountExceedsBalance(uint256 redeemAmount, uint256 balance);
-    error TokenLending__InterestBearingApprovalFailed(address user, uint256 depositAmount);
+    error TokenLending__LendingTokenApprovalFailed(address user, uint256 depositAmount);
     error TokenLending__LendingProtocolDepositFailed();
     error TokenLending__BatchRedeemUnderlyingFailed();
 

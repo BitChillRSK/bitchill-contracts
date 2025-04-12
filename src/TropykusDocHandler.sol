@@ -62,7 +62,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         super.depositToken(user, depositAmount);
         if (i_stableToken.allowance(address(this), address(i_kDocToken)) < depositAmount) {
             bool approvalSuccess = i_stableToken.approve(address(i_kDocToken), depositAmount);
-            if (!approvalSuccess) revert TokenLending__InterestBearingApprovalFailed(user, depositAmount);
+            if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
         }
         uint256 prevKdocBalance = i_kDocToken.balanceOf(address(this));
         if(i_kDocToken.mint(depositAmount) != 0) revert TokenLending__LendingProtocolDepositFailed();
@@ -150,7 +150,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
      */
     function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
         uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = _underlyingToInterestBearing(docToRedeem, exchangeRate);
+        uint256 kDocToRepay = _underlyingToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, kDocToRepay, usersKdocBalance);
             kDocToRepay = usersKdocBalance;
@@ -183,7 +183,7 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         returns (uint256 docRedeemed)
     {
         uint256 usersKdocBalance = s_kDocBalances[user];
-        uint256 kDocToRepay = _underlyingToInterestBearing(docToRedeem, exchangeRate);
+        uint256 kDocToRepay = _underlyingToLendingToken(docToRedeem, exchangeRate);
         if (kDocToRepay > usersKdocBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, kDocToRepay, usersKdocBalance);
             kDocToRepay = usersKdocBalance;
@@ -217,14 +217,14 @@ abstract contract TropykusDocHandler is TokenHandler, TokenLending, ITropykusDoc
         if (totalDocToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 totalKdocToRepay = _underlyingToInterestBearing(totalDocToRedeem, i_kDocToken.exchangeRateCurrent());
+        uint256 totalKdocToRepay = _underlyingToLendingToken(totalDocToRedeem, i_kDocToken.exchangeRateCurrent());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
             // @notice the amount of kDOC each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
             uint256 usersRepayedKdoc = totalKdocToRepay * purchaseAmounts[i] / totalDocToRedeem;
             s_kDocBalances[users[i]] -= usersRepayedKdoc;
-            emit TokenLending__UnderlyingRedeemedInterestBearingRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
+            emit TokenLending__UnderlyingRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayedKdoc);
         }
         
         // Store DOC balance before redemption
