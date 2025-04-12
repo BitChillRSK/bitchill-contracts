@@ -61,7 +61,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         super.depositToken(user, depositAmount);
         if (i_stableToken.allowance(address(this), address(i_iSusdToken)) < depositAmount) {
             bool approvalSuccess = i_stableToken.approve(address(i_iSusdToken), depositAmount);
-            if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
+            if (!approvalSuccess) revert TokenLending__InterestBearingApprovalFailed(user, depositAmount);
         }
         uint256 mintedAmount = i_iSusdToken.mint(address(this), depositAmount);
         if (mintedAmount == 0) revert TokenLending__LendingProtocolDepositFailed();
@@ -171,7 +171,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         returns (uint256)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
-        uint256 iSusdToRepay = _docToLendingToken(docToRedeem, exchangeRate);
+        uint256 iSusdToRepay = _underlyingToInterestBearing(docToRedeem, exchangeRate);
         if (iSusdToRepay > usersIsusdBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
             iSusdToRepay = usersIsusdBalance;
@@ -179,7 +179,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         s_iSusdBalances[user] -= iSusdToRepay;
         uint256 docRedeemed = i_iSusdToken.burn(docRecipient, iSusdToRepay);
         if (docRedeemed == 0) revert SovrynDocLending__RedeemUnderlyingFailed();
-        emit TokenLending__SuccessfulDocRedemption(user, docRedeemed, iSusdToRepay);
+        emit TokenLending__SuccessfulUnderlyingRedemption(user, docRedeemed, iSusdToRepay);
         return docRedeemed;
     }
 
@@ -198,19 +198,19 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         uint256 underlyingAmount =
             i_iSusdToken.assetBalanceOf(address(this)) + uint256(i_iSusdToken.profitOf(address(this))); // TODO: check if int->uint conversion is OK
         if (totalDocToRedeem > underlyingAmount) {
-            revert TokenLending__DocRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
+            revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 totaliSusdToRepay = _docToLendingToken(totalDocToRedeem, i_iSusdToken.tokenPrice());
+        uint256 totaliSusdToRepay = _underlyingToInterestBearing(totalDocToRedeem, i_iSusdToken.tokenPrice());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
             // @notice the amount of iSusd each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
             uint256 usersRepayediSusd = totaliSusdToRepay * purchaseAmounts[i] / totalDocToRedeem;
             s_iSusdBalances[users[i]] -= usersRepayediSusd;
-            emit TokenLending__DocRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayediSusd);
+            emit TokenLending__UnderlyingRedeemedInterestBearingRepayed(users[i], purchaseAmounts[i], usersRepayediSusd);
         }
         uint256 docRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
-        if (docRedeemed > 0) emit TokenLending__SuccessfulBatchDocRedemption(totalDocToRedeem, totaliSusdToRepay);
+        if (docRedeemed > 0) emit TokenLending__SuccessfulBatchUnderlyingRedemption(totalDocToRedeem, totaliSusdToRepay);
         else revert SovrynDocLending__RedeemUnderlyingFailed();
         return docRedeemed;
     }

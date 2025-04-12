@@ -64,10 +64,10 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
     }
 
     /**
-     * @notice withdraw some or all of the DOC previously deposited
-     * @notice This function transfers DOC from this contract back to the user
+     * @notice withdraw some or all of the stablecoin token previously deposited
+     * @notice This function transfers stablecoin token from this contract back to the user
      * @param user: the address of the user making the withdrawal
-     * @param withdrawalAmount: the amount of DOC to withdraw
+     * @param withdrawalAmount: the amount of stablecoin token to withdraw
      */
     function withdrawToken(address user, uint256 withdrawalAmount) public virtual override onlyDcaManager {
         i_stableToken.safeTransfer(user, withdrawalAmount);

@@ -12,7 +12,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title TokenLending
- * @notice Defines functions to convert stablecoin balances to lending token and vice versa
+ * @notice Defines functions to convert stablecoin balances to interest bearing token and vice versa
  */
 abstract contract TokenLending is ITokenLending {
     uint256 immutable i_exchangeRateDecimals;
@@ -22,35 +22,35 @@ abstract contract TokenLending is ITokenLending {
     }
 
     /**
-     * @notice convert DOC to lending token
-     * @param docAmount: the amount of DOC to convert
-     * @param exchangeRate: the exchange rate of DOC to lending token
-     * @return lendingTokenAmount the amount of lending token
+     * @notice convert underlying token to interest bearing token
+     * @param underlyingAmount: the amount of underlying token to convert
+     * @param exchangeRate: the exchange rate of underlying token to interest bearing token
+     * @return interestBearingAmount the amount of interest bearing token
      */
-    function _docToLendingToken(uint256 docAmount, uint256 exchangeRate)
+    function _underlyingToInterestBearing(uint256 underlyingAmount, uint256 exchangeRate)
         internal
         view
-        returns (uint256 lendingTokenAmount)
+        returns (uint256 interestBearingAmount)
     {
-        // lendingTokenAmount = docAmount * i_exchangeRateDecimals / exchangeRate;
-        // lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
-        lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate);
+        // interestBearingAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
+        // interestBearingAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
+        interestBearingAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate);
     }
 
     /**
-     * @notice convert lending token to DOC
-     * @param lendingTokenAmount: the amount of lending token to convert
-     * @param exchangeRate: the exchange rate of lending token to DOC
-     * @return docAmount the amount of DOC
+     * @notice convert interest bearing token to underlying token
+     * @param interestBearingAmount: the amount of interest bearing token to convert
+     * @param exchangeRate: the exchange rate of interest bearing token to underlying
+     * @return underlyingAmount the amount of underlying
      */
-    function _lendingTokenToDoc(uint256 lendingTokenAmount, uint256 exchangeRate)
+    function _interestBearingToUnderlying(uint256 interestBearingAmount, uint256 exchangeRate)
         internal
         view
-        returns (uint256 docAmount)
+        returns (uint256 underlyingAmount)
     {
-        // docAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
+        // underlyingAmount = interestBearingAmount * exchangeRate / i_exchangeRateDecimals;
         // Using OpenZeppelin's Math library for precise division rounding up
-        docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
-        // docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals);
+        underlyingAmount = Math.mulDiv(interestBearingAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
+        // underlyingAmount = Math.mulDiv(interestBearingAmount, exchangeRate, i_exchangeRateDecimals);
     }
 }
