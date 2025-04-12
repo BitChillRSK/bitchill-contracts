@@ -79,14 +79,14 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         onlyDcaManager
     {
         uint256 exchangeRate = i_iSusdToken.tokenPrice();
-        uint256 docInSovryn = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
+        uint256 docInSovryn = _lendingTokenToStablecoin(s_iSusdBalances[user], exchangeRate);
 
         if (docInSovryn < withdrawalAmount) {
             emit TokenLending__WithdrawalAmountAdjusted(user, withdrawalAmount, docInSovryn);
             withdrawalAmount = docInSovryn;
         }
 
-        withdrawalAmount = _redeemDoc(user, withdrawalAmount, exchangeRate);
+        withdrawalAmount = _redeemStablecoin(user, withdrawalAmount, exchangeRate);
         super.withdrawToken(user, withdrawalAmount);
     }
 
@@ -106,12 +106,12 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
      */
     function withdrawInterest(address user, uint256 docLockedInDcaSchedules) external override onlyDcaManager {
         uint256 exchangeRate = i_iSusdToken.tokenPrice();
-        uint256 totalDocInLending = _lendingTokenToDoc(s_iSusdBalances[user], exchangeRate);
+        uint256 totalDocInLending = _lendingTokenToStablecoin(s_iSusdBalances[user], exchangeRate);
         if (totalDocInLending <= docLockedInDcaSchedules) {
             return; // No interest to withdraw
         }
         uint256 docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
-        _redeemDoc(user, docInterestAmount, exchangeRate, user);
+        _redeemStablecoin(user, docInterestAmount, exchangeRate, user);
     }
 
     /**
@@ -127,7 +127,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         onlyDcaManager
         returns (uint256 docInterestAmount)
     {
-        uint256 totalDocInLending = _lendingTokenToDoc(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
+        uint256 totalDocInLending = _lendingTokenToStablecoin(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
         docInterestAmount = totalDocInLending - docLockedInDcaSchedules;
     }
 
@@ -141,9 +141,9 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
      * @param docToRedeem: the amount of DOC to redeem
      * @return docRedeemed: the amount of DOC redeemed
      */
-    function _redeemDoc(address user, uint256 docToRedeem) internal virtual returns (uint256) {
+    function _redeemStablecoin(address user, uint256 docToRedeem) internal virtual returns (uint256) {
         // For buyRbtc(), we want the DOC to come to the contract
-        return _redeemDoc(user, docToRedeem, i_iSusdToken.tokenPrice(), address(this));
+        return _redeemStablecoin(user, docToRedeem, i_iSusdToken.tokenPrice(), address(this));
     }
 
     /**
@@ -153,8 +153,8 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
      * @param exchangeRate: the exchange rate of DOC to rBTC
      * @return docRedeemed: the amount of DOC redeemed
      */
-    function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
-        return _redeemDoc(user, docToRedeem, exchangeRate, address(this));
+    function _redeemStablecoin(address user, uint256 docToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
+        return _redeemStablecoin(user, docToRedeem, exchangeRate, address(this));
     }
 
     /**
@@ -165,7 +165,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
      * @param docRecipient: the address of the recipient of the DOC
      * @return docRedeemed: the amount of DOC redeemed
      */
-    function _redeemDoc(address user, uint256 docToRedeem, uint256 exchangeRate, address docRecipient)
+    function _redeemStablecoin(address user, uint256 docToRedeem, uint256 exchangeRate, address docRecipient)
         internal
         virtual
         returns (uint256)
@@ -190,7 +190,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
      * @param totalDocToRedeem: the total amount of DOC to redeem
      * @return docRedeemed: the amount of DOC redeemed
      */
-    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocToRedeem)
         internal
         virtual
         returns (uint256)

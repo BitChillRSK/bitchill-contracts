@@ -24,7 +24,7 @@ BitChill is a decentralized protocol that enables users to automate their BTC pu
    - `TokenLending` abstract contract
       - Manages conversion of balances from stablecoins to lending tokens and viceversa
    - Supports multiple lending protocols (Tropykus, Sovryn)
-   - `TropykusDocHandler` and `SovrynDocHandler`
+   - `TropykusErc20Handler` and `SovrynDocHandler`
       - Implement deposits and withdrawals overriding `TokenHandler` to deposit to and withdraw from lending protocols
       - Handle withdrawal of accrued interests
 

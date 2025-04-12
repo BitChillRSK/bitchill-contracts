@@ -5,8 +5,8 @@ import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {TokenLending} from "./TokenLending.sol";
 import {PurchaseUniswap} from "./PurchaseUniswap.sol";
-import {TropykusDocHandler} from "./TropykusDocHandler.sol";
-import {IkDocToken} from "./interfaces/IkDocToken.sol";
+import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
+import {IkToken} from "./interfaces/IkToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,10 +17,10 @@ import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
- * @title TropykusDocHandlerDex
+ * @title TropykusErc20HandlerDex
  * @notice This contract handles swaps of DOC for rBTC using Uniswap V3
  */
-contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
+contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
     using SafeERC20 for IERC20;
 
     /**
@@ -42,7 +42,7 @@ contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
         address feeCollector,
         FeeSettings memory feeSettings
     )
-        TropykusDocHandler(
+        TropykusErc20Handler(
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,
@@ -54,31 +54,31 @@ contract TropykusDocHandlerDex is TropykusDocHandler, PurchaseUniswap {
     {}
 
     /**
-     * @notice Override the _redeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _redeemStablecoin function to resolve ambiguity between parent contracts
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount)
+    function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(TropykusDocHandler, PurchaseUniswap)
+        override(TropykusErc20Handler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call TropykusDocHandler's version of _redeemDoc
-        return TropykusDocHandler._redeemDoc(user, amount);
+        // Call TropykusErc20Handler's version of _redeemStablecoin
+        return TropykusErc20Handler._redeemStablecoin(user, amount);
     }
 
     /**
-     * @notice Override the _batchRedeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
      * @param users The array of user addresses for whom DOC is being redeemed
      * @param purchaseAmounts The array of amounts of DOC to redeem for each user
      * @param totalDocAmountToSpend The total amount of DOC to redeem
      */
-    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(TropykusDocHandler, PurchaseUniswap)
+        override(TropykusErc20Handler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call TropykusDocHandler's version of _batchRedeemDoc
-        return TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        // Call TropykusErc20Handler's version of _batchRedeemStablecoin
+        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

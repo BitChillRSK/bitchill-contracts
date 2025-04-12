@@ -43,7 +43,7 @@ abstract contract TokenLending is ITokenLending {
      * @param exchangeRate: the exchange rate of lending token to underlying
      * @return underlyingAmount the amount of underlying
      */
-    function _lendingTokenToUnderlying(uint256 lendingTokenAmount, uint256 exchangeRate)
+    function _lendingTokenToStablecoin(uint256 lendingTokenAmount, uint256 exchangeRate)
         internal
         view
         returns (uint256 underlyingAmount)

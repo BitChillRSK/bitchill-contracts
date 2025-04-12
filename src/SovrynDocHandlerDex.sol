@@ -58,31 +58,31 @@ contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
     /**
-     * @notice Override the _redeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _redeemStablecoin function to resolve ambiguity between parent contracts
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount)
+    function _redeemStablecoin(address user, uint256 amount)
         internal
         override(SovrynDocHandler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _redeemDoc
-        return SovrynDocHandler._redeemDoc(user, amount);
+        // Call SovrynDocHandler's version of _redeemStablecoin
+        return SovrynDocHandler._redeemStablecoin(user, amount);
     }
 
     /**
-     * @notice Override the _batchRedeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
      * @param users The array of user addresses for whom DOC is being redeemed
      * @param purchaseAmounts The array of amounts of DOC to redeem for each user
      * @param totalDocAmountToSpend The total amount of DOC to redeem
      */
-    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         override(SovrynDocHandler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _batchRedeemDoc
-        return SovrynDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        // Call SovrynDocHandler's version of _batchRedeemStablecoin
+        return SovrynDocHandler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

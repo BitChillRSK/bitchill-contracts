@@ -2,11 +2,11 @@
 pragma solidity 0.8.19;
 
 /**
- * @title IKdocToken
+ * @title IKToken
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the kDOC token contract.
+ * @dev Interface for the kToken token contract.
  */
-interface IkDocToken {
+interface IkToken {
 
     /**
      * @notice Sender supplies assets into the market and receives cTokens in exchange
@@ -17,8 +17,8 @@ interface IkDocToken {
     function mint(uint256 mintAmount) external returns (uint256);
 
     /**
-     * @dev This function is used to withdraw DOC from the Tropykus protocol and give back the corresponding kDOC
-     * @param redeemAmount the amount of DOC to be withdrawn
+     * @dev This function is used to withdraw the underlying ERC20 from the Tropykus protocol and give back the corresponding kToken
+     * @param redeemAmount the amount of the underlying ERC20 to be withdrawn
      */
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 
@@ -31,8 +31,8 @@ interface IkDocToken {
     function redeem(uint256 redeemTokens) external returns (uint256);
 
     /**
-     * @dev This function is used to retrieve the amount of DOC corresponding to a user that holds kDOC
-     * @param owner the user that owns the DOC deposited into Tropykus
+     * @dev This function is used to retrieve the amount of the underlying ERC20 corresponding to a user that holds kToken
+     * @param owner the user that owns the the underlying ERC20 deposited into Tropykus
      */
     function getSupplierSnapshotStored(address owner)
         external

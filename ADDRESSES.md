@@ -5,7 +5,7 @@
 ### Core Protocol Contracts
 - [AdminOperations](https://rootstock-testnet.blockscout.com/address/0x7d70dDc0F0Bfaf33FcCe6Af99C2BEF6413d2ec6B): `0x7d70dDc0F0Bfaf33FcCe6Af99C2BEF6413d2ec6B`
 - [DcaManager](https://rootstock-testnet.blockscout.com/address/0xe41768Eb79F7e84cB793f2E50d995eb31AF0883F): `0xe41768Eb79F7e84cB793f2E50d995eb31AF0883F`
-- [TropykusDocHandlerMoc](https://rootstock-testnet.blockscout.com/address/0x513a9D082d291Aa39DBA7a90a8a54A42e0EbF727): `0x513a9D082d291Aa39DBA7a90a8a54A42e0EbF727`
+- [TropykusErc20HandlerMoc](https://rootstock-testnet.blockscout.com/address/0x513a9D082d291Aa39DBA7a90a8a54A42e0EbF727): `0x513a9D082d291Aa39DBA7a90a8a54A42e0EbF727`
 - [SovrynDocHandlerMoc](https://rootstock-testnet.blockscout.com/address/0x2d8E508c239A1f284e5F859d9945E5e369615364): `0x2d8E508c239A1f284e5F859d9945E5e369615364`
 
 ## External dependencies - Rootstock Mainnet

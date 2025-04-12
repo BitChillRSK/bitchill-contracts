@@ -8,7 +8,7 @@ import {DcaManagerAccessControl} from "../../src/DcaManagerAccessControl.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {IDocHandler} from "../../src/interfaces/IDocHandler.sol";
 import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
-import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
+import {TropykusErc20HandlerMoc} from "../../src/TropykusErc20HandlerMoc.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";

@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {DeployBase} from "./DeployBase.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
+import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
 import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
 import {IUniswapPurchase} from "../src/interfaces/IUniswapPurchase.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
@@ -35,7 +35,7 @@ contract DeployDexSwaps is DeployBase {
 
         if (protocol == Protocol.TROPYKUS) {
             return address(
-                new TropykusDocHandlerDex(
+                new TropykusErc20HandlerDex(
                     dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
                 )
             );

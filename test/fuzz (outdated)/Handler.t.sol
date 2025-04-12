@@ -8,14 +8,14 @@ pragma solidity 0.8.19;
 // import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 // import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 // import {AdminOperations} from "src/AdminOperations.sol";
-// import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
+// import {TropykusErc20HandlerMoc} from "src/TropykusErc20HandlerMoc.sol";
 // import {MockDocToken} from "../mocks/MockDocToken.sol";
 // import "../Constants.sol";
 // // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 // contract Handler is Test {
 //     AdminOperations public adminOperations;
-//     TropykusDocHandlerMoc public docHandlerMoc;
+//     TropykusErc20HandlerMoc public docHandlerMoc;
 //     DcaManager public dcaManager;
 //     MockDocToken public mockDocToken;
 //     // MockMocProxy public mockMocProxy;
@@ -31,7 +31,7 @@ pragma solidity 0.8.19;
 
 //     constructor(
 //         AdminOperations _adminOperations,
-//         TropykusDocHandlerMoc _docHandlerMoc,
+//         TropykusErc20HandlerMoc _docHandlerMoc,
 //         DcaManager _dcaManager,
 //         MockDocToken _mockDocToken,
 //         address[] memory users
@@ -369,7 +369,7 @@ pragma solidity 0.8.19;
 //         vm.stopPrank();
 //     }
 
-//     function withdrawInterestFromTropykusDocHandlerMoc(uint256 userSeed) external {
+//     function withdrawInterestFromTropykusErc20HandlerMoc(uint256 userSeed) external {
 //         address user = s_users[userSeed % s_users.length];
 //         uint256[] memory lendingProtocolIndexes = new uint256[](1);
 //         lendingProtocolIndexes[0] = s_lendingProtocolIndex;

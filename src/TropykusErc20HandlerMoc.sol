@@ -2,18 +2,18 @@
 pragma solidity 0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {TropykusDocHandler} from "./TropykusDocHandler.sol";
+import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
 import {TokenLending} from "./TokenLending.sol";
 import {PurchaseMoc} from "src/PurchaseMoc.sol";
-import {IkDocToken} from "./interfaces/IkDocToken.sol";
+import {IkToken} from "./interfaces/IkToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * @title TropykusDocHandlerMoc
+ * @title TropykusErc20HandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
+contract TropykusErc20HandlerMoc is TropykusErc20Handler, PurchaseMoc {
     using SafeERC20 for IERC20;
 
     /**
@@ -33,7 +33,7 @@ contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
         address mocProxyAddress,
         FeeSettings memory feeSettings
     )
-        TropykusDocHandler(
+        TropykusErc20Handler(
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,
@@ -45,31 +45,31 @@ contract TropykusDocHandlerMoc is TropykusDocHandler, PurchaseMoc {
     {}
 
     /**
-     * @notice Override the _redeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _redeemStablecoin function to resolve ambiguity between parent contracts
      * @param user The address of the user for whom DOC is being redeemed
      * @param amount The amount of DOC to redeem
      */
-    function _redeemDoc(address user, uint256 amount)
+    function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(TropykusDocHandler, PurchaseMoc)
+        override(TropykusErc20Handler, PurchaseMoc)
         returns (uint256)
     {
-        // Call TropykusDocHandler's version of _redeemDoc
-        return TropykusDocHandler._redeemDoc(user, amount);
+        // Call TropykusErc20Handler's version of _redeemStablecoin
+        return TropykusErc20Handler._redeemStablecoin(user, amount);
     }
 
     /**
-     * @notice Override the _batchRedeemDoc function to resolve ambiguity between parent contracts
+     * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
      * @param users The array of user addresses for whom DOC is being redeemed
      * @param purchaseAmounts The array of amounts of DOC to redeem for each user
      * @param totalDocAmountToSpend The total amount of DOC to redeem
      */
-    function _batchRedeemDoc(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(TropykusDocHandler, PurchaseMoc)
+        override(TropykusErc20Handler, PurchaseMoc)
         returns (uint256)
     {
-        // Call TropykusDocHandler's version of _batchRedeemDoc
-        return TropykusDocHandler._batchRedeemDoc(users, purchaseAmounts, totalDocAmountToSpend);
+        // Call TropykusErc20Handler's version of _batchRedeemStablecoin
+        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

@@ -73,7 +73,7 @@ abstract contract PurchaseUniswap is
         onlyDcaManager
     {
         // Redeem DOC (repaying kDOC)
-        purchaseAmount = _redeemDoc(buyer, purchaseAmount);
+        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount);
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
@@ -113,7 +113,7 @@ abstract contract PurchaseUniswap is
             _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
         // Redeem DOC (and repay lending token)
-        uint256 docRedeemed = _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
+        uint256 docRedeemed = _batchRedeemStablecoin(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
         totalDocAmountToSpend = docRedeemed - aggregatedFee;
 
         // Charge fees
@@ -218,9 +218,9 @@ abstract contract PurchaseUniswap is
     }
 
     // Define abstract functions to be implemented by child contracts
-    function _redeemDoc(address buyer, uint256 amount) internal virtual returns (uint256);
+    function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
 
-    function _batchRedeemDoc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         virtual
         returns (uint256);
