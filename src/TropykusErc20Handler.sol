@@ -149,7 +149,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
      */
     function _redeemStablecoin(address user, uint256 stablecoinToRedeem, uint256 exchangeRate) internal virtual returns (uint256) {
         uint256 usersKtokenBalance = s_kTokenBalances[user];
-        uint256 kTokenToRepay = _underlyingToLendingToken(stablecoinToRedeem, exchangeRate);
+        uint256 kTokenToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
         if (kTokenToRepay > usersKtokenBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, kTokenToRepay, usersKtokenBalance);
             kTokenToRepay = usersKtokenBalance;
@@ -182,7 +182,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         returns (uint256 stablecoinRedeemed)
     {
         uint256 usersKtokenBalance = s_kTokenBalances[user];
-        uint256 kTokenToRepay = _underlyingToLendingToken(stablecoinToRedeem, exchangeRate);
+        uint256 kTokenToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
         if (kTokenToRepay > usersKtokenBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, kTokenToRepay, usersKtokenBalance);
             kTokenToRepay = usersKtokenBalance;
@@ -216,7 +216,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         if (totalStablecoinToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalStablecoinToRedeem, underlyingAmount);
         }
-        uint256 totalKtokenToRepay = _underlyingToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
+        uint256 totalKtokenToRepay = _stablecoinToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {

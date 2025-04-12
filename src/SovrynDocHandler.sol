@@ -171,7 +171,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         returns (uint256)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
-        uint256 iSusdToRepay = _underlyingToLendingToken(docToRedeem, exchangeRate);
+        uint256 iSusdToRepay = _stablecoinToLendingToken(docToRedeem, exchangeRate);
         if (iSusdToRepay > usersIsusdBalance) {
             emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
             iSusdToRepay = usersIsusdBalance;
@@ -200,7 +200,7 @@ abstract contract SovrynDocHandler is TokenHandler, TokenLending, ISovrynDocLend
         if (totalDocToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalDocToRedeem, underlyingAmount);
         }
-        uint256 totaliSusdToRepay = _underlyingToLendingToken(totalDocToRedeem, i_iSusdToken.tokenPrice());
+        uint256 totaliSusdToRepay = _stablecoinToLendingToken(totalDocToRedeem, i_iSusdToken.tokenPrice());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
