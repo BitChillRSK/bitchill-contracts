@@ -6,8 +6,8 @@ pragma solidity 0.8.19;
 // import {StdInvariant} from "forge-std/StdInvariant.sol";
 // import {DcaManager} from "src/DcaManager.sol";
 // import {AdminOperations} from "src/AdminOperations.sol";
-// import {TropykusErc20HandlerMoc} from "src/TropykusErc20HandlerMoc.sol";
-// // import {TropykusErc20HandlerMocDex} from "../../src/TropykusErc20HandlerMocDex.sol";
+// import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
+// // import {TropykusDocHandlerMocDex} from "../../src/TropykusDocHandlerMocDex.sol";
 // import {IDocHandler} from "src/interfaces/IDocHandler.sol";
 // import {MockDocToken} from "../mocks/MockDocToken.sol";
 // import {MockKdocToken} from "../mocks/MockKdocToken.sol";
@@ -21,8 +21,8 @@ pragma solidity 0.8.19;
 // contract InvariantTest is StdInvariant, Test {
 //     DcaManager dcaManager;
 //     AdminOperations adminOperations;
-//     TropykusErc20HandlerMoc docHandlerMoc;
-//     // TropykusErc20HandlerMocDex docHandlerMocDex;
+//     TropykusDocHandlerMoc docHandlerMoc;
+//     // TropykusDocHandlerMocDex docHandlerMocDex;
 //     MockDocToken mockDocToken;
 //     MockKdocToken mockKdocToken;
 //     MockMocProxy mocProxy;
@@ -57,7 +57,7 @@ pragma solidity 0.8.19;
 //         deployer = new DeployMocSwaps();
 //         address docHandlerAddress;
 //         (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployer.run();
-//         docHandlerMoc = TropykusErc20HandlerMoc(payable(docHandlerAddress));
+//         docHandlerMoc = TropykusDocHandlerMoc(payable(docHandlerAddress));
 //         (address docTokenAddress, address mocProxyAddress, address kDocToken, ) =
 //             helperConfig.activeNetworkConfig();
 //         mockDocToken = MockDocToken(docTokenAddress);
@@ -126,7 +126,7 @@ pragma solidity 0.8.19;
 //             vm.stopPrank();
 //         }
 //         // DOC deposited in Bitchill is immediately lent in Tropykus
-//         assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in TropykusErc20HandlerMoc
+//         assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in TropykusDocHandlerMoc
 
 //         // Update the amount of DOC in the mock kDOC contract according to the interest that has been generated
 //         uint256 interestFactor = 1e18 + (block.timestamp - setUpTimestamp) * 5 * 1e18 / (100 * 31536000); // 1 + timeInYears * yearlyIncrease
@@ -157,7 +157,7 @@ pragma solidity 0.8.19;
 //         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docHandlerMoc)));
 //     }
 
-//     function invariant_TropykusErc20HandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {
+//     function invariant_TropykusDocHandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {
 //         // get the contract's rBTC balance and compare it to the sum of all users' balances
 //         vm.prank(OWNER);
 //         address[] memory users = dcaManager.getUsers();

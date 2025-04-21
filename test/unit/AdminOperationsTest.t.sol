@@ -6,7 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {TropykusErc20HandlerMoc} from "../../src/TropykusErc20HandlerMoc.sol";
+import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
 import "./TestsHelper.t.sol";
 
@@ -49,9 +49,9 @@ contract AdminOperationsTest is DcaDappTest {
     }
 
     function testTokenHandlerUpdated() external {
-        address prevTropykusErc20HandlerMoc = adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex);
+        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex);
         vm.startBroadcast();
-        TropykusErc20HandlerMoc newTropykusErc20HandlerMoc = new TropykusErc20HandlerMoc(
+        TropykusDocHandlerMoc newTropykusDocHandlerMoc = new TropykusDocHandlerMoc(
             address(dcaManager),
             address(docToken),
             address(lendingToken),
@@ -66,14 +66,14 @@ contract AdminOperationsTest is DcaDappTest {
             })
         );
         vm.stopBroadcast();
-        assert(prevTropykusErc20HandlerMoc != address(newTropykusErc20HandlerMoc));
+        assert(prevTropykusDocHandlerMoc != address(newTropykusDocHandlerMoc));
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(
-            address(docToken), s_lendingProtocolIndex, address(newTropykusErc20HandlerMoc)
+            address(docToken), s_lendingProtocolIndex, address(newTropykusDocHandlerMoc)
         );
         assertEq(
             adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex),
-            address(newTropykusErc20HandlerMoc)
+            address(newTropykusDocHandlerMoc)
         );
     }
 

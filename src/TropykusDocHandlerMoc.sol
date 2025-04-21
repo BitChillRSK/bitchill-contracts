@@ -10,10 +10,10 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
- * @title TropykusErc20HandlerMoc
+ * @title TropykusDocHandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract TropykusErc20HandlerMoc is TropykusErc20Handler, PurchaseMoc {
+contract TropykusDocHandlerMoc is TropykusErc20Handler, PurchaseMoc {
     using SafeERC20 for IERC20;
 
     /**
