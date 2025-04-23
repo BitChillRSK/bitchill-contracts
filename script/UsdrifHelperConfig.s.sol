@@ -157,7 +157,7 @@ contract UsdrifHelperConfig is Script {
         activeNetworkConfig.dcaManagerAddress = dcaManagerAddress;
     }
 
-    function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
+    function getNetworkConfig() public view returns (NetworkConfig memory) {
         return activeNetworkConfig;
     }
 }

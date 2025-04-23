@@ -16,6 +16,8 @@ contract BaseDeploymentTest is Test {
     DcaManager public dcaManager;
     address public docHandlerMocAddress;
     MocHelperConfig public helperConfig;
+    address OWNER = makeAddr(OWNER_STRING);
+    address ADMIN = makeAddr(ADMIN_STRING);
     
     // For validating the handler type
     TropykusDocHandlerMoc public tropykusHandler;
@@ -37,6 +39,15 @@ contract BaseDeploymentTest is Test {
         } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
             sovrynHandler = SovrynDocHandlerMoc(payable(docHandlerMocAddress));
         }
+
+        // Grant admin role to test contract and register the handler
+        vm.prank(OWNER);
+        adminOperations.setAdminRole(ADMIN);
+        vm.prank(ADMIN);
+        adminOperations.addOrUpdateLendingProtocol(
+            "tropykus",
+            TROPYKUS_INDEX
+        );
     }
     
     function testCoreProtocolDeployment() public {

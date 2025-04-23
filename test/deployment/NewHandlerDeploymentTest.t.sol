@@ -25,8 +25,17 @@ contract NewHandlerDeploymentTest is BaseDeploymentTest {
         // Deploy USDRIF handler with our configured helper
         DeployUsdrifHandler usdrifDeployer = new DeployUsdrifHandler();
         console.log("USDRIF handler deployed:", address(usdrifDeployer));
+        
         usdrifHandlerAddress = usdrifDeployer.run(usdrifHelperConfig);
         usdrifHandler = TropykusErc20HandlerDex(payable(usdrifHandlerAddress));
+        address usdrifTokenAddress = usdrifHelperConfig.getNetworkConfig().usdrifTokenAddress;
+
+        vm.prank(ADMIN);
+        adminOperations.assignOrUpdateTokenHandler(
+            usdrifTokenAddress,
+            TROPYKUS_INDEX,
+            usdrifHandlerAddress
+        );
     }
     
     function testUsdrifHandlerDeployment() public {
@@ -40,7 +49,7 @@ contract NewHandlerDeploymentTest is BaseDeploymentTest {
         assertEq(usdrifHandler.owner(), makeAddr(OWNER_STRING), "USDRIF handler owner not set correctly");
         
         // Verify handler is registered in AdminOperations
-        UsdrifHelperConfig.NetworkConfig memory config = usdrifHelperConfig.getActiveNetworkConfig();
+        UsdrifHelperConfig.NetworkConfig memory config = usdrifHelperConfig.getNetworkConfig();
         address registeredHandler = adminOperations.getTokenHandler(config.usdrifTokenAddress, TROPYKUS_INDEX);
         assertEq(registeredHandler, usdrifHandlerAddress, "USDRIF handler not registered in AdminOperations");
     }

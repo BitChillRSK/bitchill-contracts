@@ -21,7 +21,7 @@ contract DeployUsdrifHandler is DeployBase {
             ? existingConfig 
             : new UsdrifHelperConfig();
         
-        UsdrifHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
+        UsdrifHelperConfig.NetworkConfig memory networkConfig = helperConfig.getNetworkConfig();
         
         // Validate addresses
         if (networkConfig.adminOperationsAddress == address(0) || networkConfig.dcaManagerAddress == address(0)) {
