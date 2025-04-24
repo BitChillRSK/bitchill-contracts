@@ -2,13 +2,13 @@
 pragma solidity 0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
-import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
-import {AdminOperations} from "../../src/AdminOperations.sol";
-import {DcaManager} from "../../src/DcaManager.sol";
-import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
-import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
-import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
-import "../Constants.sol";
+import {DeployMocSwaps} from "../../../script/DeployMocSwaps.s.sol";
+import {AdminOperations} from "../../../src/AdminOperations.sol";
+import {DcaManager} from "../../../src/DcaManager.sol";
+import {TropykusDocHandlerMoc} from "../../../src/TropykusDocHandlerMoc.sol";
+import {SovrynDocHandlerMoc} from "../../../src/SovrynDocHandlerMoc.sol";
+import {MocHelperConfig} from "../../../script/MocHelperConfig.s.sol";
+import "../../Constants.sol";
 
 contract BaseDeploymentTest is Test {
     // Core contracts
