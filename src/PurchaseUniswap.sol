@@ -42,9 +42,8 @@ abstract contract PurchaseUniswap is
     bytes public s_swapPath;
 
     /**
-     * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
-     * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
-     * @param stableTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
+     * @param stableTokenAddress the address of the stablecoin token on the blockchain of deployment
+     * @param uniswapSettings the settings for the uniswap router
      */
     constructor(
         address stableTokenAddress, // TODO: modify this to passing the interface

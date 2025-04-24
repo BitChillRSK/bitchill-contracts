@@ -25,8 +25,6 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
     uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 
     /**
-     * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
-     * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param stableTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
      * @param iSusdTokenAddress the address of Sovryn' iSusd token contract

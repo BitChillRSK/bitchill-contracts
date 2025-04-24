@@ -25,8 +25,6 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
     using SafeERC20 for IERC20;
 
     /**
-     * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
-     * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param stableTokenAddress the address of the stablecoin on the blockchain of deployment
      * @param iSusdTokenAddress the address of Sovryn' iSUSD token contract
