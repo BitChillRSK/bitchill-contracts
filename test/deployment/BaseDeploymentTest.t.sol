@@ -6,7 +6,7 @@ import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {AdminOperations} from "../../src/AdminOperations.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
-import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
+import {SovrynErc20HandlerMoc} from "../../src/SovrynErc20HandlerMoc.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
 import "../Constants.sol";
 
@@ -21,7 +21,7 @@ contract BaseDeploymentTest is Test {
     
     // For validating the handler type
     TropykusDocHandlerMoc public tropykusHandler;
-    SovrynDocHandlerMoc public sovrynHandler;
+    SovrynErc20HandlerMoc public sovrynHandler;
 
     function setUp() public virtual {
         // Set up environment variables for deployment
@@ -37,7 +37,7 @@ contract BaseDeploymentTest is Test {
         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
             tropykusHandler = TropykusDocHandlerMoc(payable(docHandlerMocAddress));
         } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
-            sovrynHandler = SovrynDocHandlerMoc(payable(docHandlerMocAddress));
+            sovrynHandler = SovrynErc20HandlerMoc(payable(docHandlerMocAddress));
         }
 
         // Grant admin role to test contract and register the handler
@@ -71,7 +71,7 @@ contract BaseDeploymentTest is Test {
             assertEq(TropykusDocHandlerMoc(payable(docHandlerMocAddress)).owner(), makeAddr(OWNER_STRING), "Handler owner not set correctly");
         } else {
             assertEq(sovrynHandler.i_dcaManager(), address(dcaManager), "SovrynHandler doesn't reference DcaManager");
-            assertEq(SovrynDocHandlerMoc(payable(docHandlerMocAddress)).owner(), makeAddr(OWNER_STRING), "Handler owner not set correctly");
+            assertEq(SovrynErc20HandlerMoc(payable(docHandlerMocAddress)).owner(), makeAddr(OWNER_STRING), "Handler owner not set correctly");
         }
     }
 }

@@ -6,7 +6,7 @@ import {DeployBase} from "./DeployBase.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
-import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
+import {SovrynErc20HandlerDex} from "../src/SovrynErc20HandlerDex.sol";
 import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
@@ -41,7 +41,7 @@ contract DeployDexSwaps is DeployBase {
             );
         } else {
             return address(
-                new SovrynDocHandlerDex(
+                new SovrynErc20HandlerDex(
                     dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
                 )
             );

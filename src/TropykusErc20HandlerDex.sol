@@ -28,7 +28,7 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
-     * @param kDocTokenAddress the address of Tropykus' kDOC token contract
+     * @param kTokenAddress the address of Tropykus' kToken contract
      * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
@@ -36,7 +36,7 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
     constructor(
         address dcaManagerAddress,
         address docTokenAddress, // TODO: modify this to passing the interface
-        address kDocTokenAddress, // TODO: modify this to passing the interface
+        address kTokenAddress, // TODO: modify this to passing the interface
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,
@@ -45,7 +45,7 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
         TropykusErc20Handler(
             dcaManagerAddress,
             docTokenAddress,
-            kDocTokenAddress,
+            kTokenAddress,
             minPurchaseAmount,
             feeCollector,
             feeSettings

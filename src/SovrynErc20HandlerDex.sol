@@ -2,10 +2,10 @@
 pragma solidity 0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
+import {ISovrynErc20Lending} from "./interfaces/ISovrynErc20Lending.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {PurchaseUniswap} from "./PurchaseUniswap.sol";
-import {SovrynDocHandler} from "./SovrynDocHandler.sol";
+import {SovrynErc20Handler} from "./SovrynErc20Handler.sol";
 import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
@@ -18,40 +18,40 @@ import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
- * @title SovrynDocHandlerDex
- * @dev Implementation of the ISovrynDocHandlerDex interface.
+ * @title SovrynErc20HandlerDex
+ * @dev Implementation of the ISovrynErc20HandlerDex interface.
  */
-contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
+contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
     using SafeERC20 for IERC20;
 
     /**
      * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
      * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param dcaManagerAddress the address of the DCA Manager contract
-     * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
+     * @param stableTokenAddress the address of the stablecoin on the blockchain of deployment
      * @param iSusdTokenAddress the address of Sovryn' iSUSD token contract
-     * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
+     * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
      */
     constructor(
         address dcaManagerAddress,
-        address docTokenAddress, // TODO: modify this to passing the interface
+        address stableTokenAddress, // TODO: modify this to passing the interface
         address iSusdTokenAddress, // TODO: modify this to passing the interface
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,
         FeeSettings memory feeSettings
     )
-        SovrynDocHandler(
+        SovrynErc20Handler(
             dcaManagerAddress,
-            docTokenAddress,
+            stableTokenAddress,
             iSusdTokenAddress,
             minPurchaseAmount,
             feeCollector,
             feeSettings
         )
-        PurchaseUniswap(docTokenAddress, uniswapSettings)
+        PurchaseUniswap(stableTokenAddress, uniswapSettings)
     {}
 
     /*//////////////////////////////////////////////////////////////
@@ -59,30 +59,30 @@ contract SovrynDocHandlerDex is SovrynDocHandler, PurchaseUniswap {
     //////////////////////////////////////////////////////////////*/
     /**
      * @notice Override the _redeemStablecoin function to resolve ambiguity between parent contracts
-     * @param user The address of the user for whom DOC is being redeemed
-     * @param amount The amount of DOC to redeem
+     * @param user The address of the user for whom stablecoin is being redeemed
+     * @param amount The amount of stablecoin to redeem
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(SovrynDocHandler, PurchaseUniswap)
+        override(SovrynErc20Handler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _redeemStablecoin
-        return SovrynDocHandler._redeemStablecoin(user, amount);
+        // Call SovrynErc20Handler's version of _redeemStablecoin
+        return SovrynErc20Handler._redeemStablecoin(user, amount);
     }
 
     /**
      * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
-     * @param users The array of user addresses for whom DOC is being redeemed
-     * @param purchaseAmounts The array of amounts of DOC to redeem for each user
-     * @param totalDocAmountToSpend The total amount of DOC to redeem
+     * @param users The array of user addresses for whom stablecoin is being redeemed
+     * @param purchaseAmounts The array of amounts of stablecoin to redeem for each user
+     * @param totalStablecoinAmountToSpend The total amount of stablecoin to redeem
      */
-    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
         internal
-        override(SovrynDocHandler, PurchaseUniswap)
+        override(SovrynErc20Handler, PurchaseUniswap)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _batchRedeemStablecoin
-        return SovrynDocHandler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
+        // Call SovrynErc20Handler's version of _batchRedeemStablecoin
+        return SovrynErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalStablecoinAmountToSpend);
     }
 }

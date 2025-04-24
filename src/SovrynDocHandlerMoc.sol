@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {PurchaseMoc} from "./PurchaseMoc.sol";
 import {TokenLending} from "./TokenLending.sol";
-import {SovrynDocHandler} from "./SovrynDocHandler.sol";
+import {SovrynErc20Handler} from "./SovrynErc20Handler.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -16,7 +16,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  * @dev Implementation of the IDocHandler interface.
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
+contract SovrynErc20HandlerMoc is SovrynErc20Handler, PurchaseMoc {
     using SafeERC20 for IERC20;
 
     /**
@@ -38,7 +38,7 @@ contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
         address mocProxyAddress,
         FeeSettings memory feeSettings
     )
-        SovrynDocHandler(
+        SovrynErc20Handler(
             dcaManagerAddress,
             docTokenAddress,
             iSusdTokenAddress,
@@ -59,11 +59,11 @@ contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(SovrynDocHandler, PurchaseMoc)
+        override(SovrynErc20Handler, PurchaseMoc)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _redeemStablecoin
-        return SovrynDocHandler._redeemStablecoin(user, amount);
+        // Call SovrynErc20Handler's version of _redeemStablecoin
+        return SovrynErc20Handler._redeemStablecoin(user, amount);
     }
 
     /**
@@ -74,10 +74,10 @@ contract SovrynDocHandlerMoc is SovrynDocHandler, PurchaseMoc {
      */
     function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(SovrynDocHandler, PurchaseMoc)
+        override(SovrynErc20Handler, PurchaseMoc)
         returns (uint256)
     {
-        // Call SovrynDocHandler's version of _batchRedeemStablecoin
-        return SovrynDocHandler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
+        // Call SovrynErc20Handler's version of _batchRedeemStablecoin
+        return SovrynErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
     }
 }

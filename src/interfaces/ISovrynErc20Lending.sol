@@ -4,11 +4,11 @@ pragma solidity 0.8.19;
 import {ITokenLending} from "./ITokenLending.sol";
 
 /**
- * @title ISovrynDocLending
+ * @title ISovrynErc20Lending
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the SovrynDocHandler contract.
+ * @dev Interface for the SovrynErc20Handler contract.
  */
-interface ISovrynDocLending is ITokenLending {
+interface ISovrynErc20Lending is ITokenLending {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
