@@ -12,5 +12,5 @@ interface ISovrynErc20Lending is ITokenLending {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
-    error SovrynDocLending__RedeemUnderlyingFailed();
+    error SovrynErc20Lending__RedeemUnderlyingFailed();
 }

@@ -6,7 +6,7 @@ import {DeployBase} from "./DeployBase.s.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {TropykusDocHandlerMoc} from "../src/TropykusDocHandlerMoc.sol";
-import {SovrynErc20HandlerMoc} from "../src/SovrynErc20HandlerMoc.sol";
+import {SovrynDocHandlerMoc} from "../src/SovrynDocHandlerMoc.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
@@ -38,7 +38,7 @@ contract DeployMocSwaps is DeployBase {
             );
         } else {
             return address(
-                new SovrynErc20HandlerMoc(
+                new SovrynDocHandlerMoc(
                     dcaManager, docToken, lendingToken, MIN_PURCHASE_AMOUNT, feeCollector, mocProxy, feeSettings
                 )
             );

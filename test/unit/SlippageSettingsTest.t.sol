@@ -8,6 +8,10 @@ import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
 import "../Constants.sol";
 
 contract SlippageSettingsTest is DcaDappTest {
+
+    event PurchaseUniswap_AmountOutMinimumPercentUpdated(uint256 oldValue, uint256 newValue);
+    event PurchaseUniswap_AmountOutMinimumSafetyCheckUpdated(uint256 oldValue, uint256 newValue);
+
     // Skip tests if not using dexSwaps
     modifier onlyDexSwaps() {
         if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("dexSwaps"))) {
@@ -103,5 +107,33 @@ contract SlippageSettingsTest is DcaDappTest {
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
         IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(0.95e18);
+    }
+
+    function testSetAmountOutMinimumPercentEmitsEvent() public onlyDexSwaps {
+        // Set up expected event parameters
+        uint256 oldValue = IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent();
+        uint256 newValue = 0.995 * 1e18; // 99.5%
+        
+        // Expect the event with the correct parameters
+        vm.expectEmit(false, false, false, true);
+        emit PurchaseUniswap_AmountOutMinimumPercentUpdated(oldValue, newValue);
+        
+        // Execute the function that should emit the event
+        vm.prank(OWNER);
+        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(newValue);
+    }
+
+    function testSetAmountOutMinimumSafetyCheckEmitsEvent() public onlyDexSwaps {
+        // Set up expected event parameters
+        uint256 oldValue = IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck();
+        uint256 newValue = 0.95 * 1e18; // 95%
+        
+        // Expect the event with the correct parameters
+        vm.expectEmit(false, false, false, true);
+        emit PurchaseUniswap_AmountOutMinimumSafetyCheckUpdated(oldValue, newValue);
+        
+        // Execute the function that should emit the event
+        vm.prank(OWNER);
+        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(newValue);
     }
 }

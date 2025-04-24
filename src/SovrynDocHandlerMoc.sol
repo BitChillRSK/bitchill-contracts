@@ -12,11 +12,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title DocHandler
- * @dev Implementation of the IDocHandler interface.
+ * @title SovrynDocHandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-contract SovrynErc20HandlerMoc is SovrynErc20Handler, PurchaseMoc {
+contract SovrynDocHandlerMoc is SovrynErc20Handler, PurchaseMoc {
     using SafeERC20 for IERC20;
 
     /**
