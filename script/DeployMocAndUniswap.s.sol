@@ -9,7 +9,7 @@ import {DeployDexSwaps} from "./DeployDexSwaps.s.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {IUniswapPurchase} from "../src/interfaces/IUniswapPurchase.sol";
+import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
@@ -103,7 +103,7 @@ contract DeployMocAndUniswap is DeployBase {
         address lendingToken = protocol == Protocol.TROPYKUS ? networkConfig.kDocAddress : networkConfig.iSusdAddress;
         
         // Create Uniswap settings from the network config
-        IUniswapPurchase.UniswapSettings memory uniswapSettings = IUniswapPurchase.UniswapSettings({
+        IPurchaseUniswap.UniswapSettings memory uniswapSettings = IPurchaseUniswap.UniswapSettings({
             wrBtcToken: IWRBTC(networkConfig.wrbtcTokenAddress),
             swapRouter02: ISwapRouter02(networkConfig.swapRouter02Address),
             swapIntermediateTokens: networkConfig.swapIntermediateTokens,

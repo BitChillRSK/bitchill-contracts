@@ -6,7 +6,7 @@ import {ISovrynDocLending} from "./interfaces/ISovrynDocLending.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {PurchaseUniswap} from "./PurchaseUniswap.sol";
 import {SovrynDocHandler} from "./SovrynDocHandler.sol";
-import {IUniswapPurchase} from "./interfaces/IUniswapPurchase.sol";
+import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

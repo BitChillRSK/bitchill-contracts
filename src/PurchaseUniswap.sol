@@ -9,7 +9,7 @@ import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/Transfer
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
-import {IUniswapPurchase} from "./interfaces/IUniswapPurchase.sol";
+import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -24,7 +24,7 @@ abstract contract PurchaseUniswap is
     FeeHandler,
     DcaManagerAccessControl, /*IDocHandlerMoc,*/
     IPurchaseRbtc,
-    IUniswapPurchase
+    IPurchaseUniswap
 {
     using SafeERC20 for IERC20;
 
@@ -38,6 +38,8 @@ abstract contract PurchaseUniswap is
     ISwapRouter02 public immutable i_swapRouter02;
     ICoinPairPrice public immutable i_MocOracle;
     uint256 constant PRECISION = 1e18;
+    uint256 internal s_amountOutMinimumPercent = 0.997 ether; // Default to 99.7%
+    uint256 internal s_amountOutMinimumSafetyCheck = 0.99 ether; // Default to 99%
     bytes public s_swapPath;
 
     /**
@@ -168,7 +170,7 @@ abstract contract PurchaseUniswap is
         onlyOwner /* TODO: set another role for access control? */
     {
         if (poolFeeRates.length != intermediateTokens.length + 1) {
-            revert DexSwaps__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
+            revert PurchaseUniswap__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
         }
 
         bytes memory newPath = abi.encodePacked(address(i_purchasingToken));
@@ -179,7 +181,32 @@ abstract contract PurchaseUniswap is
         newPath = abi.encodePacked(newPath, poolFeeRates[poolFeeRates.length - 1], address(i_wrBtcToken));
 
         s_swapPath = newPath;
-        emit DexSwaps_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
+        emit PurchaseUniswap_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
+    }
+
+    /**
+     * @notice Set the minimum percentage of rBTC that must be received from the swap.
+     * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap.
+     */
+    function setAmountOutMinimumPercent(uint256 amountOutMinimumPercent) external onlyOwner {
+        if (amountOutMinimumPercent > PRECISION) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooHigh();
+        }
+        if (amountOutMinimumPercent < s_amountOutMinimumSafetyCheck) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooLow();
+        }
+        s_amountOutMinimumPercent = amountOutMinimumPercent;
+    }
+
+    /**
+     * @notice Set the minimum percentage of rBTC that must be received from the swap.
+     * @param amountOutMinimumSafetyCheck The minimum percentage of rBTC that must be received from the swap.
+     */
+    function setAmountOutMinimumSafetyCheck(uint256 amountOutMinimumSafetyCheck) external onlyOwner {
+        if (amountOutMinimumSafetyCheck > PRECISION) {
+            revert PurchaseUniswap__AmountOutMinimumSafetyCheckTooHigh();
+        }
+        s_amountOutMinimumSafetyCheck = amountOutMinimumSafetyCheck;
     }
 
     /**
@@ -188,6 +215,22 @@ abstract contract PurchaseUniswap is
      */
     function getAccumulatedRbtcBalance() external view override returns (uint256) {
         return s_usersAccumulatedRbtc[msg.sender];
+    }
+
+    /**
+     * @notice Get the minimum percentage of rBTC that must be received from the swap.
+     * @return The minimum percentage of rBTC that must be received from the swap.
+     */     
+    function getAmountOutMinimumPercent() external view returns (uint256) {
+        return s_amountOutMinimumPercent;
+    }
+
+    /**
+     * @notice Get the minimum percentage of rBTC that must be received from the swap.
+     * @return The minimum percentage of rBTC that must be received from the swap.
+     */
+    function getAmountOutMinimumSafetyCheck() external view returns (uint256) {
+        return s_amountOutMinimumSafetyCheck;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -214,7 +257,7 @@ abstract contract PurchaseUniswap is
     }
 
     function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (docAmountToSpend * PRECISION * 0) / (100 * i_MocOracle.getPrice()); // (docAmountToSpend * PRECISION * 98) / (100 * i_MocOracle.getPrice()); // TODO: Should we make the slippage a parameter?
+        minimumRbtcAmount = (docAmountToSpend * s_amountOutMinimumPercent) / i_MocOracle.getPrice();
     }
 
     // Define abstract functions to be implemented by child contracts

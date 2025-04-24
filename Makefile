@@ -22,10 +22,10 @@ test:
 # MocSwaps specific tests
 moc:
 	@echo "Executing MocSwaps tests with $(LENDING_PROTOCOL)..."
-	$(TEST_CMD)
+	SWAP_TYPE=mocSwaps $(TEST_CMD)
 moc-tropykus:
 	@echo "Executing MocSwaps Tropykus tests..."
-	LENDING_PROTOCOL=tropykus $(TEST_CMD)
+	SWAP_TYPE=mocSwaps LENDING_PROTOCOL=tropykus $(TEST_CMD)
 moc-sovryn:
 	@echo "Executing MocSwaps Sovryn tests..."
 	LENDING_PROTOCOL=sovryn $(TEST_CMD)
@@ -43,7 +43,7 @@ fork-sovryn:
 # DexSwaps specific tests
 dex:
 	@echo "Executing DexSwaps tests..."
-	$(TEST_CMD) --no-match-contract MockContractsTest
+	SWAP_TYPE=dexSwaps $(TEST_CMD) --no-match-contract MockContractsTest
 
 coverage:
 	@echo "Calculating coverage excluding invariant tests..."

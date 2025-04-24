@@ -6,7 +6,7 @@ import {DeployBase} from "./DeployBase.s.sol";
 import {UsdrifHelperConfig} from "./UsdrifHelperConfig.s.sol";
 import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
-import {IUniswapPurchase} from "../src/interfaces/IUniswapPurchase.sol";
+import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
@@ -37,7 +37,7 @@ contract DeployUsdrifHandler is DeployBase {
         address feeCollector = getFeeCollector(environment);
         
         // Set up Uniswap settings
-        IUniswapPurchase.UniswapSettings memory uniswapSettings = IUniswapPurchase.UniswapSettings({
+        IPurchaseUniswap.UniswapSettings memory uniswapSettings = IPurchaseUniswap.UniswapSettings({
             wrBtcToken: IWRBTC(networkConfig.wrbtcTokenAddress),
             swapRouter02: ISwapRouter02(networkConfig.swapRouter02Address),
             swapIntermediateTokens: networkConfig.swapIntermediateTokens,
