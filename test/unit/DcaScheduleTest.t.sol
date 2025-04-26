@@ -22,7 +22,7 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 scheduleIndex = dcaManager.getMyDcaSchedules(address(docToken)).length;
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
             USER, address(docToken), scheduleId, DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD
@@ -41,7 +41,7 @@ contract DcaScheduleTest is DcaDappTest {
         vm.startPrank(USER);
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         console.log("First timestamp", block.timestamp);
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
@@ -51,7 +51,7 @@ contract DcaScheduleTest is DcaDappTest {
             address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         bytes32 scheduleId2 =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         console.log("Second timestamp", block.timestamp);
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
@@ -72,7 +72,7 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         docToken.approve(address(docHandler), extraDocToDeposit);
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
+            abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleUpdated(
@@ -93,13 +93,13 @@ contract DcaScheduleTest is DcaDappTest {
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
@@ -119,13 +119,13 @@ contract DcaScheduleTest is DcaDappTest {
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
@@ -149,7 +149,7 @@ contract DcaScheduleTest is DcaDappTest {
         super.createSeveralDcaSchedules();
         vm.startPrank(USER);
         for (int256 i = int256(NUM_OF_SCHEDULES) - 1; i >= 0; --i) {
-            bytes32 scheduleId = keccak256(abi.encodePacked(USER, block.timestamp, uint256(i)));
+            bytes32 scheduleId = keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, uint256(i)));
             dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
         }
         vm.stopPrank();
@@ -164,13 +164,13 @@ contract DcaScheduleTest is DcaDappTest {
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         vm.warp(block.timestamp + 1 minutes);
         bytes32 scheduleId2 =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         dcaManager.createDcaSchedule(
             address(docToken), DOC_TO_DEPOSIT * 3, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
@@ -215,7 +215,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testCannotDeleteInexistentSchedule() external {
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp + 1, dcaManager.getMyDcaSchedules(address(docToken)).length)
+            abi.encodePacked(USER, address(docToken), block.timestamp + 1, dcaManager.getMyDcaSchedules(address(docToken)).length)
         );
         vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleId.selector);
         vm.prank(USER);

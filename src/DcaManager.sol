@@ -141,7 +141,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(msg.sender, block.timestamp, s_dcaSchedules[msg.sender][token].length));
+            keccak256(abi.encodePacked(msg.sender, token, block.timestamp, s_dcaSchedules[msg.sender][token].length));
 
         DcaDetails memory dcaSchedule = DcaDetails(
             depositAmount,

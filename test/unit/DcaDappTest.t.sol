@@ -306,7 +306,7 @@ contract DcaDappTest is Test {
         uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
+            abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.expectEmit(true, true, true, false);
         emit TokenHandler__TokenDeposited(address(docToken), USER, DOC_TO_DEPOSIT);
@@ -335,7 +335,7 @@ contract DcaDappTest is Test {
         uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
         // Delete the schedule created in setUp to have all five schedules with the same amounts
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
+            abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         dcaManager.deleteDcaSchedule(address(docToken), scheduleId);
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
@@ -348,7 +348,7 @@ contract DcaDappTest is Test {
                 userBalanceBeforeDeposit = 0;
             }
             scheduleId = keccak256(
-                abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
+                abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
             );
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
