@@ -43,7 +43,7 @@ fork-sovryn:
 # DexSwaps specific tests
 dex:
 	@echo "Executing DexSwaps tests..."
-	SWAP_TYPE=dexSwaps $(TEST_CMD) --no-match-contract MockContractsTest
+	SWAP_TYPE=dexSwaps $(TEST_CMD)
 
 coverage:
 	@echo "Calculating coverage excluding invariant tests..."

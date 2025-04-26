@@ -12,15 +12,6 @@ contract SlippageSettingsTest is DcaDappTest {
     event PurchaseUniswap_AmountOutMinimumPercentUpdated(uint256 oldValue, uint256 newValue);
     event PurchaseUniswap_AmountOutMinimumSafetyCheckUpdated(uint256 oldValue, uint256 newValue);
 
-    // Skip tests if not using dexSwaps
-    modifier onlyDexSwaps() {
-        if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("dexSwaps"))) {
-            console.log("Skipping test: only applicable for dexSwaps");
-            return;
-        }
-        _;
-    }
-
     function setUp() public override {
         super.setUp();
     }
