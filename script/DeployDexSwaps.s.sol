@@ -5,9 +5,9 @@ pragma solidity ^0.8.19;
 import {DeployBase} from "./DeployBase.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {TropykusDocHandlerDex} from "../src/TropykusDocHandlerDex.sol";
-import {SovrynDocHandlerDex} from "../src/SovrynDocHandlerDex.sol";
-import {IUniswapPurchase} from "../src/interfaces/IUniswapPurchase.sol";
+import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
+import {SovrynErc20HandlerDex} from "../src/SovrynErc20HandlerDex.sol";
+import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
 import {AdminOperations} from "../src/AdminOperations.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
@@ -23,7 +23,7 @@ contract DeployDexSwaps is DeployBase {
         address dcaManager,
         address docToken,
         address lendingToken,
-        IUniswapPurchase.UniswapSettings memory uniswapSettings,
+        IPurchaseUniswap.UniswapSettings memory uniswapSettings,
         address feeCollector
     ) public returns (address) {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
@@ -35,13 +35,13 @@ contract DeployDexSwaps is DeployBase {
 
         if (protocol == Protocol.TROPYKUS) {
             return address(
-                new TropykusDocHandlerDex(
+                new TropykusErc20HandlerDex(
                     dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
                 )
             );
         } else {
             return address(
-                new SovrynDocHandlerDex(
+                new SovrynErc20HandlerDex(
                     dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
                 )
             );
@@ -62,7 +62,7 @@ contract DeployDexSwaps is DeployBase {
         address iSusdToken = networkConfig.iSusdAddress;
         address docHandlerDexAddress;
 
-        IUniswapPurchase.UniswapSettings memory uniswapSettings = IUniswapPurchase.UniswapSettings({
+        IPurchaseUniswap.UniswapSettings memory uniswapSettings = IPurchaseUniswap.UniswapSettings({
             wrBtcToken: IWRBTC(networkConfig.wrbtcTokenAddress),
             swapRouter02: ISwapRouter02(networkConfig.swapRouter02Address),
             swapIntermediateTokens: networkConfig.swapIntermediateTokens,

@@ -24,8 +24,6 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
 
     /**
-     * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
-     * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
      * @param mocProxyAddress the address of the MoC proxy contract on the blockchain of deployment
      */
@@ -52,7 +50,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         onlyDcaManager
     {
         // Redeem DOC (repaying kDOC)
-        purchaseAmount = _redeemDoc(buyer, purchaseAmount); // TODO: Check if this is correct
+        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); // TODO: Check if this is correct
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
@@ -92,7 +90,7 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
             _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
         // Redeem DOC (and repay kDOC)
-        _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
+        _batchRedeemStablecoin(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
 
         // Charge fees
         _transferFee(i_docToken, aggregatedFee);
@@ -165,9 +163,9 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     }
 
     // Define abstract functions to be implemented by child contracts
-    function _redeemDoc(address buyer, uint256 amount) internal virtual returns (uint256);
+    function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
 
-    function _batchRedeemDoc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
         virtual
         returns (uint256);

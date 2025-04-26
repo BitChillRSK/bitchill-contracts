@@ -9,11 +9,6 @@ import "../test/Constants.sol";
 import {Script} from "forge-std/Script.sol";
 
 contract MocHelperConfig is Script {
-    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
-    address mockLendingTokenAddress;
-    bool lendingProtocolIsTropykus =
-        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
-    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
 
     struct NetworkConfig {
         address docTokenAddress;
@@ -22,6 +17,13 @@ contract MocHelperConfig is Script {
         address kDocAddress;
         address iSusdAddress;
     }
+    
+    string lendingProtocol = vm.envString("LENDING_PROTOCOL");
+    address mockLendingTokenAddress;
+    bool lendingProtocolIsTropykus =
+        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
+    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+
 
     NetworkConfig public activeNetworkConfig;
 

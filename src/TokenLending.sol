@@ -22,35 +22,35 @@ abstract contract TokenLending is ITokenLending {
     }
 
     /**
-     * @notice convert DOC to lending token
-     * @param docAmount: the amount of DOC to convert
-     * @param exchangeRate: the exchange rate of DOC to lending token
+     * @notice convert underlying token to lending token
+     * @param underlyingAmount: the amount of underlying token to convert
+     * @param exchangeRate: the exchange rate of underlying token to lending token
      * @return lendingTokenAmount the amount of lending token
      */
-    function _docToLendingToken(uint256 docAmount, uint256 exchangeRate)
+    function _stablecoinToLendingToken(uint256 underlyingAmount, uint256 exchangeRate)
         internal
         view
         returns (uint256 lendingTokenAmount)
     {
-        // lendingTokenAmount = docAmount * i_exchangeRateDecimals / exchangeRate;
-        // lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
-        lendingTokenAmount = Math.mulDiv(docAmount, i_exchangeRateDecimals, exchangeRate);
+        // lendingTokenAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
+        // lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
+        lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate);
     }
 
     /**
-     * @notice convert lending token to DOC
+     * @notice convert lending token to underlying token
      * @param lendingTokenAmount: the amount of lending token to convert
-     * @param exchangeRate: the exchange rate of lending token to DOC
-     * @return docAmount the amount of DOC
+     * @param exchangeRate: the exchange rate of lending token to underlying
+     * @return underlyingAmount the amount of underlying
      */
-    function _lendingTokenToDoc(uint256 lendingTokenAmount, uint256 exchangeRate)
+    function _lendingTokenToStablecoin(uint256 lendingTokenAmount, uint256 exchangeRate)
         internal
         view
-        returns (uint256 docAmount)
+        returns (uint256 underlyingAmount)
     {
-        // docAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
+        // underlyingAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
         // Using OpenZeppelin's Math library for precise division rounding up
-        docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
-        // docAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals);
+        underlyingAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
+        // underlyingAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals);
     }
 }

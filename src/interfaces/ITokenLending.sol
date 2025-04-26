@@ -12,15 +12,15 @@ interface ITokenLending is ITokenHandler {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event TokenLending__SuccessfulDocRedemption(
-        address indexed user, uint256 indexed docRedeemed, uint256 indexed lendingTokenRepayed
+    event TokenLending__SuccessfulUnderlyingRedemption(
+        address indexed user, uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed
     );
-    event TokenLending__SuccessfulBatchDocRedemption(uint256 indexed docRedeemed, uint256 indexed lendingTokenRepayed);
-    event TokenLending__DocRedeemedLendingTokenRepayed(
-        address indexed user, uint256 docRedeemed, uint256 indexed lendingTokenRepayed
+    event TokenLending__SuccessfulBatchUnderlyingRedemption(uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed);
+    event TokenLending__UnderlyingRedeemedLendingTokenRepayed(
+        address indexed user, uint256 underlyingRedeemed, uint256 indexed lendingTokenRepayed
     );
     event TokenLending__SuccessfulInterestWithdrawal(
-        address indexed user, uint256 indexed docRedeemed, uint256 indexed lendingTokenRepayed
+        address indexed user, uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed
     );
     event TokenLending__WithdrawalAmountAdjusted(
         address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
@@ -33,13 +33,10 @@ interface ITokenLending is ITokenHandler {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error TokenLending__DocRedeemAmountExceedsBalance(uint256 redeemAmount, uint256 balance);
+    error TokenLending__UnderlyingRedeemAmountExceedsBalance(uint256 redeemAmount, uint256 balance);
     error TokenLending__LendingTokenApprovalFailed(address user, uint256 depositAmount);
-    error TokenLending__WithdrawalAmountExceedsLendingTokenBalance(
-        address user, uint256 withdrawalAmount, uint256 balance
-    );
     error TokenLending__LendingProtocolDepositFailed();
-    error TokenLending__BatchRedeemDocFailed();
+    error TokenLending__BatchRedeemUnderlyingFailed();
 
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS

@@ -9,7 +9,7 @@ import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/Transfer
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
-import {IUniswapPurchase} from "./interfaces/IUniswapPurchase.sol";
+import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -17,14 +17,14 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
 /**
- * @title PurchaseMoc
- * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
+ * @title PurchaseUniswap
+ * @notice This contract handles swaps of stablecoin for rBTC using Uniswap V3
  */
 abstract contract PurchaseUniswap is
     FeeHandler,
-    DcaManagerAccessControl, /*IDocHandlerMoc,*/
+    DcaManagerAccessControl,
     IPurchaseRbtc,
-    IUniswapPurchase
+    IPurchaseUniswap
 {
     using SafeERC20 for IERC20;
 
@@ -34,16 +34,16 @@ abstract contract PurchaseUniswap is
     IERC20 public immutable i_purchasingToken;
     IWRBTC public immutable i_wrBtcToken;
     mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
-    mapping(address user => uint256 balance) private s_WrbtcBalances;
     ISwapRouter02 public immutable i_swapRouter02;
     ICoinPairPrice public immutable i_MocOracle;
-    uint256 constant PRECISION = 1e18;
+    uint256 constant HUNDRED_PERCENT = 1 ether;
+    uint256 internal s_amountOutMinimumPercent = 0.997 ether; // Default to 99.7%
+    uint256 internal s_amountOutMinimumSafetyCheck = 0.99 ether; // Default to 99%
     bytes public s_swapPath;
 
     /**
-     * @notice the contract is ownable and after deployment its ownership shall be transferred to the wallet associated to the CRON job
-     * @notice the DCA contract inherits from OZ's Ownable, which is the secure, standard way to handle ownership
-     * @param stableTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
+     * @param stableTokenAddress the address of the stablecoin token on the blockchain of deployment
+     * @param uniswapSettings the settings for the uniswap router
      */
     constructor(
         address stableTokenAddress, // TODO: modify this to passing the interface
@@ -72,16 +72,16 @@ abstract contract PurchaseUniswap is
         override
         onlyDcaManager
     {
-        // Redeem DOC (repaying kDOC)
-        purchaseAmount = _redeemDoc(buyer, purchaseAmount);
+        // Redeem stablecoin (repaying yield bearing token)
+        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount);
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
         uint256 netPurchaseAmount = purchaseAmount - fee;
         _transferFee(i_purchasingToken, fee);
 
-        // Swap DOC for WRBTC
-        uint256 wrBtcPurchased = _swapDocForWrbtc(netPurchaseAmount);
+        // Swap stablecoin for WRBTC
+        uint256 wrBtcPurchased = _swapStablecoinForWrbtc(netPurchaseAmount);
 
         if (wrBtcPurchased > 0) {
             s_usersAccumulatedRbtc[buyer] += wrBtcPurchased;
@@ -109,29 +109,29 @@ abstract contract PurchaseUniswap is
         uint256 numOfPurchases = buyers.length;
 
         // Calculate net amounts
-        (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) =
+        (uint256 aggregatedFee, uint256[] memory netStablecoinAmountsToSpend, uint256 totalStablecoinAmountToSpend) =
             _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
 
-        // Redeem DOC (and repay lending token)
-        uint256 docRedeemed = _batchRedeemDoc(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee
-        totalDocAmountToSpend = docRedeemed - aggregatedFee;
+        // Redeem stablecoin (and repay lending token)
+        uint256 stablecoinRedeemed = _batchRedeemStablecoin(buyers, purchaseAmounts, totalStablecoinAmountToSpend + aggregatedFee); // total stablecoin to redeem by repaying yield bearing token in order to spend it to redeem rBTC is totalStablecoinAmountToSpend + aggregatedFee
+        totalStablecoinAmountToSpend = stablecoinRedeemed - aggregatedFee;
 
         // Charge fees
         _transferFee(i_purchasingToken, aggregatedFee);
 
-        // Swap DOC for wrBTC
-        uint256 wrBtcPurchased = _swapDocForWrbtc(totalDocAmountToSpend);
+        // Swap stablecoin for wrBTC
+        uint256 wrBtcPurchased = _swapStablecoinForWrbtc(totalStablecoinAmountToSpend);
 
         if (wrBtcPurchased > 0) {
             for (uint256 i; i < numOfPurchases; ++i) {
-                uint256 usersPurchasedWrbtc = wrBtcPurchased * netDocAmountsToSpend[i] / totalDocAmountToSpend;
+                uint256 usersPurchasedWrbtc = wrBtcPurchased * netStablecoinAmountsToSpend[i] / totalStablecoinAmountToSpend;
                 s_usersAccumulatedRbtc[buyers[i]] += usersPurchasedWrbtc;
                 emit PurchaseRbtc__RbtcBought(
-                    buyers[i], address(i_purchasingToken), usersPurchasedWrbtc, scheduleIds[i], netDocAmountsToSpend[i]
+                    buyers[i], address(i_purchasingToken), usersPurchasedWrbtc, scheduleIds[i], netStablecoinAmountsToSpend[i]
                 );
             }
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
-                address(i_purchasingToken), wrBtcPurchased, totalDocAmountToSpend
+                address(i_purchasingToken), wrBtcPurchased, totalStablecoinAmountToSpend
             );
         } else {
             revert PurchaseRbtc__RbtcBatchPurchaseFailed(address(i_purchasingToken));
@@ -168,7 +168,7 @@ abstract contract PurchaseUniswap is
         onlyOwner /* TODO: set another role for access control? */
     {
         if (poolFeeRates.length != intermediateTokens.length + 1) {
-            revert DexSwaps__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
+            revert PurchaseUniswap__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);
         }
 
         bytes memory newPath = abi.encodePacked(address(i_purchasingToken));
@@ -179,7 +179,34 @@ abstract contract PurchaseUniswap is
         newPath = abi.encodePacked(newPath, poolFeeRates[poolFeeRates.length - 1], address(i_wrBtcToken));
 
         s_swapPath = newPath;
-        emit DexSwaps_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
+        emit PurchaseUniswap_NewPathSet(intermediateTokens, poolFeeRates, s_swapPath);
+    }
+
+    /**
+     * @notice Set the minimum percentage of rBTC that must be received from the swap.
+     * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap.
+     */
+    function setAmountOutMinimumPercent(uint256 amountOutMinimumPercent) external onlyOwner {
+        if (amountOutMinimumPercent > HUNDRED_PERCENT) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooHigh();
+        }
+        if (amountOutMinimumPercent < s_amountOutMinimumSafetyCheck) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooLow();
+        }
+        emit PurchaseUniswap_AmountOutMinimumPercentUpdated(s_amountOutMinimumPercent, amountOutMinimumPercent);
+        s_amountOutMinimumPercent = amountOutMinimumPercent;
+    }
+
+    /**
+     * @notice Set the minimum percentage of rBTC that must be received from the swap.
+     * @param amountOutMinimumSafetyCheck The minimum percentage of rBTC that must be received from the swap.
+     */
+    function setAmountOutMinimumSafetyCheck(uint256 amountOutMinimumSafetyCheck) external onlyOwner {
+        if (amountOutMinimumSafetyCheck > HUNDRED_PERCENT) {
+            revert PurchaseUniswap__AmountOutMinimumSafetyCheckTooHigh();
+        }
+        emit PurchaseUniswap_AmountOutMinimumSafetyCheckUpdated(s_amountOutMinimumSafetyCheck, amountOutMinimumSafetyCheck);
+        s_amountOutMinimumSafetyCheck = amountOutMinimumSafetyCheck;
     }
 
     /**
@@ -190,37 +217,53 @@ abstract contract PurchaseUniswap is
         return s_usersAccumulatedRbtc[msg.sender];
     }
 
+    /**
+     * @notice Get the minimum percentage of rBTC that must be received from the swap.
+     * @return The minimum percentage of rBTC that must be received from the swap.
+     */     
+    function getAmountOutMinimumPercent() external view returns (uint256) {
+        return s_amountOutMinimumPercent;
+    }
+
+    /**
+     * @notice Get the minimum percentage of rBTC that must be received from the swap.
+     * @return The minimum percentage of rBTC that must be received from the swap.
+     */
+    function getAmountOutMinimumSafetyCheck() external view returns (uint256) {
+        return s_amountOutMinimumSafetyCheck;
+    }
+
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @param docAmountToSpend the amount of DOC to swap for rBTC
+     * @param stablecoinAmountToSpend the amount of stablecoin to swap for rBTC
      * @return amountOut the amount of rBTC received
      */
-    function _swapDocForWrbtc(uint256 docAmountToSpend) internal returns (uint256 amountOut) {
-        // Approve the router to spend DOC.
-        TransferHelper.safeApprove(address(i_purchasingToken), address(i_swapRouter02), docAmountToSpend);
+    function _swapStablecoinForWrbtc(uint256 stablecoinAmountToSpend) internal returns (uint256 amountOut) {
+        // Approve the router to spend stablecoin.
+        TransferHelper.safeApprove(address(i_purchasingToken), address(i_swapRouter02), stablecoinAmountToSpend);
 
         // Set up the swap parameters
         IV3SwapRouter.ExactInputParams memory params = IV3SwapRouter.ExactInputParams({
             path: s_swapPath,
             recipient: address(this),
-            amountIn: docAmountToSpend,
-            amountOutMinimum: _getAmountOutMinimum(docAmountToSpend)
+            amountIn: stablecoinAmountToSpend,
+            amountOutMinimum: _getAmountOutMinimum(stablecoinAmountToSpend)
         });
 
         amountOut = i_swapRouter02.exactInput(params);
     }
 
-    function _getAmountOutMinimum(uint256 docAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (docAmountToSpend * PRECISION * 0) / (100 * i_MocOracle.getPrice()); // (docAmountToSpend * PRECISION * 98) / (100 * i_MocOracle.getPrice()); // TODO: Should we make the slippage a parameter?
+    function _getAmountOutMinimum(uint256 stablecoinAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
+        minimumRbtcAmount = (stablecoinAmountToSpend * s_amountOutMinimumPercent) / i_MocOracle.getPrice();
     }
 
     // Define abstract functions to be implemented by child contracts
-    function _redeemDoc(address buyer, uint256 amount) internal virtual returns (uint256);
+    function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
 
-    function _batchRedeemDoc(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
         internal
         virtual
         returns (uint256);

@@ -4,13 +4,13 @@ pragma solidity 0.8.19;
 import {ITokenLending} from "./ITokenLending.sol";
 
 /**
- * @title ITropykusDocLending
+ * @title ISovrynErc20Lending
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the TropykusDocHandler contract.
+ * @dev Interface for the SovrynErc20Handler contract.
  */
-interface ITropykusDocLending is ITokenLending {
+interface ISovrynErc20Lending is ITokenLending {
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
-    error TropykusDocLending__RedeemUnderlyingFailed(uint256 errorCode);
+    error SovrynErc20Lending__RedeemUnderlyingFailed();
 }

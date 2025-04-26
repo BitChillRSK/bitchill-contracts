@@ -16,7 +16,7 @@ contract MockContractsTest is DcaDappTest {
     /*//////////////////////////////////////////////////////////////
                           MOCK MOC PROXY TESTS
     //////////////////////////////////////////////////////////////*/
-    function testMockMocProxyRedeemFreeDoc() external {
+    function testMockMocProxyRedeemFreeDoc() external onlyMocSwaps {
         if (block.chainid == ANVIL_CHAIN_ID) {
             uint256 redeemAmount = 50_000 ether; // redeem 50,000 DOC
             docToken.mint(USER, redeemAmount);

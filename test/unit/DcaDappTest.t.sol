@@ -114,6 +114,22 @@ contract DcaDappTest is Test {
         address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
     );
 
+    modifier onlyDexSwaps() {
+        if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("dexSwaps"))) {
+            console.log("Skipping test: only applicable for dexSwaps");
+            return;
+        }
+        _;
+    }
+
+    modifier onlyMocSwaps() {
+        if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("mocSwaps"))) {
+            console.log("Skipping test: only applicable for mocSwaps");
+            return;
+        }
+        _;
+    }
+
     /*//////////////////////////////////////////////////////////////
                             UNIT TESTS SETUP
     //////////////////////////////////////////////////////////////*/
