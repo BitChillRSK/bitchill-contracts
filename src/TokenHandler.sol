@@ -46,8 +46,6 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    receive() external payable /*onlyMocProxy*/ {} // TODO? Cambiar onlyMocProxy por algo que controle que el rbtc venga de fuentes conocidas?
-
     /**
      * @notice deposit the full token amount for DCA on the contract
      * @notice This function transfers the selected token from the user to this contract. The user must have called the token contract's
@@ -56,9 +54,6 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
      * @param depositAmount: the amount to deposit
      */
     function depositToken(address user, uint256 depositAmount) public virtual override onlyDcaManager {
-        if (i_stableToken.allowance(user, address(this)) < depositAmount) {
-            revert TokenHandler__InsufficientTokenAllowance(address(i_stableToken));
-        }
         i_stableToken.safeTransferFrom(user, address(this), depositAmount);
         emit TokenHandler__TokenDeposited(address(i_stableToken), user, depositAmount);
     }

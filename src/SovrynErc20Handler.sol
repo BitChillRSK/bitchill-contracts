@@ -7,7 +7,6 @@ import {ISovrynErc20Lending} from "./interfaces/ISovrynErc20Lending.sol";
 import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TokenLending} from "src/TokenLending.sol";
 
 /**

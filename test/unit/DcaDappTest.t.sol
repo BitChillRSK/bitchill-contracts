@@ -49,6 +49,8 @@ contract DcaDappTest is Test {
     uint256 constant NUM_OF_SCHEDULES = 5;
     uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 1 BTC
     string swapType = vm.envString("SWAP_TYPE");
+    bool isMocSwaps = keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"));
+    bool isDexSwaps = keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"));
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     address docHandlerAddress;
     uint256 s_lendingProtocolIndex;
@@ -115,7 +117,7 @@ contract DcaDappTest is Test {
     );
 
     modifier onlyDexSwaps() {
-        if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("dexSwaps"))) {
+        if (!isDexSwaps) {
             console.log("Skipping test: only applicable for dexSwaps");
             return;
         }
@@ -123,7 +125,7 @@ contract DcaDappTest is Test {
     }
 
     modifier onlyMocSwaps() {
-        if (keccak256(abi.encodePacked(swapType)) != keccak256(abi.encodePacked("mocSwaps"))) {
+        if (!isMocSwaps) {
             console.log("Skipping test: only applicable for mocSwaps");
             return;
         }
@@ -146,7 +148,7 @@ contract DcaDappTest is Test {
         vm.deal(USER, STARTING_RBTC_USER_BALANCE);
         s_btcPrice = BTC_PRICE;
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        if (isMocSwaps) {
             MocHelperConfig helperConfig;
             DeployMocSwaps deployContracts = new DeployMocSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
@@ -207,7 +209,7 @@ contract DcaDappTest is Test {
                 mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
             }
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        } else if (isDexSwaps) {
             DexHelperConfig helperConfig;
             DeployDexSwaps deployContracts = new DeployDexSwaps();
             (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployContracts.run();
@@ -373,7 +375,7 @@ contract DcaDappTest is Test {
         uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
-        if (block.chainid == ANVIL_CHAIN_ID) {
+        if (block.chainid == ANVIL_CHAIN_ID && isMocSwaps) {
             vm.expectEmit(true, true, true, true);
         } else {
             vm.expectEmit(true, true, true, false); // Amounts may not match to the last wei on fork tests
@@ -478,9 +480,9 @@ contract DcaDappTest is Test {
 
         uint256 prevDocHandlerBalance;
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        if (isMocSwaps) {
             prevDocHandlerBalance = address(docHandler).balance;
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        } else if (isDexSwaps) {
             prevDocHandlerBalance = wrBtcToken.balanceOf(address(docHandler));
         }
 
@@ -519,11 +521,11 @@ contract DcaDappTest is Test {
 
         vm.expectEmit(true, false, false, false); // the amount of rBTC purchased won't match exactly neither the amount of DOC spent in the case of Sovryn due to rounding errors
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        if (isMocSwaps) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
                 address(docToken), totalNetPurchaseAmount / s_btcPrice, totalNetPurchaseAmount
             );
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        } else if (isDexSwaps) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
                 address(docToken), (totalNetPurchaseAmount * 995) / (1000 * s_btcPrice), totalNetPurchaseAmount
             );
@@ -546,10 +548,10 @@ contract DcaDappTest is Test {
 
         uint256 postDocHandlerBalance;
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        if (isMocSwaps) {
             postDocHandlerBalance = address(docHandler).balance;
             // assertEq(postDocHandlerBalance - prevDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        } else if (isDexSwaps) {
             postDocHandlerBalance = wrBtcToken.balanceOf(address(docHandler));
             // assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
             //     postDocHandlerBalance - prevDocHandlerBalance,
@@ -598,10 +600,10 @@ contract DcaDappTest is Test {
         // After a second purchase, we have the same increment
         // assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
 
-        if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
+        if (isMocSwaps) {
             postDocHandlerBalance2 = address(docHandler).balance;
             // assertEq(postDocHandlerBalance2 - postDocHandlerBalance, totalNetPurchaseAmount / s_btcPrice);
-        } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
+        } else if (isDexSwaps) {
             postDocHandlerBalance2 = wrBtcToken.balanceOf(address(docHandler));
             // assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
             //     postDocHandlerBalance2 - postDocHandlerBalance,

@@ -30,7 +30,7 @@ contract MockSwapRouter02 is IV3SwapRouter {
     function exactInput(ExactInputParams calldata params) external payable override returns (uint256 amountOut) {
         require(params.amountIn > 0, "AmountIn must be greater than zero");
 
-        amountOut = (params.amountIn /* * 1e18*/ * 995) / (1000 * s_outputTokenPrice); // Simulate some slippage TODO: DOUBLE-CHECK MATH!!!
+        amountOut = (params.amountIn * 997) / (1000 * s_outputTokenPrice); // Simulate some slippage TODO: DOUBLE-CHECK MATH!!!
 
         require(params.amountOutMinimum <= amountOut, "Insufficient output amount");
 

@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {PurchaseMoc} from "./PurchaseMoc.sol";
-import {TokenLending} from "./TokenLending.sol";
+import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {SovrynErc20Handler} from "./SovrynErc20Handler.sol";
-import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
-import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title SovrynDocHandlerMoc
@@ -56,7 +52,7 @@ contract SovrynDocHandlerMoc is SovrynErc20Handler, PurchaseMoc {
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(SovrynErc20Handler, PurchaseMoc)
+        override(SovrynErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call SovrynErc20Handler's version of _redeemStablecoin
@@ -71,7 +67,7 @@ contract SovrynDocHandlerMoc is SovrynErc20Handler, PurchaseMoc {
      */
     function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(SovrynErc20Handler, PurchaseMoc)
+        override(SovrynErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call SovrynErc20Handler's version of _batchRedeemStablecoin

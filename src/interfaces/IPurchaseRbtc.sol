@@ -21,6 +21,7 @@ interface IPurchaseRbtc {
     event PurchaseRbtc__SuccessfulRbtcBatchPurchase(
         address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
     );
+    event PurchaseRbtc__rBtcRescued(address indexed stuckContract, address indexed rescueAddress, uint256 amount);
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
@@ -66,6 +67,14 @@ interface IPurchaseRbtc {
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
      */
     function withdrawAccumulatedRbtc(address user) external;
+
+    /**
+     * @notice Emergency function to withdraw rBTC stuck in contracts that cannot receive native tokens
+     * @param stuckUserContract The address of the user contract where rBTC is stuck
+     * @param rescueAddress The address to send the rescued rBTC to
+     * @dev This function can only be called by the owner
+     */
+    function withdrawStuckRbtc(address stuckUserContract, address rescueAddress) external;
 
     /**
      * @dev returns the rBTC that has been accumulated by the user through periodical purchases

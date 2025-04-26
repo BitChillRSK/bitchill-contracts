@@ -30,9 +30,7 @@ contract DocDepositTest is DcaDappTest {
 
     function testDepositRevertsIfDocNotApproved() external {
         vm.startPrank(USER);
-        bytes memory encodedRevert =
-            abi.encodeWithSelector(ITokenHandler.TokenHandler__InsufficientTokenAllowance.selector, address(docToken));
-        vm.expectRevert(encodedRevert);
+        vm.expectRevert();
         dcaManager.depositToken(address(docToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
         vm.stopPrank();
     }

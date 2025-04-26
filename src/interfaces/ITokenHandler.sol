@@ -16,9 +16,6 @@ interface ITokenHandler {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error TokenHandler__InsufficientTokenAllowance(address token);
-    // error TokenHandler__TokenDepositFailed(address token);
-    // error TokenHandler__TokenWithdrawalFailed(address token);
     error TokenHandler__PurchaseAmountMustBeGreaterThanZero();
     error TokenHandler__PurchasePeriodMustBeGreaterThanZero();
     error TokenHandler__PurchaseAmountMustBeLowerThanHalfOfBalance();

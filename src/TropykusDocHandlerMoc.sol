@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
-import {TokenLending} from "./TokenLending.sol";
 import {PurchaseMoc} from "src/PurchaseMoc.sol";
-import {IkToken} from "./interfaces/IkToken.sol";
+import {PurchaseRbtc} from "src/PurchaseRbtc.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -51,7 +49,7 @@ contract TropykusDocHandlerMoc is TropykusErc20Handler, PurchaseMoc {
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(TropykusErc20Handler, PurchaseMoc)
+        override(TropykusErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call TropykusErc20Handler's version of _redeemStablecoin
@@ -66,7 +64,7 @@ contract TropykusDocHandlerMoc is TropykusErc20Handler, PurchaseMoc {
      */
     function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal
-        override(TropykusErc20Handler, PurchaseMoc)
+        override(TropykusErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call TropykusErc20Handler's version of _batchRedeemStablecoin

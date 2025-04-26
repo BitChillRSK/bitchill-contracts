@@ -3,12 +3,10 @@ pragma solidity 0.8.19;
 
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {TokenHandler} from "./TokenHandler.sol";
-import {DcaManagerAccessControl} from "src/DcaManagerAccessControl.sol";
 import {ITropykusErc20Lending} from "./interfaces/ITropykusErc20Lending.sol";
 import {IkToken} from "./interfaces/IkToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {TokenLending} from "src/TokenLending.sol";
 
 /**

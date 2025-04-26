@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {FeeHandler} from "./FeeHandler.sol";
-import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
+import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
 import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
-import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
 /**
  * @title PurchaseUniswap
@@ -22,8 +18,7 @@ import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
  */
 abstract contract PurchaseUniswap is
     FeeHandler,
-    DcaManagerAccessControl,
-    IPurchaseRbtc,
+    PurchaseRbtc,
     IPurchaseUniswap
 {
     using SafeERC20 for IERC20;
@@ -33,7 +28,6 @@ abstract contract PurchaseUniswap is
     //////////////////////
     IERC20 public immutable i_purchasingToken;
     IWRBTC public immutable i_wrBtcToken;
-    mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
     ISwapRouter02 public immutable i_swapRouter02;
     ICoinPairPrice public immutable i_MocOracle;
     uint256 constant HUNDRED_PERCENT = 1 ether;
@@ -139,22 +133,28 @@ abstract contract PurchaseUniswap is
     }
 
     /**
+     * @param user: the user to withdraw the rBTC to
      * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
-     * @notice anyone can pay for the transaction to have the rBTC sent to the user
      */
-    function withdrawAccumulatedRbtc(address user) external {
-        uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
-        if (rbtcBalance == 0) revert PurchaseRbtc__NoAccumulatedRbtcToWithdraw();
-
-        s_usersAccumulatedRbtc[user] = 0;
+    function withdrawAccumulatedRbtc(address user) external override onlyDcaManager {
+        uint256 rbtcBalance = _withdrawRbtcChecksEffects(user);
 
         // Unwrap rBTC
         i_wrBtcToken.withdraw(rbtcBalance);
 
         // Transfer RBTC from this contract back to the user
-        (bool sent,) = user.call{value: rbtcBalance}("");
-        if (!sent) revert PurchaseRbtc__rBtcWithdrawalFailed();
-        emit PurchaseRbtc__rBtcWithdrawn(user, rbtcBalance);
+        _withdrawRbtc(user, rbtcBalance);
+    }
+
+    /**
+     * @param stuckUserContract: the contract to withdraw the rBTC from
+     * @param rescueAddress: the address to send the rBTC to if the contract has no fallback
+     * @notice the owner can at any time withdraw the rBTC that has been accumulated through periodical purchases
+     */
+    function withdrawStuckRbtc(address stuckUserContract, address rescueAddress) external override onlyOwner {
+        uint256 rbtcBalance = _withdrawRbtcChecksEffects(stuckUserContract);
+        i_wrBtcToken.withdraw(rbtcBalance);
+        _withdrawStuckRbtc(stuckUserContract, rescueAddress, rbtcBalance);
     }
 
     /**
@@ -210,14 +210,6 @@ abstract contract PurchaseUniswap is
     }
 
     /**
-     * @notice get the accumulated rBTC balance
-     * @return the accumulated rBTC balance
-     */
-    function getAccumulatedRbtcBalance() external view override returns (uint256) {
-        return s_usersAccumulatedRbtc[msg.sender];
-    }
-
-    /**
      * @notice Get the minimum percentage of rBTC that must be received from the swap.
      * @return The minimum percentage of rBTC that must be received from the swap.
      */     
@@ -260,11 +252,4 @@ abstract contract PurchaseUniswap is
         minimumRbtcAmount = (stablecoinAmountToSpend * s_amountOutMinimumPercent) / i_MocOracle.getPrice();
     }
 
-    // Define abstract functions to be implemented by child contracts
-    function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
-
-    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
-        internal
-        virtual
-        returns (uint256);
 }

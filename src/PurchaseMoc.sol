@@ -2,18 +2,16 @@
 pragma solidity 0.8.19;
 
 import {FeeHandler} from "./FeeHandler.sol";
-import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
+import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 
 /**
  * @title PurchaseMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseRbtc {
+abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -21,7 +19,6 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
     //////////////////////
     IERC20 public immutable i_docToken;
     IMocProxy public immutable i_mocProxy;
-    mapping(address user => uint256 amount) internal s_usersAccumulatedRbtc;
 
     /**
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
@@ -116,30 +113,6 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         }
     }
 
-    /**
-     * @notice the user can at any time withdraw the rBTC that has been accumulated through periodical purchases
-     * @notice anyone can pay for the transaction to have the rBTC sent to the user
-     * @param user: the user to withdraw the rBTC to
-     */
-    function withdrawAccumulatedRbtc(address user) external virtual override {
-        uint256 rbtcBalance = s_usersAccumulatedRbtc[user];
-        if (rbtcBalance == 0) revert PurchaseRbtc__NoAccumulatedRbtcToWithdraw();
-
-        s_usersAccumulatedRbtc[user] = 0;
-        // Transfer RBTC from this contract back to the user
-        (bool sent,) = user.call{value: rbtcBalance}("");
-        if (!sent) revert PurchaseRbtc__rBtcWithdrawalFailed();
-        emit PurchaseRbtc__rBtcWithdrawn(user, rbtcBalance);
-    }
-
-    /**
-     * @notice get the accumulated rBTC balance
-     * @return the accumulated rBTC balance
-     */
-    function getAccumulatedRbtcBalance() external view override returns (uint256) {
-        return s_usersAccumulatedRbtc[msg.sender];
-    }
-
     /*//////////////////////////////////////////////////////////////
                            INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -162,11 +135,4 @@ abstract contract PurchaseMoc is FeeHandler, DcaManagerAccessControl, IPurchaseR
         return (balancePrev, balancePost);
     }
 
-    // Define abstract functions to be implemented by child contracts
-    function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
-
-    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
-        internal
-        virtual
-        returns (uint256);
 }
