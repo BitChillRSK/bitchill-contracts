@@ -41,7 +41,16 @@ abstract contract PurchaseRbtc is IPurchaseRbtc, Ownable, DcaManagerAccessContro
     }
 
     /**
-     * @notice get the accumulated rBTC balance
+     * @notice get the accumulated rBTC balance for a specific user
+     * @param user the address of the user to check the accumulated rBTC balance for
+     * @return the accumulated rBTC balance
+     */
+    function getAccumulatedRbtcBalance(address user) external view override returns (uint256) {
+        return s_usersAccumulatedRbtc[user];
+    }
+
+    /**
+     * @notice get the accumulated rBTC balance for the caller
      * @return the accumulated rBTC balance
      */
     function getAccumulatedRbtcBalance() external view override returns (uint256) {

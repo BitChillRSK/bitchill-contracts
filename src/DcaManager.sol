@@ -331,9 +331,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         address[] memory depositedTokens = s_usersDepositedTokens[msg.sender];
         for (uint256 i; i < depositedTokens.length; ++i) {
             for (uint256 j; j < lendingProtocolIndexes.length; ++j) {
-                IPurchaseRbtc(address(_handler(depositedTokens[i], lendingProtocolIndexes[j]))).withdrawAccumulatedRbtc(
-                    msg.sender
-                );
+                IPurchaseRbtc handler = IPurchaseRbtc(address(_handler(depositedTokens[i], lendingProtocolIndexes[j])));
+                if (handler.getAccumulatedRbtcBalance(msg.sender) == 0) continue;
+                handler.withdrawAccumulatedRbtc(msg.sender);
             }
         }
     }

@@ -107,7 +107,7 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testOnlySwapperCanCallDcaManagerToPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes memory encodedRevert = abi.encodeWithSelector(IDcaManager.DcaManager__UnauthorizedSwapper.selector, USER);
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
@@ -118,13 +118,13 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
-        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+        assertEq(RbtcBalanceAfterPurchase, rbtcBalanceBeforePurchase);
     }
 
     function testOnlyDcaManagerCanPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
@@ -135,7 +135,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
-        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+        assertEq(RbtcBalanceAfterPurchase, rbtcBalanceBeforePurchase);
     }
 
     function testBatchPurchasesOneUser() external {

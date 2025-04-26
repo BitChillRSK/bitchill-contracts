@@ -427,7 +427,7 @@ contract DcaDappTest is Test {
             for (uint8 j; j < numOfPurchases; ++j) {
                 vm.startPrank(USER);
                 uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), scheduleIndex);
-                uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+                uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
                 bytes32 scheduleId = dcaManager.getScheduleId(address(docToken), scheduleIndex);
                 vm.stopPrank();
                 console.log("Lending token balance of DOC handler", lendingToken.balanceOf(address(docHandler)));
@@ -439,13 +439,13 @@ contract DcaDappTest is Test {
                 vm.stopPrank();
                 // Check that DOC was substracted and rBTC was added to user's balances
                 assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
-                // assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
+                // assertEq(RbtcBalanceAfterPurchase - rbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
 
                 // if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-                //     assertEq(RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
+                //     assertEq(RbtcBalanceAfterPurchase - rbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
                 // } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
                 assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                    RbtcBalanceAfterPurchase - RbtcBalanceBeforePurchase,
+                    RbtcBalanceAfterPurchase - rbtcBalanceBeforePurchase,
                     netPurchaseAmount / s_btcPrice,
                     0.75e16 // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
                 );

@@ -78,6 +78,13 @@ interface IPurchaseRbtc {
 
     /**
      * @dev returns the rBTC that has been accumulated by the user through periodical purchases
+     * @param user the address of the user to check the accumulated rBTC balance for
+     */
+    function getAccumulatedRbtcBalance(address user) external view returns (uint256);
+
+    /**
+     * @dev returns the rBTC that has been accumulated by the caller through periodical purchases
+     * @notice This is a convenience function that calls getAccumulatedRbtcBalance(msg.sender)
      */
     function getAccumulatedRbtcBalance() external view returns (uint256);
 }
