@@ -234,7 +234,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         schedules.pop();
 
         // Withdraw all balance
-        _handler(token, lendingProtocolIndex).withdrawToken(msg.sender, tokenBalance);
+        if (tokenBalance > 0) {
+            _handler(token, lendingProtocolIndex).withdrawToken(msg.sender, tokenBalance);
+        }
 
         // Emit event
         emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleId, tokenBalance);
@@ -426,7 +428,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param depositAmount: the amount to deposit
      */
     function _validateDeposit(address token, uint256 depositAmount) internal {
-        if (depositAmount <= 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
+        if (depositAmount == 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
         // if (!_isTokenDeposited(token)) s_usersDepositedTokens[msg.sender].push(token);
         if (!s_tokenIsDeposited[msg.sender][token]) {
             s_tokenIsDeposited[msg.sender][token] = true;
@@ -492,7 +494,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param withdrawalAmount: the amount to withdraw
      */
     function _withdrawToken(address token, uint256 scheduleIndex, uint256 withdrawalAmount) internal {
-        if (withdrawalAmount <= 0) revert DcaManager__WithdrawalAmountMustBeGreaterThanZero();
+        if (withdrawalAmount == 0) revert DcaManager__WithdrawalAmountMustBeGreaterThanZero();
         uint256 tokenBalance = s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
         if (withdrawalAmount > tokenBalance) {
             revert DcaManager__WithdrawalAmountExceedsBalance(token, withdrawalAmount, tokenBalance);

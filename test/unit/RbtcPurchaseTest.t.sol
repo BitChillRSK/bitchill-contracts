@@ -301,4 +301,10 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.prank(OWNER);
         IPurchaseRbtc(address(docHandler)).withdrawStuckRbtc(stuckContract, rescueAddress);
     }
+
+    function testOnlyUserCanWithdrawRbtc() external {
+        vm.expectRevert();
+        vm.prank(makeAddr("notUser"));
+        IPurchaseRbtc(address(docHandler)).withdrawAccumulatedRbtc(USER);
+    }
 }
