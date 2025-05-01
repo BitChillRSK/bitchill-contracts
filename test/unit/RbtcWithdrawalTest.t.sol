@@ -21,7 +21,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
     function testWithdrawRbtcAfterOnePurchase() external {
         // TODO: test this for multiple stablecoins/schedules
 
-        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
         vm.prank(USER);

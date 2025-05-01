@@ -70,7 +70,7 @@ abstract contract PurchaseUniswap is
         purchaseAmount = _redeemStablecoin(buyer, purchaseAmount);
 
         // Charge fee
-        uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
+        uint256 fee = _calculateFee(purchaseAmount);
         uint256 netPurchaseAmount = purchaseAmount - fee;
         _transferFee(i_purchasingToken, fee);
 
@@ -104,7 +104,7 @@ abstract contract PurchaseUniswap is
 
         // Calculate net amounts
         (uint256 aggregatedFee, uint256[] memory netStablecoinAmountsToSpend, uint256 totalStablecoinAmountToSpend) =
-            _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
+            _calculateFeeAndNetAmounts(purchaseAmounts);
 
         // Redeem stablecoin (and repay lending token)
         uint256 stablecoinRedeemed = _batchRedeemStablecoin(buyers, purchaseAmounts, totalStablecoinAmountToSpend + aggregatedFee); // total stablecoin to redeem by repaying yield bearing token in order to spend it to redeem rBTC is totalStablecoinAmountToSpend + aggregatedFee

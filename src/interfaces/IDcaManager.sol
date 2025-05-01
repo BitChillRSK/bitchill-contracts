@@ -23,12 +23,6 @@ interface IDcaManager {
     // Events ////////////
     //////////////////////
     event DcaManager__TokenBalanceUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed amount);
-    event DcaManager__TokenWithdrawn(address indexed user, address indexed token, uint256 indexed amount);
-    // event DcaManager__TokenDeposited(address indexed user, address indexed token, uint256 indexed amount);
-    // event DcaManager__RbtcBought(
-    //     address indexed user, bytes32 indexed scheduleId, uint256 indexed tokenAmount, uint256 rbtcAmount
-    // );
-    event DcaManager__rBtcWithdrawn(address indexed user, uint256 indexed rbtcAmount);
     event DcaManager__PurchaseAmountSet(
         address indexed user, bytes32 indexed scheduleId, uint256 indexed purchaseAmount
     );
@@ -51,6 +45,7 @@ interface IDcaManager {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     );
+    event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
 
     //////////////////////
     // Errors ////////////
@@ -69,9 +64,7 @@ interface IDcaManager {
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
     error DcaManager__BatchPurchaseArraysLengthMismatch();
     error DcaManager__EmptyBatchPurchaseArrays();
-
-    event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
-
+    error DcaManager__MaxSchedulesPerTokenReached(address token);
     error DcaManager__TokenDoesNotYieldInterest(address token);
     error DcaManager__UnauthorizedSwapper(address sender);
 
@@ -224,20 +217,94 @@ interface IDcaManager {
      */
     function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external;
 
+    /**
+     * @dev modifies the maximum number of schedules per token
+     */
+    function modifyMaxSchedulesPerToken(uint256 maxSchedulesPerToken) external;
+
     //////////////////////
     // Getter functions //
     //////////////////////
 
+    /**
+     * @notice get the DCA schedules for a user and a token
+     * @param token the token address
+     * @return the DCA schedules for the user and the token
+     */
     function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory);
+
+    /**
+     * @notice get the balance of a schedule
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the balance of the schedule
+     */
     function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256);
+
+    /**
+     * @notice get the purchase amount of a schedule
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the purchase amount of the schedule
+     */
     function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256);
-    function getScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32);
+
+    /**
+     * @notice get the purchase period of a schedule
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the purchase period of the schedule
+     */
     function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256);
+
+    /**
+     * @notice get the schedule ID of a schedule
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the schedule ID of the schedule
+     */
+    function getScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32);
+
+    /**
+     * @notice get the users DCA schedules
+     * @param user the user address
+     * @param token the token address
+     * @return the DCA schedules for the user and the token
+     */
     function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
+
+    /**
+     * @notice get the admin operations contract's address
+     * @return the admin operations contract's address
+     */
     function getAdminOperationsAddress() external view returns (address);
+
+    /**
+     * @notice get the users deposited tokens
+     * @param user the user address
+     * @return the users deposited tokens
+     */
     function getUsersDepositedTokens(address user) external view returns (address[] memory);
+
+    /**
+     * @notice get the users that have ever deposited funds into BitChill
+     * @return the users' addresses
+     */
     function getUsers() external view returns (address[] memory);
+
+    /**
+     * @notice get the number of users that have ever deposited funds into BitChill
+     * @return the number of users
+     */
     function getAllTimeUserCount() external view returns (uint256);
+
+    /**
+     * @notice get the interest accrued by a user for a token and a lending protocol index
+     * @param user the user address
+     * @param token the token address
+     * @param lendingProtocolIndex the lending protocol index
+     * @return the interest accrued by the user for the token and the lending protocol index
+     */
     function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
         external
         returns (uint256);
@@ -246,4 +313,9 @@ interface IDcaManager {
      * @dev returns the minimum period that can be set for purchases
      */
     function getMinPurchasePeriod() external returns (uint256);
+
+    /**
+     * @dev returns the maximum number of schedules per token
+     */
+    function getMaxSchedulesPerToken() external returns (uint256);
 }

@@ -16,9 +16,11 @@ import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
  * @custom:unaudited This is an unaudited contract
  */
 contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
-    ///////////////////////////////
-    // State variables ////////////
-    ///////////////////////////////
+    
+    /*//////////////////////////////////////////////////////////////
+                            STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
     AdminOperations private s_adminOperations;
 
     /**
@@ -30,10 +32,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
     uint256 private s_minPurchasePeriod = 1 days; // At most one purchase each day
+    uint256 private s_maxSchedulesPerToken = 10; // Maximum number of schedules per token
 
-    //////////////////////
-    // Modifiers /////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                               MODIFIERS
+    //////////////////////////////////////////////////////////////*/
     /**
      * @notice validate the schedule index
      * @param token the token address
@@ -56,9 +59,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _;
     }
 
-    //////////////////////
-    // Functions /////////
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                               FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @param adminOperationsAddress the address of the admin operations contract
@@ -83,7 +86,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         dcaSchedule.tokenBalance += depositAmount;
         _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
-        // emit DcaManager__TokenDeposited(msg.sender, token, depositAmount);
         emit DcaManager__TokenBalanceUpdated(token, dcaSchedule.scheduleId, dcaSchedule.tokenBalance);
     }
 
@@ -140,8 +142,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _validateDeposit(token, depositAmount);
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
+        DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
+        if (schedules.length == s_maxSchedulesPerToken) {
+            revert DcaManager__MaxSchedulesPerTokenReached(token);
+        }
+
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(msg.sender, token, block.timestamp, s_dcaSchedules[msg.sender][token].length));
+            keccak256(abi.encodePacked(msg.sender, token, block.timestamp, schedules.length));
 
         DcaDetails memory dcaSchedule = DcaDetails(
             depositAmount,
@@ -154,7 +161,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
         _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
 
-        s_dcaSchedules[msg.sender][token].push(dcaSchedule);
+        schedules.push(dcaSchedule);
         emit DcaManager__DcaScheduleCreated(
             msg.sender, token, scheduleId, depositAmount, purchaseAmount, purchasePeriod
         );
@@ -386,9 +393,17 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         s_minPurchasePeriod = minPurchasePeriod;
     }
 
-    ///////////////////////////////
-    // Internal functions /////////
-    ///////////////////////////////
+    /**
+     * @notice modify the maximum number of schedules per token
+     * @param maxSchedulesPerToken: the new maximum number of schedules per token
+     */
+    function modifyMaxSchedulesPerToken(uint256 maxSchedulesPerToken) external override onlyOwner {
+        s_maxSchedulesPerToken = maxSchedulesPerToken;
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice validate that the purchase amount to be set is valid
@@ -502,7 +517,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         dcaSchedule.tokenBalance -= withdrawalAmount;
         _handler(token, dcaSchedule.lendingProtocolIndex).withdrawToken(msg.sender, withdrawalAmount);
-        emit DcaManager__TokenWithdrawn(msg.sender, token, withdrawalAmount);
         emit DcaManager__TokenBalanceUpdated(
             token, dcaSchedule.scheduleId, s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance
         );
@@ -537,9 +551,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
     }
 
-    //////////////////////
-    // Getter functions //
-    //////////////////////
+    /*//////////////////////////////////////////////////////////////
+                            GETTER FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
 
     /**
      * @notice get all DCA schedules for a user
@@ -654,6 +668,14 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function getMinPurchasePeriod() external view override returns (uint256) {
         return s_minPurchasePeriod;
+    }
+
+    /**
+     * @notice get the maximum number of schedules per token
+     * @return the maximum number of schedules per token
+     */
+    function getMaxSchedulesPerToken() external view override returns (uint256) {
+        return s_maxSchedulesPerToken;
     }
 
     /**

@@ -148,35 +148,38 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev Calculates the fee rate based on the annual spending.
+     * @dev Calculates the fee based on the purchase amount.
      * @param purchaseAmount The amount of stablecoin to be swapped for rBTC in each purchase.
-     * @param purchasePeriod The period between purchases in seconds.
-     * @return The fee rate in basis points.
+     * @return The fee amount to be deducted from the purchase amount.
      */
-    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view returns (uint256) {
-        uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
+    function _calculateFee(uint256 purchaseAmount) internal view returns (uint256) {
+        // If min and max rates are equal, apply a flat fee rate regardless of purchase amount
+        if (s_minFeeRate == s_maxFeeRate) {
+            return purchaseAmount * s_minFeeRate / FEE_PERCENTAGE_DIVISOR;
+        }
+        
         uint256 feeRate;
-
-        if (annualSpending >= s_maxAnnualAmount) {
+        
+        if (purchaseAmount >= s_maxAnnualAmount) {
             feeRate = s_minFeeRate;
-        } else if (annualSpending <= s_minAnnualAmount) {
+        } else if (purchaseAmount <= s_minAnnualAmount) {
             feeRate = s_maxFeeRate;
         } else {
-            // Calculate the linear fee rate
+            // Calculate the linear fee rate based on purchase amount
             feeRate = s_maxFeeRate
-                - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
+                - ((purchaseAmount - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
                     / (s_maxAnnualAmount - s_minAnnualAmount);
         }
+        
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
     /**
      * @notice calculate the fee and net amounts
      * @param purchaseAmounts: the purchase amounts
-     * @param purchasePeriods: the purchase periods
      * @return the fee, the net amounts, and the total amount to spend on the rBTC purchase
      */
-    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
+    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts)
         internal
         view
         returns (uint256, uint256[] memory, uint256)
@@ -186,7 +189,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         uint256[] memory netAmountsToSpend = new uint256[](purchaseAmounts.length);
         uint256 totalAmountToSpend;
         for (uint256 i; i < purchaseAmounts.length; ++i) {
-            fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
+            fee = _calculateFee(purchaseAmounts[i]);
             aggregatedFee += fee;
             netAmountsToSpend[i] = purchaseAmounts[i] - fee;
             totalAmountToSpend += netAmountsToSpend[i];

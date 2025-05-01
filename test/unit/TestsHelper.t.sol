@@ -17,18 +17,22 @@ contract FeeCalculator {
     uint256 internal s_minAnnualAmount = MIN_ANNUAL_AMOUNT;
     uint256 internal s_maxAnnualAmount = MAX_ANNUAL_AMOUNT;
 
-    function calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) external view returns (uint256) {
-        uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
+    function calculateFee(uint256 purchaseAmount) external view returns (uint256) {
+
+        if (s_minFeeRate == s_maxFeeRate) {
+            return purchaseAmount * s_minFeeRate / FEE_PERCENTAGE_DIVISOR;
+        }
+
         uint256 feeRate;
 
-        if (annualSpending >= s_maxAnnualAmount) {
+        if (purchaseAmount >= s_maxAnnualAmount) {
             feeRate = s_minFeeRate;
-        } else if (annualSpending <= s_minAnnualAmount) {
+        } else if (purchaseAmount <= s_minAnnualAmount) {
             feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate
             feeRate = s_maxFeeRate
-                - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
+                - ((purchaseAmount - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
                     / (s_maxAnnualAmount - s_minAnnualAmount);
         }
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;

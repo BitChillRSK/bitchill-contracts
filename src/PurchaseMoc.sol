@@ -50,7 +50,7 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
         purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); // TODO: Check if this is correct
 
         // Charge fee
-        uint256 fee = _calculateFee(purchaseAmount, purchasePeriod);
+        uint256 fee = _calculateFee(purchaseAmount);
         uint256 netPurchaseAmount = purchaseAmount - fee;
         _transferFee(i_docToken, fee);
 
@@ -84,7 +84,7 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
 
         // Calculate net amounts
         (uint256 aggregatedFee, uint256[] memory netDocAmountsToSpend, uint256 totalDocAmountToSpend) =
-            _calculateFeeAndNetAmounts(purchaseAmounts, purchasePeriods);
+            _calculateFeeAndNetAmounts(purchaseAmounts);
 
         // Redeem DOC (and repay kDOC)
         _batchRedeemStablecoin(buyers, purchaseAmounts, totalDocAmountToSpend + aggregatedFee); // total DOC to redeem by repaying kDOC in order to spend it to redeem rBTC is totalDocAmountToSpend + aggregatedFee

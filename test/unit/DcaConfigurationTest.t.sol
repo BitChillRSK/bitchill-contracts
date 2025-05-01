@@ -50,4 +50,22 @@ contract DcaConfigurationTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
     }
+
+    function testMaxSchedulesPerTokenCannotBeExceeded() external {
+        uint256 maxSchedulesPerToken = dcaManager.getMaxSchedulesPerToken();
+        bytes memory encodedRevert = abi.encodeWithSelector(
+            IDcaManager.DcaManager__MaxSchedulesPerTokenReached.selector, address(docToken)
+        );
+        for (uint256 i; i < maxSchedulesPerToken; ++i) {
+            vm.startPrank(USER);
+            docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
+            if (i == maxSchedulesPerToken - 1) {
+                vm.expectRevert(encodedRevert);
+            }
+            dcaManager.createDcaSchedule(
+                address(docToken), DOC_TO_DEPOSIT / 2, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
+            );
+            vm.stopPrank();
+        }
+    }
 }

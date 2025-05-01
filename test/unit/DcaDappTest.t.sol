@@ -372,7 +372,7 @@ contract DcaDappTest is Test {
         IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(docToken));
         vm.stopPrank();
 
-        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
         if (block.chainid == ANVIL_CHAIN_ID && isMocSwaps) {
@@ -421,7 +421,7 @@ contract DcaDappTest is Test {
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(docToken), scheduleIndex);
             uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(docToken), scheduleIndex);
             vm.stopPrank();
-            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
+            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount);
             uint256 netPurchaseAmount = schedulePurchaseAmount - fee;
 
             for (uint8 j; j < numOfPurchases; ++j) {
@@ -501,9 +501,8 @@ contract DcaDappTest is Test {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(docToken), scheduleIndex);
-            uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(docToken), scheduleIndex);
             vm.stopPrank();
-            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
+            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
 
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
