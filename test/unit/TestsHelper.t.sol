@@ -14,8 +14,8 @@ contract DummyERC165Contract {
 contract FeeCalculator {
     uint256 internal s_minFeeRate = MIN_FEE_RATE;
     uint256 internal s_maxFeeRate = MAX_FEE_RATE;
-    uint256 internal s_minAnnualAmount = MIN_ANNUAL_AMOUNT;
-    uint256 internal s_maxAnnualAmount = MAX_ANNUAL_AMOUNT;
+    uint256 internal s_purchaseLowerBound = PURCHASE_LOWER_BOUND;
+    uint256 internal s_purchaseUpperBound = PURCHASE_UPPER_BOUND;
 
     function calculateFee(uint256 purchaseAmount) external view returns (uint256) {
 
@@ -25,15 +25,15 @@ contract FeeCalculator {
 
         uint256 feeRate;
 
-        if (purchaseAmount >= s_maxAnnualAmount) {
+        if (purchaseAmount >= s_purchaseLowerBound) {
             feeRate = s_minFeeRate;
-        } else if (purchaseAmount <= s_minAnnualAmount) {
+        } else if (purchaseAmount <= s_purchaseLowerBound) {
             feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate
             feeRate = s_maxFeeRate
-                - ((purchaseAmount - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_maxAnnualAmount - s_minAnnualAmount);
+                - ((purchaseAmount - s_purchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
+                    / (s_purchaseUpperBound - s_purchaseLowerBound);
         }
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }

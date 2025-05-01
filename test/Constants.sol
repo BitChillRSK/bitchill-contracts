@@ -17,8 +17,8 @@ uint256 constant SOVRYN_INDEX = 2;
 uint256 constant MIN_PURCHASE_AMOUNT = 25 ether; // at least 25 DOC on each purchase
 uint256 constant MIN_FEE_RATE = 100;
 uint256 constant MAX_FEE_RATE = 200;
-uint256 constant MIN_ANNUAL_AMOUNT = 1000 ether; // 1000 DOC
-uint256 constant MAX_ANNUAL_AMOUNT = 100_000 ether; // 100,000 DOC
+uint256 constant PURCHASE_LOWER_BOUND = 1000 ether; // 1000 DOC
+uint256 constant PURCHASE_UPPER_BOUND = 100_000 ether; // 100,000 DOC
 uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000;
 uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
 uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;

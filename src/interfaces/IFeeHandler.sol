@@ -13,8 +13,8 @@ interface IFeeHandler {
     struct FeeSettings {
         uint256 minFeeRate; // the lowest possible fee
         uint256 maxFeeRate; // the highest possible fee
-        uint256 minAnnualAmount; // the annual amount below which max fee is applied
-        uint256 maxAnnualAmount; // the annual amount above which min fee is applied
+        uint256 purchaseLowerBound; // the purchase amount below which max fee is applied
+        uint256 purchaseUpperBound; // the purchase amount above which min fee is applied
     }
 
     //////////////////////
@@ -22,8 +22,8 @@ interface IFeeHandler {
     //////////////////////
     event FeeHandler__MinFeeRateSet(uint256 indexed minFeeRate);
     event FeeHandler__MaxFeeRateSet(uint256 indexed maxFeeRate);
-    event FeeHandler__MinAnnualAmountSet(uint256 indexed minAnnualAmount);
-    event FeeHandler__MaxAnnualAmountSet(uint256 indexed maxAnnualAmount);
+    event FeeHandler__PurchaseLowerBoundSet(uint256 indexed purchaseLowerBound);
+    event FeeHandler__PurchaseUpperBoundSet(uint256 indexed purchaseUpperBound);
     event FeeHandler__FeeCollectorAddress(address indexed feeCollector);
 
     //////////////////////
@@ -58,16 +58,16 @@ interface IFeeHandler {
     function setMaxFeeRate(uint256 maxFeeRate) external;
 
     /**
-     * @dev Sets the minimum annual amount for fee calculations.
-     * @param minAnnualAmount The minimum annual amount.
+     * @dev Sets the purchase lower bound for fee calculations.
+     * @param purchaseLowerBound The purchase lower bound.
      */
-    function setMinAnnualAmount(uint256 minAnnualAmount) external;
+    function setPurchaseLowerBound(uint256 purchaseLowerBound) external;
 
     /**
-     * @dev Sets the maximum annual amount for fee calculations.
-     * @param maxAnnualAmount The maximum annual amount.
+     * @dev Sets the purchase upper bound for fee calculations.
+     * @param purchaseUpperBound The purchase upper bound.
      */
-    function setMaxAnnualAmount(uint256 maxAnnualAmount) external;
+    function setPurchaseUpperBound(uint256 purchaseUpperBound) external;
 
     /**
      * @dev Sets the address of the fee collector.

@@ -38,8 +38,8 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
         s_maxFeeRate = feeSettings.maxFeeRate;
-        s_minAnnualAmount = feeSettings.minAnnualAmount;
-        s_maxAnnualAmount = feeSettings.maxAnnualAmount;
+        s_purchaseLowerBound = feeSettings.purchaseLowerBound;
+        s_purchaseUpperBound = feeSettings.purchaseUpperBound;
     }
 
     /*//////////////////////////////////////////////////////////////

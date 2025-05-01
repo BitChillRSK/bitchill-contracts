@@ -29,8 +29,8 @@ contract DeployDexSwaps is DeployBase {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
             maxFeeRate: MAX_FEE_RATE,
-            minAnnualAmount: MIN_ANNUAL_AMOUNT,
-            maxAnnualAmount: MAX_ANNUAL_AMOUNT
+            purchaseLowerBound: PURCHASE_LOWER_BOUND,
+            purchaseUpperBound: PURCHASE_UPPER_BOUND
         });
 
         if (protocol == Protocol.TROPYKUS) {
