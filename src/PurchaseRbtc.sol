@@ -99,7 +99,10 @@ abstract contract PurchaseRbtc is IPurchaseRbtc, Ownable, DcaManagerAccessContro
         }
     }
 
-    // Define abstract functions to be implemented by child contracts
+    // @notice: define abstract functions to be implemented by child contracts
+    // @dev: these functions semantically belong to the TokenLending contract,
+    // however, putting them there and changing the inheritance graph made it 
+    // impossible to linearize and finding another solution  would have required a major refactor.
     function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
 
     function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
