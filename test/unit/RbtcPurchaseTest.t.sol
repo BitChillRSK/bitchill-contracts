@@ -12,6 +12,9 @@ import {IDcaManagerAccessControl} from "../../src/interfaces/IDcaManagerAccessCo
 import "../Constants.sol";
 
 contract RbtcPurchaseTest is DcaDappTest {
+
+    event PurchaseRbtc__rBtcRescued(address indexed stuckUserContract, address indexed rescueAddress, uint256 amount);
+
     function setUp() public override {
         super.setUp();
     }
@@ -29,7 +32,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, DOC_TO_SPEND);
         dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
+            abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.stopPrank();
         vm.prank(SWAPPER);
@@ -46,11 +49,11 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testSeveralPurchasesOneSchedule() external {
         uint256 numOfPurchases = 5;
 
-        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND, MIN_PURCHASE_PERIOD);
+        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND);
         uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
 
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
 
         vm.prank(USER);
         dcaManager.setPurchasePeriod(address(docToken), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
@@ -79,7 +82,7 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testRevertPurchasetIfDocRunsOut() external {
         uint256 numOfPurchases = DOC_TO_DEPOSIT / DOC_TO_SPEND;
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
+            keccak256(abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
         for (uint256 i; i < numOfPurchases; ++i) {
             // vm.prank(OWNER);
             vm.prank(SWAPPER);
@@ -104,7 +107,7 @@ contract RbtcPurchaseTest is DcaDappTest {
     function testOnlySwapperCanCallDcaManagerToPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes memory encodedRevert = abi.encodeWithSelector(IDcaManager.DcaManager__UnauthorizedSwapper.selector, USER);
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length));
@@ -115,15 +118,15 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
-        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+        assertEq(RbtcBalanceAfterPurchase, rbtcBalanceBeforePurchase);
     }
 
     function testOnlyDcaManagerCanPurchase() external {
         vm.startPrank(USER);
         uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 RbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
+            abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.expectRevert(IDcaManagerAccessControl.DcaManagerAccessControl__OnlyDcaManagerCanCall.selector);
         IPurchaseRbtc(address(docHandler)).buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT, MIN_PURCHASE_PERIOD);
@@ -132,7 +135,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.stopPrank();
         // Check that balances didn't change
         assertEq(docBalanceBeforePurchase, docBalanceAfterPurchase);
-        assertEq(RbtcBalanceAfterPurchase, RbtcBalanceBeforePurchase);
+        assertEq(RbtcBalanceAfterPurchase, rbtcBalanceBeforePurchase);
     }
 
     function testBatchPurchasesOneUser() external {
@@ -176,7 +179,7 @@ contract RbtcPurchaseTest is DcaDappTest {
 
     function testPurchaseFailsIfIdAndIndexDontMatch() external {
         bytes32 scheduleId = keccak256(
-            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
+            abi.encodePacked("dummyStuff", address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
         );
 
         vm.startPrank(USER);
@@ -202,7 +205,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         super.createSeveralDcaSchedules();
 
         bytes32 scheduleId = keccak256(
-            abi.encodePacked("dummyStuff", block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
+            abi.encodePacked("dummyStuff", address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length)
         );
 
         uint256 prevDocHandlerMocBalance = address(docHandler).balance;
@@ -221,9 +224,8 @@ contract RbtcPurchaseTest is DcaDappTest {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
             uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(docToken), scheduleIndex);
-            uint256 schedulePurchasePeriod = dcaManager.getSchedulePurchasePeriod(address(docToken), scheduleIndex);
             vm.stopPrank();
-            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount, schedulePurchasePeriod);
+            uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
 
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
@@ -255,5 +257,53 @@ contract RbtcPurchaseTest is DcaDappTest {
         uint256 userAccumulatedRbtcPost = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, 0);
+    }
+
+    function testRescueRbtcFromStuckContract() external {
+        // First do a purchase to accumulate some rBTC on the handler contract
+        super.makeSinglePurchase();
+
+        address stuckContract = USER;
+        // Deploy bytecode that reverts when receiving rBTC to the user address to test the rescue function
+        vm.etch(stuckContract, hex"60006000fd"); // simplest bytecode to always revert
+        
+        // Verify the balance was set correctly
+        vm.prank(stuckContract);
+        uint256 stuckContractBalance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        assertGt(stuckContractBalance, 0);
+
+        address rescueAddress = makeAddr("rescueAddress");
+        
+        // Try to rescue the funds
+        vm.expectEmit(true, true, true, true);
+        emit PurchaseRbtc__rBtcRescued(stuckContract, rescueAddress, stuckContractBalance);
+        vm.prank(OWNER);
+        IPurchaseRbtc(address(docHandler)).withdrawStuckRbtc(stuckContract, rescueAddress);
+        
+        // Verify rBTC was correctly sent to the rescue address
+        assertGt(rescueAddress.balance, 0);
+        
+        // Verify the stuck contract's accumulated rBTC is now 0
+        vm.prank(stuckContract);
+        assertEq(IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(), 0);
+    }
+
+    function testCannotRescueIfNoAccumulatedRbtc() external {
+        // Create a mock contract address 
+        address stuckContract = makeAddr("stuckContract");
+        address rescueAddress = makeAddr("rescueAddress");
+        
+        // Set up the revert expectation
+        vm.expectRevert(IPurchaseRbtc.PurchaseRbtc__NoAccumulatedRbtcToWithdraw.selector);
+        
+        // Try to rescue the funds when there are none
+        vm.prank(OWNER);
+        IPurchaseRbtc(address(docHandler)).withdrawStuckRbtc(stuckContract, rescueAddress);
+    }
+
+    function testOnlyUserCanWithdrawRbtc() external {
+        vm.expectRevert();
+        vm.prank(makeAddr("notUser"));
+        IPurchaseRbtc(address(docHandler)).withdrawAccumulatedRbtc(USER);
     }
 }

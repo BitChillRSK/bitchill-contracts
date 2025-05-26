@@ -19,8 +19,8 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
 
     uint256 internal s_minFeeRate; // Minimum fee rate
     uint256 internal s_maxFeeRate; // Maximum fee rate
-    uint256 internal s_minAnnualAmount; // Spending below min annual amount annually gets the maximum fee rate
-    uint256 internal s_maxAnnualAmount; // Spending above max annually gets the minimum fee rate
+    uint256 internal s_purchaseLowerBound; // Spending below lower bound gets the maximum fee rate
+    uint256 internal s_purchaseUpperBound; // Spending above upper bound gets the minimum fee rate
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
     uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
 
@@ -28,8 +28,8 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
         s_maxFeeRate = feeSettings.maxFeeRate;
-        s_minAnnualAmount = feeSettings.minAnnualAmount;
-        s_maxAnnualAmount = feeSettings.maxAnnualAmount;
+        s_purchaseLowerBound = feeSettings.purchaseLowerBound;
+        s_purchaseUpperBound = feeSettings.purchaseUpperBound;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -40,18 +40,18 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @notice set the fee rate parameters
      * @param minFeeRate: the minimum fee rate
      * @param maxFeeRate: the maximum fee rate
-     * @param minAnnualAmount: the minimum annual amount
-     * @param maxAnnualAmount: the maximum annual amount
+     * @param purchaseLowerBound: the purchase lower bound
+     * @param purchaseUpperBound: the purchase upper bound
      */
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 purchaseLowerBound, uint256 purchaseUpperBound)
         external
         override
         onlyOwner
     {
         if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
         if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
-        if (s_minAnnualAmount != minAnnualAmount) setMinAnnualAmount(minAnnualAmount);
-        if (s_maxAnnualAmount != maxAnnualAmount) setMaxAnnualAmount(maxAnnualAmount);
+        if (s_purchaseLowerBound != purchaseLowerBound) setPurchaseLowerBound(purchaseLowerBound);
+        if (s_purchaseUpperBound != purchaseUpperBound) setPurchaseUpperBound(purchaseUpperBound);
     }
 
     /**
@@ -73,21 +73,21 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     }
 
     /**
-     * @notice set the minimum annual amount
-     * @param minAnnualAmount: the minimum annual amount
+     * @notice set the purchase lower bound
+     * @param purchaseLowerBound: the purchase lower bound
      */
-    function setMinAnnualAmount(uint256 minAnnualAmount) public override onlyOwner {
-        s_minAnnualAmount = minAnnualAmount;
-        emit FeeHandler__MinAnnualAmountSet(minAnnualAmount);
+    function setPurchaseLowerBound(uint256 purchaseLowerBound) public override onlyOwner {
+        s_purchaseLowerBound = purchaseLowerBound;
+        emit FeeHandler__PurchaseLowerBoundSet(purchaseLowerBound);
     }
 
     /**
-     * @notice set the maximum annual amount
-     * @param maxAnnualAmount: the maximum annual amount
+     * @notice set the purchase upper bound
+     * @param purchaseUpperBound: the purchase upper bound
      */
-    function setMaxAnnualAmount(uint256 maxAnnualAmount) public override onlyOwner {
-        s_maxAnnualAmount = maxAnnualAmount;
-        emit FeeHandler__MaxAnnualAmountSet(maxAnnualAmount);
+    function setPurchaseUpperBound(uint256 purchaseUpperBound) public override onlyOwner {
+        s_purchaseUpperBound = purchaseUpperBound;
+        emit FeeHandler__PurchaseUpperBoundSet(purchaseUpperBound);
     }
 
     /**
@@ -124,7 +124,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @return the minimum annual amount
      */     
     function getMinAnnualAmount() public view override returns (uint256) {
-        return s_minAnnualAmount;
+        return s_purchaseLowerBound;
     }
 
     /**
@@ -132,7 +132,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @return the maximum annual amount
      */
     function getMaxAnnualAmount() public view override returns (uint256) {
-        return s_maxAnnualAmount;
+        return s_purchaseLowerBound;
     }
 
     /**
@@ -148,35 +148,38 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @dev Calculates the fee rate based on the annual spending.
+     * @dev Calculates the fee based on the purchase amount.
      * @param purchaseAmount The amount of stablecoin to be swapped for rBTC in each purchase.
-     * @param purchasePeriod The period between purchases in seconds.
-     * @return The fee rate in basis points.
+     * @return The fee amount to be deducted from the purchase amount.
      */
-    function _calculateFee(uint256 purchaseAmount, uint256 purchasePeriod) internal view returns (uint256) {
-        uint256 annualSpending = (purchaseAmount * 365 days) / purchasePeriod;
+    function _calculateFee(uint256 purchaseAmount) internal view returns (uint256) {
+        // If min and max rates are equal, apply a flat fee rate regardless of purchase amount
+        if (s_minFeeRate == s_maxFeeRate) {
+            return purchaseAmount * s_minFeeRate / FEE_PERCENTAGE_DIVISOR;
+        }
+        
         uint256 feeRate;
-
-        if (annualSpending >= s_maxAnnualAmount) {
+        
+        if (purchaseAmount >= s_purchaseUpperBound) {
             feeRate = s_minFeeRate;
-        } else if (annualSpending <= s_minAnnualAmount) {
+        } else if (purchaseAmount <= s_purchaseLowerBound) {
             feeRate = s_maxFeeRate;
         } else {
-            // Calculate the linear fee rate
+            // Calculate the linear fee rate based on purchase amount
             feeRate = s_maxFeeRate
-                - ((annualSpending - s_minAnnualAmount) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_maxAnnualAmount - s_minAnnualAmount);
+                - ((purchaseAmount - s_purchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
+                    / (s_purchaseUpperBound - s_purchaseLowerBound);
         }
+        
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
     /**
      * @notice calculate the fee and net amounts
      * @param purchaseAmounts: the purchase amounts
-     * @param purchasePeriods: the purchase periods
      * @return the fee, the net amounts, and the total amount to spend on the rBTC purchase
      */
-    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts, uint256[] memory purchasePeriods)
+    function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts)
         internal
         view
         returns (uint256, uint256[] memory, uint256)
@@ -186,7 +189,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         uint256[] memory netAmountsToSpend = new uint256[](purchaseAmounts.length);
         uint256 totalAmountToSpend;
         for (uint256 i; i < purchaseAmounts.length; ++i) {
-            fee = _calculateFee(purchaseAmounts[i], purchasePeriods[i]);
+            fee = _calculateFee(purchaseAmounts[i]);
             aggregatedFee += fee;
             netAmountsToSpend[i] = purchaseAmounts[i] - fee;
             totalAmountToSpend += netAmountsToSpend[i];

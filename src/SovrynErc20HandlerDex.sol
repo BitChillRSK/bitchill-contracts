@@ -1,21 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
-import {ISovrynErc20Lending} from "./interfaces/ISovrynErc20Lending.sol";
-import {TokenHandler} from "./TokenHandler.sol";
 import {PurchaseUniswap} from "./PurchaseUniswap.sol";
+import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {SovrynErc20Handler} from "./SovrynErc20Handler.sol";
-import {IPurchaseUniswap} from "./interfaces/IPurchaseUniswap.sol";
-import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
-import {IWRBTC} from "./interfaces/IWRBTC.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {TransferHelper} from "@uniswap/v3-periphery/contracts/libraries/TransferHelper.sol";
-import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-import {IV3SwapRouter} from "@uniswap/swap-router-contracts/contracts/interfaces/IV3SwapRouter.sol";
-import {ICoinPairPrice} from "./interfaces/ICoinPairPrice.sol";
 
 /**
  * @title SovrynErc20HandlerDex
@@ -62,7 +52,7 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
-        override(SovrynErc20Handler, PurchaseUniswap)
+        override(SovrynErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call SovrynErc20Handler's version of _redeemStablecoin
@@ -77,7 +67,7 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
      */
     function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
         internal
-        override(SovrynErc20Handler, PurchaseUniswap)
+        override(SovrynErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call SovrynErc20Handler's version of _batchRedeemStablecoin
