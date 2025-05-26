@@ -45,7 +45,7 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
         onlyDcaManager
     {
         // Redeem DOC (repaying kDOC)
-        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); // TODO: Check if this is correct
+        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); 
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount);

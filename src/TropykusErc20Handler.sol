@@ -233,6 +233,6 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
             emit TokenLending__SuccessfulBatchUnderlyingRedemption(stablecoinRedeemed, totalKtokenToRepay);
             return stablecoinRedeemed;
         }
-        else revert TokenLending__BatchRedeemUnderlyingFailed(); // TODO: cambiar a TropykusErc20Lending__BatchRedeemStablecoinFailed?
+        else revert TokenLending__BatchRedeemUnderlyingFailed();
     }
 }

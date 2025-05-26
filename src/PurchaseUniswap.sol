@@ -42,7 +42,7 @@ abstract contract PurchaseUniswap is
      * @param amountOutMinimumSafetyCheck The safety check percentage for minimum rBTC output (default: 99%)
      */
     constructor(
-        address stableTokenAddress, // TODO: modify this to passing the interface
+        address stableTokenAddress,
         UniswapSettings memory uniswapSettings,
         uint256 amountOutMinimumPercent,
         uint256 amountOutMinimumSafetyCheck
@@ -180,7 +180,7 @@ abstract contract PurchaseUniswap is
     function setPurchasePath(address[] memory intermediateTokens, uint24[] memory poolFeeRates)
         public
         override
-        onlyOwner /* TODO: set another role for access control? */
+        onlyOwner
     {
         if (poolFeeRates.length != intermediateTokens.length + 1) {
             revert PurchaseUniswap__WrongNumberOfTokensOrFeeRates(intermediateTokens.length, poolFeeRates.length);

@@ -26,8 +26,8 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
      */
     constructor(
         address dcaManagerAddress,
-        address stableTokenAddress, // TODO: modify this to passing the interface
-        address iSusdTokenAddress, // TODO: modify this to passing the interface
+        address stableTokenAddress,
+        address iSusdTokenAddress,
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,

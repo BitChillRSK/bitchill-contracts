@@ -26,8 +26,8 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      */
     constructor(
         address dcaManagerAddress,
-        address docTokenAddress, // TODO: modify this to passing the interface
-        address kTokenAddress, // TODO: modify this to passing the interface
+        address docTokenAddress,
+        address kTokenAddress,
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,

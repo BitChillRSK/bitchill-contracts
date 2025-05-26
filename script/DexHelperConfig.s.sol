@@ -68,7 +68,7 @@ contract DexHelperConfig is Script {
             kDocAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914, // Address of the kDOC proxy contract in Rootstock testnet
             iSusdAddress: 0x74e00A8CeDdC752074aad367785bFae7034ed89f, // Address of the iSusd proxy contract in Rootstock testnet
             wrbtcTokenAddress: 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab, // Address of the WRBTC token in Rootstock testnet
-            swapRouter02Address: 0x0000000000000000000000000000000000000000, // TODO: Deploy a mock router on RSK testnet?
+            swapRouter02Address: 0x0000000000000000000000000000000000000000, // Uniswap's contracts are not deployed on RSK testnet
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0x0000000000000000000000000000000000000000,
@@ -87,11 +87,11 @@ contract DexHelperConfig is Script {
         poolFeeRates[1] = 500;
 
         RootstockMainnetNetworkConfig = NetworkConfig({
-            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock testnet
-            kDocAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2, // Address of the kDOC proxy contract in Rootstock testnet
-            iSusdAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1, // Address of the iSusd proxy contract in Rootstock testnet
-            wrbtcTokenAddress: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d, // Address of the WRBTC token in Rootstock testnet
-            swapRouter02Address: 0x0B14ff67f0014046b4b99057Aec4509640b3947A, // TODO: Deploy a mock router on RSK testnet?
+            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
+            kDocAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2, // Address of the kDOC proxy contract in Rootstock mainnet
+            iSusdAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1, // Address of the iSusd proxy contract in Rootstock mainnet
+            wrbtcTokenAddress: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d, // Address of the WRBTC token in Rootstock mainnet
+            swapRouter02Address: 0x0B14ff67f0014046b4b99057Aec4509640b3947A, 
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD,
