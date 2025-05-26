@@ -322,7 +322,6 @@ contract ComparePurchaseMethods is Script {
             scheduleIndexes,
             mocScheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             TROPYKUS_INDEX
         );
         uint256 mocGasUsed = mocGasStart - gasleft();
@@ -336,7 +335,6 @@ contract ComparePurchaseMethods is Script {
             scheduleIndexes,
             uniScheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             TROPYKUS_INDEX
         );
         uint256 uniGasUsed = uniGasStart - gasleft();

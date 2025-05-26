@@ -31,6 +31,7 @@ interface IPurchaseUniswap {
     );
     event PurchaseUniswap_AmountOutMinimumPercentUpdated(uint256 oldValue, uint256 newValue);
     event PurchaseUniswap_AmountOutMinimumSafetyCheckUpdated(uint256 oldValue, uint256 newValue);
+    event PurchaseUniswap_OracleUpdated(address oldOracle, address newOracle);
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
@@ -40,6 +41,8 @@ interface IPurchaseUniswap {
     error PurchaseUniswap__AmountOutMinimumPercentTooHigh();
     error PurchaseUniswap__AmountOutMinimumPercentTooLow();
     error PurchaseUniswap__AmountOutMinimumSafetyCheckTooHigh();
+    error PurchaseUniswap__InvalidOracleAddress();
+    error PurchaseUniswap__OutdatedPrice();
     /*//////////////////////////////////////////////////////////////
                            EXTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -75,4 +78,21 @@ interface IPurchaseUniswap {
      */
     function getAmountOutMinimumSafetyCheck() external view returns (uint256);
     
+    /**
+     * @notice Updates the oracle address to a new one.
+     * @param newOracle The address of the new oracle to use.
+     */
+    function updateMocOracle(address newOracle) external;
+
+    /**
+     * @notice Get the oracle used for price checks.
+     * @return The oracle used for price checks.
+     */
+    function getMocOracle() external view returns (ICoinPairPrice);
+
+    /**
+     * @notice Get the current swap path.
+     * @return The current swap path.
+     */
+    function getSwapPath() external view returns (bytes memory);
 }

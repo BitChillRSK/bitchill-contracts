@@ -28,6 +28,8 @@ contract DexHelperConfig is Script {
         uint24[] swapPoolFeeRates;
         address mocOracleAddress;
         address mocProxyAddress; // @notice: needed only for fork testing, where we need to call MoC::mintDoc()
+        uint256 amountOutMinimumPercent;
+        uint256 amountOutMinimumSafetyCheck;
     }
 
     NetworkConfig internal activeNetworkConfig;
@@ -70,7 +72,9 @@ contract DexHelperConfig is Script {
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0x0000000000000000000000000000000000000000,
-            mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F
+            mocProxyAddress: 0x2820f6d4D199B8D8838A4B26F9917754B86a0c1F,
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
         });
     }
 
@@ -91,7 +95,9 @@ contract DexHelperConfig is Script {
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD,
-            mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370
+            mocProxyAddress: 0xf773B590aF754D597770937Fa8ea7AbDf2668370,
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
         });
     }
 
@@ -162,7 +168,9 @@ contract DexHelperConfig is Script {
                 swapIntermediateTokens: intermediateTokens,
                 swapPoolFeeRates: poolFeeRates,
                 mocOracleAddress: address(mockMocOracle),
-                mocProxyAddress: address(mockMocProxy)
+                mocProxyAddress: address(mockMocProxy),
+                amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+                amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
             });
         } else if (lendingProtocolIsSovryn) {
             anvilNetworkConfig = NetworkConfig({
@@ -174,7 +182,9 @@ contract DexHelperConfig is Script {
                 swapIntermediateTokens: intermediateTokens,
                 swapPoolFeeRates: poolFeeRates,
                 mocOracleAddress: address(mockMocOracle),
-                mocProxyAddress: address(mockMocProxy)
+                mocProxyAddress: address(mockMocProxy),
+                amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+                amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
             });
         }
     }

@@ -165,7 +165,6 @@ interface IDcaManager {
      * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
      * @param scheduleIds the IDs of the DCA schedules that correspond to each user's purchase
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
-     * @param purchasePeriods the purchase period that corresponds to each user's purchase
      * @param lendingProtocolIndex the lending protocol to withdraw the tokens from before purchasing
      */
     function batchBuyRbtc(
@@ -174,7 +173,6 @@ interface IDcaManager {
         uint256[] memory scheduleIndexes,
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
-        uint256[] memory purchasePeriods,
         uint256 lendingProtocolIndex
     ) external;
 

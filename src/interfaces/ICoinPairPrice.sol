@@ -82,6 +82,12 @@ interface ICoinPairPrice {
     /// @notice Return the current price
     function getPrice() external view returns (uint256);
 
+    /// @notice Return the current price with validity information
+    /// @return price The current price
+    /// @return isValid Whether the price is valid and up-to-date
+    /// @return lastPubBlock The block number when the price was last updated
+    function getPriceInfo() external view returns (uint256 price, bool isValid, uint256 lastPubBlock);
+
     ///////////////////////////////////////////////////////////////////////////////// GETTERS TO GET CURRENT PRICE END
 
     /// @notice Return current round information

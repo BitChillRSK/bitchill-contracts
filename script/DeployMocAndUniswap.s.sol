@@ -33,6 +33,18 @@ contract DeployMocAndUniswap is DeployBase {
         DexHelperConfig helpConfUni;
     }
     
+    // Struct for DeployDexSwaps parameters to avoid stack too deep errors
+    struct DexDeployParams {
+        Protocol protocol;
+        address dcaManager;
+        address tokenAddress;
+        address lendingToken;
+        IPurchaseUniswap.UniswapSettings uniswapSettings;
+        address feeCollector;
+        uint256 amountOutMinimumPercent;
+        uint256 amountOutMinimumSafetyCheck;
+    }
+    
     // Split the deployment into smaller functions to avoid stack too deep errors
     function deployMocContracts() 
         private 
@@ -113,15 +125,31 @@ contract DeployMocAndUniswap is DeployBase {
         
         vm.stopBroadcast();
 
+        // Create deployment parameters struct
+        DexDeployParams memory params = DexDeployParams({
+            protocol: protocol,
+            dcaManager: address(dcaManUni),
+            tokenAddress: docToken,
+            lendingToken: lendingToken,
+            uniswapSettings: uniswapSettings,
+            feeCollector: feeCollector,
+            amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+            amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+        });
+
         // Deploy Uniswap handler
         DeployDexSwaps deployDexSwapContracts = new DeployDexSwaps();
         handlerUni = deployDexSwapContracts.deployDocHandlerDex(
-            protocol, 
-            address(dcaManUni), 
-            docToken, 
-            lendingToken, 
-            uniswapSettings, 
-            feeCollector
+            DeployDexSwaps.DeployParams({
+                protocol: params.protocol,
+                dcaManager: params.dcaManager,
+                tokenAddress: params.tokenAddress,
+                lendingToken: params.lendingToken,
+                uniswapSettings: params.uniswapSettings,
+                feeCollector: params.feeCollector,
+                amountOutMinimumPercent: params.amountOutMinimumPercent,
+                amountOutMinimumSafetyCheck: params.amountOutMinimumSafetyCheck
+            })
         );
         console.log("Uniswap handler deployed at:", handlerUni);
         

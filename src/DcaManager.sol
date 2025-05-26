@@ -276,11 +276,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         nonReentrant
         onlySwapper
     {
-        (uint256 purchaseAmount, uint256 purchasePeriod, uint256 lendingProtocolIndex) =
+        (uint256 purchaseAmount, uint256 lendingProtocolIndex) =
             _rBtcPurchaseChecksEffects(buyer, token, scheduleIndex, scheduleId);
 
         IPurchaseRbtc(address(_handler(token, lendingProtocolIndex))).buyRbtc(
-            buyer, scheduleId, purchaseAmount, purchasePeriod
+            buyer, scheduleId, purchaseAmount
         );
     }
 
@@ -291,7 +291,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token the stablecoin that all users in the array will spend to purchase rBTC
      * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
-     * @param purchasePeriods the purchase period that corresponds to each user's purchase
      * @param lendingProtocolIndex the lending protocol to withdraw the tokens from before purchasing
      */
     function batchBuyRbtc(
@@ -300,14 +299,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256[] memory scheduleIndexes,
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
-        uint256[] memory purchasePeriods,
         uint256 lendingProtocolIndex
     ) external override nonReentrant /*onlyOwner*/ onlySwapper {
         uint256 numOfPurchases = buyers.length;
         if (numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
         if (
             numOfPurchases != scheduleIndexes.length || numOfPurchases != scheduleIds.length
-                || numOfPurchases != purchaseAmounts.length || numOfPurchases != purchasePeriods.length
+                || numOfPurchases != purchaseAmounts.length
         ) revert DcaManager__BatchPurchaseArraysLengthMismatch();
         for (uint256 i; i < numOfPurchases; ++i) {
             /**
@@ -317,7 +315,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             // TODO: Add check that purchaseAmount and purchasePeriod match the schedule's?
         }
         IPurchaseRbtc(address(_handler(token, lendingProtocolIndex))).batchBuyRbtc(
-            buyers, scheduleIds, purchaseAmounts, purchasePeriods
+            buyers, scheduleIds, purchaseAmounts
         );
     }
 
@@ -477,7 +475,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _rBtcPurchaseChecksEffects(address buyer, address token, uint256 scheduleIndex, bytes32 scheduleId)
         internal
-        returns (uint256, uint256, uint256)
+        returns (uint256, uint256)
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[buyer][token][scheduleIndex];
 
@@ -499,7 +497,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
         dcaSchedule.lastPurchaseTimestamp += lastPurchaseTimestamp == 0 ? block.timestamp : purchasePeriod; 
 
-        return (dcaSchedule.purchaseAmount, purchasePeriod, dcaSchedule.lendingProtocolIndex);
+        return (dcaSchedule.purchaseAmount, dcaSchedule.lendingProtocolIndex);
     }
 
     /**

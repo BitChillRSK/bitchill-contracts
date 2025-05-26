@@ -29,25 +29,44 @@ abstract contract PurchaseUniswap is
     IERC20 public immutable i_purchasingToken;
     IWRBTC public immutable i_wrBtcToken;
     ISwapRouter02 public immutable i_swapRouter02;
-    ICoinPairPrice public immutable i_MocOracle;
+    ICoinPairPrice public s_mocOracle;
     uint256 constant HUNDRED_PERCENT = 1 ether;
-    uint256 internal s_amountOutMinimumPercent = 0.997 ether; // Default to 99.7%
-    uint256 internal s_amountOutMinimumSafetyCheck = 0.99 ether; // Default to 99%
-    bytes public s_swapPath;
+    uint256 internal s_amountOutMinimumPercent;
+    uint256 internal s_amountOutMinimumSafetyCheck;
+    bytes internal s_swapPath;
 
     /**
      * @param stableTokenAddress the address of the stablecoin token on the blockchain of deployment
      * @param uniswapSettings the settings for the uniswap router
+     * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap (default: 99.7%)
+     * @param amountOutMinimumSafetyCheck The safety check percentage for minimum rBTC output (default: 99%)
      */
     constructor(
         address stableTokenAddress, // TODO: modify this to passing the interface
-        UniswapSettings memory uniswapSettings
+        UniswapSettings memory uniswapSettings,
+        uint256 amountOutMinimumPercent,
+        uint256 amountOutMinimumSafetyCheck
     ) 
     {
         i_purchasingToken = IERC20(stableTokenAddress);
         i_swapRouter02 = uniswapSettings.swapRouter02;
         i_wrBtcToken = uniswapSettings.wrBtcToken;
-        i_MocOracle = uniswapSettings.mocOracle;
+        s_mocOracle = uniswapSettings.mocOracle;
+        
+        // Set the initial values for the minimum amount out percentages
+        if (amountOutMinimumPercent > HUNDRED_PERCENT) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooHigh();
+        }
+        if (amountOutMinimumSafetyCheck > HUNDRED_PERCENT) {
+            revert PurchaseUniswap__AmountOutMinimumSafetyCheckTooHigh();
+        }
+        if (amountOutMinimumPercent < amountOutMinimumSafetyCheck) {
+            revert PurchaseUniswap__AmountOutMinimumPercentTooLow();
+        }
+        
+        s_amountOutMinimumPercent = amountOutMinimumPercent;
+        s_amountOutMinimumSafetyCheck = amountOutMinimumSafetyCheck;
+        
         setPurchasePath(uniswapSettings.swapIntermediateTokens, uniswapSettings.swapPoolFeeRates);
     }
 
@@ -57,11 +76,9 @@ abstract contract PurchaseUniswap is
     /**
      * @param buyer: the user on behalf of which the contract is making the rBTC purchase
      * @param purchaseAmount: the amount to spend on rBTC
-     * @param purchasePeriod: the period between purchases
      * @notice this function will be called periodically through a CRON job running on a web server
-     * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount, uint256 purchasePeriod)
+    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount)
         external
         override
         onlyDcaManager
@@ -92,13 +109,11 @@ abstract contract PurchaseUniswap is
      * @param buyers: the users on behalf of which the contract is making the rBTC purchase
      * @param scheduleIds: the schedule ids
      * @param purchaseAmounts: the amounts to spend on rBTC
-     * @param purchasePeriods: the periods between purchases
      */
     function batchBuyRbtc(
         address[] memory buyers,
         bytes32[] memory scheduleIds,
-        uint256[] memory purchaseAmounts,
-        uint256[] memory purchasePeriods
+        uint256[] memory purchaseAmounts
     ) external override onlyDcaManager {
         uint256 numOfPurchases = buyers.length;
 
@@ -210,6 +225,18 @@ abstract contract PurchaseUniswap is
     }
 
     /**
+     * @notice Updates the oracle address to a new one.
+     * @param newOracle The address of the new oracle to use.
+     */
+    function updateMocOracle(address newOracle) external override onlyOwner {
+        if (newOracle == address(0)) {
+            revert PurchaseUniswap__InvalidOracleAddress();
+        }
+        emit PurchaseUniswap_OracleUpdated(address(s_mocOracle), newOracle);
+        s_mocOracle = ICoinPairPrice(newOracle);
+    }
+
+    /**
      * @notice Get the minimum percentage of rBTC that must be received from the swap.
      * @return The minimum percentage of rBTC that must be received from the swap.
      */     
@@ -223,6 +250,22 @@ abstract contract PurchaseUniswap is
      */
     function getAmountOutMinimumSafetyCheck() external view returns (uint256) {
         return s_amountOutMinimumSafetyCheck;
+    }
+
+    /**
+     * @notice Get the oracle used for price checks.
+     * @return The oracle used for price checks.
+     */
+    function getMocOracle() external view returns (ICoinPairPrice) {
+        return s_mocOracle;
+    }
+
+    /**
+     * @notice Get the current swap path.
+     * @return The current swap path.
+     */
+    function getSwapPath() external view returns (bytes memory) {
+        return s_swapPath;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -248,8 +291,15 @@ abstract contract PurchaseUniswap is
         amountOut = i_swapRouter02.exactInput(params);
     }
 
+    /**
+     * @param stablecoinAmountToSpend the amount of stablecoin to swap for rBTC
+     * @return minimumRbtcAmount the minimum amount of rBTC that must be received
+     * @dev Verifies that the oracle price is valid and up-to-date before using it
+     */
     function _getAmountOutMinimum(uint256 stablecoinAmountToSpend) internal view returns (uint256 minimumRbtcAmount) {
-        minimumRbtcAmount = (stablecoinAmountToSpend * s_amountOutMinimumPercent) / i_MocOracle.getPrice();
+        (uint256 currentPrice, bool isValid, ) = s_mocOracle.getPriceInfo();
+        if (!isValid) revert PurchaseUniswap__OutdatedPrice();
+        minimumRbtcAmount = (stablecoinAmountToSpend * s_amountOutMinimumPercent) / currentPrice;
     }
 
 }

@@ -21,6 +21,8 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
      * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
+     * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap (default: 99.7%)
+     * @param amountOutMinimumSafetyCheck The safety check percentage for minimum rBTC output (default: 99%)
      */
     constructor(
         address dcaManagerAddress,
@@ -29,7 +31,9 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings
+        FeeSettings memory feeSettings,
+        uint256 amountOutMinimumPercent,
+        uint256 amountOutMinimumSafetyCheck
     )
         SovrynErc20Handler(
             dcaManagerAddress,
@@ -39,7 +43,12 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
             feeCollector,
             feeSettings
         )
-        PurchaseUniswap(stableTokenAddress, uniswapSettings)
+        PurchaseUniswap(
+            stableTokenAddress, 
+            uniswapSettings, 
+            amountOutMinimumPercent, 
+            amountOutMinimumSafetyCheck
+        )
     {}
 
     /*//////////////////////////////////////////////////////////////
