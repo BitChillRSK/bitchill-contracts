@@ -192,8 +192,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         virtual
         returns (uint256)
     {
-        uint256 underlyingAmount =
-            i_iSusdToken.assetBalanceOf(address(this)) + uint256(i_iSusdToken.profitOf(address(this))); // TODO: check if int->uint conversion is OK
+        uint256 underlyingAmount = uint256(int256(i_iSusdToken.assetBalanceOf(address(this))) + i_iSusdToken.profitOf(address(this)));
         if (totalErc20ToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalErc20ToRedeem, underlyingAmount);
         }
