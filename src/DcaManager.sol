@@ -71,10 +71,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice deposit the full DOC amount for DCA on the contract
+     * @notice deposit the full stablecoin amount for DCA on the contract
      * @param token the token address
      * @param scheduleIndex the schedule index
-     * @param depositAmount the amount of DOC to deposit
+     * @param depositAmount the amount of stablecoin to deposit
      */
     function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount)
         external
@@ -92,7 +92,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     /**
      * @param token the token address
      * @param scheduleIndex the schedule index
-     * @param purchaseAmount the amount of DOC to swap periodically for rBTC
+     * @param purchaseAmount the amount of stablecoin to swap periodically for rBTC
      * @notice the amount cannot be greater than or equal to half of the deposited amount
      */
     function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount)
