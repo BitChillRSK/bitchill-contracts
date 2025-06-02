@@ -27,8 +27,6 @@ interface IPurchaseRbtc {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error PurchaseRbtc__RedeemDocRequestFailed();
-    error PurchaseRbtc__RedeemFreeDocFailed();
     error PurchaseRbtc__NoAccumulatedRbtcToWithdraw();
     error PurchaseRbtc__rBtcWithdrawalFailed();
     error PurchaseRbtc__RbtcPurchaseFailed(address user, address tokenSpent);

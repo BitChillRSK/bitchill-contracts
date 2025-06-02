@@ -6,12 +6,13 @@ import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {IMocProxy} from "./interfaces/IMocProxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IPurchaseMoc} from "./interfaces/IPurchaseMoc.sol";
 
 /**
  * @title PurchaseMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
-abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
+abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc, IPurchaseMoc {
     using SafeERC20 for IERC20;
 
     //////////////////////
@@ -120,12 +121,12 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
     function _redeemRbtc(uint256 docAmountToSpend) internal returns (uint256, uint256) {
         try i_mocProxy.redeemDocRequest(docAmountToSpend) {}
         catch {
-            revert PurchaseRbtc__RedeemDocRequestFailed();
+            revert PurchaseMoc__RedeemDocRequestFailed();
         }
         uint256 balancePrev = address(this).balance;
         try i_mocProxy.redeemFreeDoc(docAmountToSpend) {}
         catch {
-            revert PurchaseRbtc__RedeemFreeDocFailed();
+            revert PurchaseMoc__RedeemFreeDocFailed();
         }
         uint256 balancePost = address(this).balance;
         return (balancePrev, balancePost);
