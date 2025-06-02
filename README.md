@@ -134,8 +134,14 @@ git checkout smart-contracts
 
 ### Testing
 ```bash
-make moc-tropykus # Runs all unit tests with Tropykus interactions
-make moc-sovryn # Runs all the unit tests with Sovryn interactions
+# Run tests with DOC and Tropykus (default)
+make moc-tropykus 
+
+# Run tests with DOC and Sovryn
+make moc-sovryn 
+
+# Run specific test file with custom parameters
+STABLECOIN_TYPE=USDRIF SWAP_TYPE=dexSwaps LENDING_PROTOCOL=tropykus forge test --match-path test/unit/DcaDappTest.t.sol -vvv
 ```
 
 ### Deployment

@@ -181,8 +181,8 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
     function testOutdatedPriceRevertsSwap() public onlyDexSwaps {
         // Setup: First perform the necessary setup for the test
         vm.startPrank(USER);
-        docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
-        dcaManager.setPurchaseAmount(address(docToken), SCHEDULE_INDEX, DOC_TO_SPEND);
+        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_SPEND);
         vm.stopPrank();
         
         // Create a mock oracle that returns invalid prices
@@ -195,13 +195,13 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         
         // Get the schedule ID
         bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, address(docToken), block.timestamp, SCHEDULE_INDEX)
+            abi.encodePacked(USER, address(stablecoin), block.timestamp, SCHEDULE_INDEX)
         );
         
         // Try to make a purchase, which should revert due to invalid price
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__OutdatedPrice.selector);
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, scheduleId);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
     }
 
     ////////////////////////////

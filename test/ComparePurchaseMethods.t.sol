@@ -11,9 +11,10 @@ import {IPurchaseRbtc} from "../src/interfaces/IPurchaseRbtc.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {MocHelperConfig} from "../script/MocHelperConfig.s.sol";
 import {DexHelperConfig} from "../script/DexHelperConfig.s.sol";
-import {MockDocToken} from "../test/mocks/MockDocToken.sol";
+import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
+import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract ComparePurchaseMethods is Test {
@@ -44,7 +45,7 @@ contract ComparePurchaseMethods is Test {
     DeployMocAndUniswap.DeployedContracts deployedContracts;
     
     // Common contracts
-    MockDocToken docToken;
+    MockStablecoin stablecoin;
     
     // MoC-specific contracts
     MockMocProxy mocProxy;
@@ -60,6 +61,8 @@ contract ComparePurchaseMethods is Test {
     // Protocol settings
     uint256 lendingProtocolIndex;
     uint256 btcPrice;
+    string stablecoinType;
+    TokenConfig tokenConfig;
 
     function setUp() public {
         if (block.chainid != RSK_MAINNET_CHAIN_ID) {
@@ -80,6 +83,17 @@ contract ComparePurchaseMethods is Test {
             revert("Lending protocol not allowed");
         }
 
+        // Get stablecoin type (or use default if not specified)
+        try vm.envString("STABLECOIN_TYPE") returns (string memory coinType) {
+            stablecoinType = coinType;
+        } catch {
+            stablecoinType = DEFAULT_STABLECOIN;
+        }
+        
+        // Load token configuration
+        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
+        console2.log("Using stablecoin type:", stablecoinType);
+
         // Deploy both implementations
         DeployMocAndUniswap deployer = new DeployMocAndUniswap();
         deployedContracts = deployer.run();
@@ -90,10 +104,13 @@ contract ComparePurchaseMethods is Test {
         dcaManUni = deployedContracts.dcaManUni;
         handlerUni = deployedContracts.handlerUni;
         
-        // Get DOC and MoC proxy contracts
-        (address docTokenAddress, address mocProxyAddress,,) = deployedContracts.helpConfMoc.activeNetworkConfig();
-        docToken = MockDocToken(docTokenAddress);
-        mocProxy = MockMocProxy(mocProxyAddress);
+        // Get stablecoin and MoC proxy contracts
+        MocHelperConfig.NetworkConfig memory mocConfig = deployedContracts.helpConfMoc.getActiveNetworkConfig();
+        
+        // Get the DOC token address
+        address docTokenAddress = mocConfig.docTokenAddress;
+        stablecoin = MockStablecoin(docTokenAddress);
+        mocProxy = MockMocProxy(mocConfig.mocProxyAddress);
         
         // Get Uniswap-specific contracts
         DexHelperConfig.NetworkConfig memory uniConfig = deployedContracts.helpConfUni.getActiveNetworkConfig();
@@ -151,7 +168,7 @@ contract ComparePurchaseMethods is Test {
         for (uint256 i = 0; i < NUM_OF_USERS; i++) {
             console2.log("User %s: DOC balance: %d; Purchase amount: %d DOC", 
                 _uintToString(i+1), 
-                docToken.balanceOf(users[i]) / 1e18, 
+                stablecoin.balanceOf(users[i]) / 1e18, 
                 docToSpendArray[i] / 1e18
             );
         }
@@ -169,8 +186,8 @@ contract ComparePurchaseMethods is Test {
         deployedContracts.adOpsMoc.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
         deployedContracts.adOpsUni.addOrUpdateLendingProtocol(TROPYKUS_STRING, 1);
         deployedContracts.adOpsUni.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
-        deployedContracts.adOpsMoc.assignOrUpdateTokenHandler(address(docToken), lendingProtocolIndex, deployedContracts.handlerMoc);
-        deployedContracts.adOpsUni.assignOrUpdateTokenHandler(address(docToken), lendingProtocolIndex, deployedContracts.handlerUni);
+        deployedContracts.adOpsMoc.assignOrUpdateTokenHandler(address(stablecoin), lendingProtocolIndex, handlerMoc);
+        deployedContracts.adOpsUni.assignOrUpdateTokenHandler(address(stablecoin), lendingProtocolIndex, handlerUni);
         vm.stopPrank();
 
         // Create initial DCA schedules for each user
@@ -184,15 +201,15 @@ contract ComparePurchaseMethods is Test {
             vm.startPrank(users[i]);
             
             // For MoC implementation
-            docToken.approve(handlerMoc, docToDepositArray[i]);
+            stablecoin.approve(handlerMoc, docToDepositArray[i]);
             dcaManMoc.createDcaSchedule(
-                address(docToken), docToDepositArray[i], docToSpendArray[i], MIN_PURCHASE_PERIOD, lendingProtocolIndex
+                address(stablecoin), docToDepositArray[i], docToSpendArray[i], MIN_PURCHASE_PERIOD, lendingProtocolIndex
             );
             
             // For Uniswap implementation
-            docToken.approve(handlerUni, docToDepositArray[i]);
+            stablecoin.approve(handlerUni, docToDepositArray[i]);
             dcaManUni.createDcaSchedule(
-                address(docToken), docToDepositArray[i], docToSpendArray[i], MIN_PURCHASE_PERIOD, lendingProtocolIndex
+                address(stablecoin), docToDepositArray[i], docToSpendArray[i], MIN_PURCHASE_PERIOD, lendingProtocolIndex
             );
             
             vm.stopPrank();
@@ -492,11 +509,11 @@ contract ComparePurchaseMethods is Test {
         uint256 totalGasUsed = 0;
         for (uint256 i = 0; i < NUM_OF_USERS; i++) {
             vm.prank(users[i]);
-            bytes32 scheduleId = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            bytes32 scheduleId = dcaManMoc.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
             
             uint256 gasStart = gasleft();
             vm.prank(SWAPPER);
-            dcaManMoc.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
+            dcaManMoc.buyRbtc(users[i], address(stablecoin), SCHEDULE_INDEX, scheduleId);
             totalGasUsed += (gasStart - gasleft());
         }
 
@@ -533,11 +550,11 @@ contract ComparePurchaseMethods is Test {
         uint256 totalGasUsed = 0;
         for (uint256 i = 0; i < NUM_OF_USERS; i++) {
             vm.prank(users[i]);
-            bytes32 scheduleId = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
+            bytes32 scheduleId = dcaManUni.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
             
             uint256 gasStart = gasleft();
             vm.prank(SWAPPER);
-            dcaManUni.buyRbtc(users[i], address(docToken), SCHEDULE_INDEX, scheduleId);
+            dcaManUni.buyRbtc(users[i], address(stablecoin), SCHEDULE_INDEX, scheduleId);
             totalGasUsed += (gasStart - gasleft());
         }
         
@@ -582,9 +599,9 @@ contract ComparePurchaseMethods is Test {
             scheduleIndexes[i] = SCHEDULE_INDEX;
             
             vm.startPrank(users[i]);
-            scheduleIds[i] = dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            purchaseAmounts[i] = dcaManMoc.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
-            purchasePeriods[i] = dcaManMoc.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
+            scheduleIds[i] = dcaManMoc.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
+            purchaseAmounts[i] = dcaManMoc.getSchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX);
+            purchasePeriods[i] = dcaManMoc.getSchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX);
             vm.stopPrank();
         }
         
@@ -593,7 +610,7 @@ contract ComparePurchaseMethods is Test {
         vm.prank(SWAPPER);
         dcaManMoc.batchBuyRbtc(
             userArray,
-            address(docToken),
+            address(stablecoin),
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
@@ -641,9 +658,9 @@ contract ComparePurchaseMethods is Test {
             scheduleIndexes[i] = SCHEDULE_INDEX;
             
             vm.startPrank(users[i]);
-            scheduleIds[i] = dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
-            purchaseAmounts[i] = dcaManUni.getSchedulePurchaseAmount(address(docToken), SCHEDULE_INDEX);
-            purchasePeriods[i] = dcaManUni.getSchedulePurchasePeriod(address(docToken), SCHEDULE_INDEX);
+            scheduleIds[i] = dcaManUni.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
+            purchaseAmounts[i] = dcaManUni.getSchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX);
+            purchasePeriods[i] = dcaManUni.getSchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX);
             vm.stopPrank();
         }
         
@@ -652,7 +669,7 @@ contract ComparePurchaseMethods is Test {
         vm.prank(SWAPPER);
         dcaManUni.batchBuyRbtc(
             userArray,
-            address(docToken),
+            address(stablecoin),
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,

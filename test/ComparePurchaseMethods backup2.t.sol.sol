@@ -11,7 +11,7 @@ pragma solidity 0.8.19;
 // import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 // import {MocHelperConfig} from "../script/MocHelperConfig.s.sol";
 // import {DexHelperConfig} from "../script/DexHelperConfig.s.sol";
-// import {MockDocToken} from "../test/mocks/MockDocToken.sol";
+// import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 // import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 // import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 // import "../test/Constants.sol";
@@ -44,7 +44,7 @@ pragma solidity 0.8.19;
 //     DeployMocAndUniswap.DeployedContracts deployedContracts;
     
 //     // Common contracts
-//     MockDocToken docToken;
+//     MockStablecoin docToken;
     
 //     // MoC-specific contracts
 //     MockMocProxy mocProxy;
@@ -89,7 +89,7 @@ pragma solidity 0.8.19;
         
 //         // Get DOC and MoC proxy contracts
 //         (address docTokenAddress, address mocProxyAddress,,) = deployedContracts.helpConfMoc.activeNetworkConfig();
-//         docToken = MockDocToken(docTokenAddress);
+//         docToken = MockStablecoin(docTokenAddress);
 //         mocProxy = MockMocProxy(mocProxyAddress);
         
 //         // Get Uniswap-specific contracts

@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Script} from "forge-std/Script.sol";
-import {MockDocToken} from "../test/mocks/MockDocToken.sol";
-import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
+import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
+import {MockKToken} from "../test/mocks/MockKToken.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
 import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
@@ -42,11 +42,11 @@ contract UsdrifHelperConfig is Script {
 
     function getRootstockMainnetConfig() public pure returns (NetworkConfig memory config) {
         address[] memory intermediateTokens = new address[](1);
-        intermediateTokens[0] = 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96; // rUSDT on mainnet
+        intermediateTokens[0] = 0xAf368c91793CB22739386DFCbBb2F1A9e4bCBeBf; // rUSDT on mainnet
 
         uint24[] memory poolFeeRates = new uint24[](2);
         poolFeeRates[0] = 500;
-        poolFeeRates[1] = 500;
+        poolFeeRates[1] = 3000;
 
         config = NetworkConfig({
             usdrifTokenAddress: 0x3A15461d8aE0F0Fb5Fa2629e9DA7D66A794a6e37, // USDRIF on mainnet
@@ -115,10 +115,10 @@ contract UsdrifHelperConfig is Script {
         }
 
         // Deploy mock tokens
-        MockDocToken mockUsdrifToken = new MockDocToken(msg.sender);
+        MockStablecoin mockUsdrifToken = new MockStablecoin(msg.sender);
         emit HelperConfig__CreatedMockToken("USDRIF", address(mockUsdrifToken));
         
-        MockKdocToken mockKUsdrifToken = new MockKdocToken(address(mockUsdrifToken));
+        MockKToken mockKUsdrifToken = new MockKToken(address(mockUsdrifToken));
         emit HelperConfig__CreatedMockToken("kUSDRIF", address(mockKUsdrifToken));
 
         MockWrbtcToken mockWrbtcToken = new MockWrbtcToken();

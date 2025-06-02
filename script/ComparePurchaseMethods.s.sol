@@ -11,9 +11,10 @@ import {IPurchaseRbtc} from "../src/interfaces/IPurchaseRbtc.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
-import {MockDocToken} from "../test/mocks/MockDocToken.sol";
+import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {console} from "forge-std/Test.sol";
+import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract ComparePurchaseMethods is Script {
@@ -23,9 +24,9 @@ contract ComparePurchaseMethods is Script {
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
     
-    uint256 constant USER_TOTAL_DOC = 20_000 ether; // 20000 DOC owned by the user in total
-    uint256 constant DOC_TO_DEPOSIT = 2000 ether; // 2000 DOC
-    uint256 constant DOC_TO_SPEND = 200 ether; // 200 DOC for periodical purchases
+    uint256 constant USER_TOTAL_AMOUNT = 20_000 ether; // 20000 DOC owned by the user in total
+    uint256 constant AMOUNT_TO_DEPOSIT = 2000 ether; // 2000 DOC
+    uint256 constant AMOUNT_TO_SPEND = 200 ether; // 200 DOC for periodical purchases
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant NUM_OF_SCHEDULES = 5;
@@ -41,25 +42,41 @@ contract ComparePurchaseMethods is Script {
 
     // Deployed contracts
     DeployMocAndUniswap.DeployedContracts deployedContracts;
-    MockDocToken docToken;
+    MockStablecoin stablecoin;
     MockMocProxy mocProxy;
     ICoinPairPrice mocOracle;
     uint256 btcPrice = BTC_PRICE;
+    string stablecoinType;
+    TokenConfig tokenConfig;
 
     function run() external {
         console.log("Comparing MoC and Uniswap purchase methods");
+        
+        // Get stablecoin type (or use default if not specified)
+        try vm.envString("STABLECOIN_TYPE") returns (string memory coinType) {
+            stablecoinType = coinType;
+        } catch {
+            stablecoinType = DEFAULT_STABLECOIN;
+        }
+        
+        // Load token configuration
+        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
+        console.log("Using stablecoin type:", stablecoinType);
         
         // Deploy both implementations
         DeployMocAndUniswap deployer = new DeployMocAndUniswap();
         deployedContracts = deployer.run();
         
-        // Get the DOC token address and MoC proxy from the MoC config
-        (address docTokenAddress, address mocProxyAddress,,) = deployedContracts.helpConfMoc.activeNetworkConfig();
-        docToken = MockDocToken(docTokenAddress);
-        mocProxy = MockMocProxy(mocProxyAddress);
+        // Get the network configuration
+        MocHelperConfig.NetworkConfig memory networkConfig = deployedContracts.helpConfMoc.getActiveNetworkConfig();
         
-        // Setup: Mint DOC for the user and set roles
-        setupEnvironment(mocProxyAddress);
+        // Get the DOC token address
+        address docTokenAddress = networkConfig.docTokenAddress;
+        stablecoin = MockStablecoin(docTokenAddress);
+        mocProxy = MockMocProxy(networkConfig.mocProxyAddress);
+        
+        // Setup: Mint stablecoin for the user and set roles
+        setupEnvironment(networkConfig.mocProxyAddress);
         
         // Test 1: Compare single purchase
         compareSinglePurchase();
@@ -77,10 +94,10 @@ contract ComparePurchaseMethods is Script {
     function setupEnvironment(address mocProxyAddress) private {
         vm.startBroadcast();
         
-        // Deal rBTC funds to user for minting DOC
+        // Deal rBTC funds to user for minting stablecoin
         vm.deal(USER, 10 ether);
         
-        // Mint DOC for the user based on the current environment
+        // Mint stablecoin for the user based on the current environment
         if (block.chainid == ANVIL_CHAIN_ID) {
             // Local tests - use mock contracts
             console.log("Setting up local environment");
@@ -88,15 +105,15 @@ contract ComparePurchaseMethods is Script {
             // Deal rBTC funds to MoC contract
             vm.deal(mocProxyAddress, 1000 ether);
             
-            // Mint DOC directly for the user
-            docToken.mint(USER, USER_TOTAL_DOC);
+            // Mint stablecoin directly for the user
+            stablecoin.mint(USER, USER_TOTAL_AMOUNT);
             
-            // Give the MoC proxy contract allowance to move DOC from handlers
+            // Give the MoC proxy contract allowance to move stablecoin from handlers
             vm.prank(deployedContracts.handlerMoc);
-            docToken.approve(mocProxyAddress, type(uint256).max);
+            stablecoin.approve(mocProxyAddress, type(uint256).max);
             
             vm.prank(deployedContracts.handlerUni);
-            docToken.approve(mocProxyAddress, type(uint256).max);
+            stablecoin.approve(mocProxyAddress, type(uint256).max);
             
         } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
             // Mainnet fork tests
@@ -109,7 +126,7 @@ contract ComparePurchaseMethods is Script {
                 bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
             );
             
-            // Mint DOC by sending rBTC to MoC
+            // Mint stablecoin by sending rBTC to MoC
             vm.prank(USER);
             mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
             
@@ -129,7 +146,7 @@ contract ComparePurchaseMethods is Script {
                 bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
             );
             
-            // Mint DOC by sending rBTC to MoC
+            // Mint stablecoin by sending rBTC to MoC
             vm.prank(USER);
             mocProxy.mintDoc{value: 0.21 ether}(0.2 ether);
             
@@ -139,7 +156,7 @@ contract ComparePurchaseMethods is Script {
             console.log("BTC price from testnet oracle:", btcPrice);
         }
         
-        console.log("User DOC balance after minting:", docToken.balanceOf(USER) / 1e18);
+        console.log("User stablecoin balance after minting:", stablecoin.balanceOf(USER) / 1e18);
         
         // Set up roles for both implementations
         deployedContracts.adOpsMoc.setSwapperRole(SWAPPER);
@@ -147,54 +164,54 @@ contract ComparePurchaseMethods is Script {
         
         // Create DCA schedules for MoC implementation
         vm.startPrank(USER);
-        docToken.approve(deployedContracts.handlerMoc, DOC_TO_DEPOSIT);
+        stablecoin.approve(deployedContracts.handlerMoc, AMOUNT_TO_DEPOSIT);
         deployedContracts.dcaManMoc.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(stablecoin), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
         );
         vm.stopPrank();
         
         // Create DCA schedules for Uniswap implementation
         vm.startPrank(USER);
-        docToken.approve(deployedContracts.handlerUni, DOC_TO_DEPOSIT);
+        stablecoin.approve(deployedContracts.handlerUni, AMOUNT_TO_DEPOSIT);
         deployedContracts.dcaManUni.createDcaSchedule(
-            address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
+            address(stablecoin), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, TROPYKUS_INDEX
         );
         vm.stopPrank();
         
         vm.stopBroadcast();
         
         console.log("Environment setup complete");
-        console.log("User DOC balance after setup:", docToken.balanceOf(USER) / 1e18);
+        console.log("User stablecoin balance after setup:", stablecoin.balanceOf(USER) / 1e18);
     }
     
     function compareSinglePurchase() private {
         console.log("\n=== COMPARING SINGLE PURCHASE ===");
         
         // Get schedule IDs
-        bytes32 mocScheduleId = deployedContracts.dcaManMoc.getScheduleId(address(docToken), SCHEDULE_INDEX);
-        bytes32 uniScheduleId = deployedContracts.dcaManUni.getScheduleId(address(docToken), SCHEDULE_INDEX);
+        bytes32 mocScheduleId = deployedContracts.dcaManMoc.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
+        bytes32 uniScheduleId = deployedContracts.dcaManUni.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
         
         // Record balances before purchase
-        uint256 mocDocBalanceBefore = deployedContracts.dcaManMoc.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 uniDocBalanceBefore = deployedContracts.dcaManUni.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
+        uint256 mocDocBalanceBefore = deployedContracts.dcaManMoc.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 uniDocBalanceBefore = deployedContracts.dcaManUni.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 mocRbtcBalanceBefore = IPurchaseRbtc(deployedContracts.handlerMoc).getAccumulatedRbtcBalance();
         uint256 uniRbtcBalanceBefore = IPurchaseRbtc(deployedContracts.handlerUni).getAccumulatedRbtcBalance();
         
         // Execute MoC purchase
         uint256 mocGasStart = gasleft();
         vm.prank(SWAPPER);
-        deployedContracts.dcaManMoc.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, mocScheduleId);
+        deployedContracts.dcaManMoc.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, mocScheduleId);
         uint256 mocGasUsed = mocGasStart - gasleft();
         
         // Execute Uniswap purchase
         uint256 uniGasStart = gasleft();
         vm.prank(SWAPPER);
-        deployedContracts.dcaManUni.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, uniScheduleId);
+        deployedContracts.dcaManUni.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, uniScheduleId);
         uint256 uniGasUsed = uniGasStart - gasleft();
         
         // Record balances after purchase
-        uint256 mocDocBalanceAfter = deployedContracts.dcaManMoc.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
-        uint256 uniDocBalanceAfter = deployedContracts.dcaManUni.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
+        uint256 mocDocBalanceAfter = deployedContracts.dcaManMoc.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 uniDocBalanceAfter = deployedContracts.dcaManUni.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 mocRbtcBalanceAfter = IPurchaseRbtc(deployedContracts.handlerMoc).getAccumulatedRbtcBalance();
         uint256 uniRbtcBalanceAfter = IPurchaseRbtc(deployedContracts.handlerUni).getAccumulatedRbtcBalance();
         
@@ -207,12 +224,12 @@ contract ComparePurchaseMethods is Script {
         // Print results
         console.log("MoC Purchase:");
         console.log("  Gas used:", mocGasUsed);
-        console.log("  DOC spent:", mocDocSpent / 1e18);
+        console.log("  Stablecoin spent:", mocDocSpent / 1e18);
         console.log("  rBTC gained:", mocRbtcGained / 1e18, ".", (mocRbtcGained % 1e18) / 1e15);
         
         console.log("Uniswap Purchase:");
         console.log("  Gas used:", uniGasUsed);
-        console.log("  DOC spent:", uniDocSpent / 1e18);
+        console.log("  Stablecoin spent:", uniDocSpent / 1e18);
         console.log("  rBTC gained:", uniRbtcGained / 1e18, ".", (uniRbtcGained % 1e18) / 1e15);
         
         // Compare efficiency
@@ -303,9 +320,9 @@ contract ComparePurchaseMethods is Script {
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; i++) {
             users[i] = USER;
             scheduleIndexes[i] = i;
-            mocScheduleIds[i] = deployedContracts.dcaManMoc.getScheduleId(address(docToken), i);
-            uniScheduleIds[i] = deployedContracts.dcaManUni.getScheduleId(address(docToken), i);
-            purchaseAmounts[i] = DOC_TO_SPEND / NUM_OF_SCHEDULES;
+            mocScheduleIds[i] = deployedContracts.dcaManMoc.getScheduleId(address(stablecoin), i);
+            uniScheduleIds[i] = deployedContracts.dcaManUni.getScheduleId(address(stablecoin), i);
+            purchaseAmounts[i] = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
             purchasePeriods[i] = MIN_PURCHASE_PERIOD + i * 5 days;
         }
         
@@ -318,7 +335,7 @@ contract ComparePurchaseMethods is Script {
         vm.prank(SWAPPER);
         deployedContracts.dcaManMoc.batchBuyRbtc(
             users,
-            address(docToken),
+            address(stablecoin),
             scheduleIndexes,
             mocScheduleIds,
             purchaseAmounts,
@@ -331,7 +348,7 @@ contract ComparePurchaseMethods is Script {
         vm.prank(SWAPPER);
         deployedContracts.dcaManUni.batchBuyRbtc(
             users,
-            address(docToken),
+            address(stablecoin),
             scheduleIndexes,
             uniScheduleIds,
             purchaseAmounts,
@@ -378,20 +395,20 @@ contract ComparePurchaseMethods is Script {
         vm.startBroadcast();
         
         // Delete the initial schedule to start fresh
-        bytes32 initialScheduleId = dcaManager.getScheduleId(address(docToken), SCHEDULE_INDEX);
+        bytes32 initialScheduleId = dcaManager.getScheduleId(address(stablecoin), SCHEDULE_INDEX);
         vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(docToken), initialScheduleId);
+        dcaManager.deleteDcaSchedule(address(stablecoin), initialScheduleId);
         
         // Create multiple schedules with different parameters
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; i++) {
-            uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
-            uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
+            uint256 docToDeposit = AMOUNT_TO_DEPOSIT / NUM_OF_SCHEDULES;
+            uint256 purchaseAmount = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
             
             vm.startPrank(USER);
-            docToken.approve(handler, docToDeposit);
+            stablecoin.approve(handler, docToDeposit);
             dcaManager.createDcaSchedule(
-                address(docToken), docToDeposit, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
+                address(stablecoin), docToDeposit, purchaseAmount, purchasePeriod, TROPYKUS_INDEX
             );
             vm.stopPrank();
         }
@@ -404,9 +421,9 @@ contract ComparePurchaseMethods is Script {
         
         // Execute purchases for each schedule
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; i++) {
-            bytes32 scheduleId = dcaManager.getScheduleId(address(docToken), i);
+            bytes32 scheduleId = dcaManager.getScheduleId(address(stablecoin), i);
             vm.prank(SWAPPER);
-            dcaManager.buyRbtc(USER, address(docToken), i, scheduleId);
+            dcaManager.buyRbtc(USER, address(stablecoin), i, scheduleId);
             
             // Advance time for the next purchase
             vm.warp(block.timestamp + MIN_PURCHASE_PERIOD);

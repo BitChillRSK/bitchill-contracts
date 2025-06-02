@@ -1,0 +1,901 @@
+Compiling 9 files with Solc 0.8.19
+Solc 0.8.19 finished in 2.53s
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to view
+   --> test/unit/DcaDappTest.t.sol:721:5:
+    |
+721 |     function getLendingTokenAddress(string memory _stablecoinType, uint256 lendingProtocolIndex) internal returns (address) {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 1 test for test/unit/DocWithdrawalTest.t.sol:DocWithdrawalTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.34ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/DcaConfigurationTest.t.sol:DcaConfigurationTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.53ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/DocDepositTest.t.sol:DocDepositTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.33ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/DocLendingTest.t.sol:DocLendingTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.34ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/MockContractsTest.t.sol:MockContractsTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.54ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/AdminOperationsTest.t.sol:AdminOperationsTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Sovryn iSusdAddress: 0x0000000000000000000000000000000000000000
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 11.73ms (0.00ns CPU time)
+
+Ran 1 test for test/unit/deployment/BaseDeploymentTest.t.sol:BaseDeploymentTest
+[PASS] testCoreProtocolDeployment() (gas: 39913)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 12.53ms (937.88µs CPU time)
+
+Ran 2 tests for test/unit/deployment/NewHandlerDeploymentTest.t.sol:NewHandlerDeploymentTest
+[PASS] testCoreProtocolDeployment() (gas: 39935)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  USDRIF handler deployed: 0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+  AdminOperations address: 0x34A1D3fff3958843C43aD80F30b94c510645C316
+  DcaManager address: 0x90193C961A926261B756D1E5bb255e67ff9498A1
+  USDRIF handler deployed at: 0x62c20Aa1e0272312BC100b4e23B4DC1Ed96dD7D1
+  Warning: Deployer is not an admin. Cannot register handler.
+  Please call adminOperations.assignOrUpdateTokenHandler() manually with an admin account and parameters:
+  tokenAddress: 0xffD4505B3452Dc22f8473616d50503bA9E1710Ac
+  handlerAddress: 0x62c20Aa1e0272312BC100b4e23B4DC1Ed96dD7D1
+  Handler ownership transferred to: 0x7c8999dC9a822c1f0Df42023113EDB4FDd543266
+
+[PASS] testUsdrifHandlerDeployment() (gas: 70063)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  USDRIF handler deployed: 0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+  AdminOperations address: 0x34A1D3fff3958843C43aD80F30b94c510645C316
+  DcaManager address: 0x90193C961A926261B756D1E5bb255e67ff9498A1
+  USDRIF handler deployed at: 0x62c20Aa1e0272312BC100b4e23B4DC1Ed96dD7D1
+  Warning: Deployer is not an admin. Cannot register handler.
+  Please call adminOperations.assignOrUpdateTokenHandler() manually with an admin account and parameters:
+  tokenAddress: 0xffD4505B3452Dc22f8473616d50503bA9E1710Ac
+  handlerAddress: 0x62c20Aa1e0272312BC100b4e23B4DC1Ed96dD7D1
+  Handler ownership transferred to: 0x7c8999dC9a822c1f0Df42023113EDB4FDd543266
+
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 15.01ms (645.79µs CPU time)
+
+Ran 2 tests for test/unit/ModifiersTest.t.sol:ModifiersTest
+[PASS] testonlyOwnerCanModifyMinPurchasePeriod() (gas: 28855)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testonlyOwnerCanSetAdminOperations() (gas: 29840)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 5.16ms (92.04µs CPU time)
+
+Ran 4 tests for test/unit/DocHandlerTest.sol:DocHandlerTest
+[PASS] testDocHandlerModifyMinPurchaseAmount() (gas: 19623)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDocHandlerSetFeeCollectorAddress() (gas: 23271)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDocHandlerSetFeeRateParams() (gas: 45349)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDocHandlerSupportsInterface() (gas: 6282)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 7.14ms (259.37µs CPU time)
+
+Ran 3 tests for test/ComparePurchaseMethods.t.sol:ComparePurchaseMethods
+[PASS] testCompareAllMethods() (gas: 255)
+[PASS] testCompareBatchPurchases() (gas: 189)
+[PASS] testCompareIndividualPurchases() (gas: 210)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 7.21ms (41.79µs CPU time)
+
+Ran 13 tests for test/unit/PurchaseUniswapSettingsTest.sol:PurchaseUniswapSettingsTest
+[PASS] testOnlyOwnerCanSetPurchasePath() (gas: 5916)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testOnlyOwnerCanSetSlippageSettings() (gas: 5895)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testOnlyOwnerCanUpdateOracle() (gas: 5939)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testOutdatedPriceRevertsSwap() (gas: 5873)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetAmountOutMinimumPercentRevertsIfTooHigh() (gas: 5917)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetAmountOutMinimumPercentRevertsIfTooLow() (gas: 5872)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetAmountOutMinimumSafetyCheck() (gas: 5917)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetAmountOutMinimumSafetyCheckRevertsIfTooHigh() (gas: 5917)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetPurchasePath() (gas: 5895)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSetPurchasePathRevertsWithWrongArrayLengths() (gas: 5851)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testSlippageSettings() (gas: 5939)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testUpdateOracle() (gas: 5896)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+[PASS] testUpdateOracleRevertsIfZeroAddress() (gas: 5852)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  Skipping test: only applicable for dexSwaps
+
+Suite result: ok. 13 passed; 0 failed; 0 skipped; finished in 8.17ms (388.29µs CPU time)
+
+Ran 11 tests for test/unit/DcaScheduleTest.t.sol:DcaScheduleTest
+[PASS] testCannotConsultInexistentSchedule() (gas: 30164)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCannotDeleteInexistentSchedule() (gas: 30406)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCannotDeleteLastDcaScheduleInTheSameBlock() (gas: 576251)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  scheduleId is 0x8e15632109710134a36679d0d6c57fb0ecd188bcd1b55f9f6b2a3270bfec6c91
+  0x8e15632109710134a36679d0d6c57fb0ecd188bcd1b55f9f6b2a3270bfec6c91
+  scheduleId 2 is 0x1b8d7cae34157d921c1199935d16647031e9020e294fef6cb78d1626ca00bc1a
+  0x1b8d7cae34157d921c1199935d16647031e9020e294fef6cb78d1626ca00bc1a
+
+[PASS] testCannotUpdateInexistentSchedule() (gas: 42163)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCreateDcaSchedule() (gas: 290823)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCreateSeveralDcaSchedules() (gas: 1040021)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDcaScheduleIdsDontCollide() (gas: 464907)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDeleteDcaSchedule() (gas: 514651)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  scheduleId is 0x8e15632109710134a36679d0d6c57fb0ecd188bcd1b55f9f6b2a3270bfec6c91
+  scheduleId2 is 0x1b8d7cae34157d921c1199935d16647031e9020e294fef6cb78d1626ca00bc1a
+
+[PASS] testDeleteSeveraldcaSchedules() (gas: 1331484)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testDeleteTwoDcaSchedules() (gas: 581109)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  scheduleId is 0x8e15632109710134a36679d0d6c57fb0ecd188bcd1b55f9f6b2a3270bfec6c91
+  0x8e15632109710134a36679d0d6c57fb0ecd188bcd1b55f9f6b2a3270bfec6c91
+  scheduleId 2 is 0x1b8d7cae34157d921c1199935d16647031e9020e294fef6cb78d1626ca00bc1a
+  0x1b8d7cae34157d921c1199935d16647031e9020e294fef6cb78d1626ca00bc1a
+
+[PASS] testUpdateDcaSchedule() (gas: 185661)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 13.84ms (6.39ms CPU time)
+
+Ran 15 tests for test/unit/RbtcPurchaseTest.t.sol:RbtcPurchaseTest
+[PASS] testBatchPurchaseFailsIfArraysEmpty() (gas: 34761)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testBatchPurchaseFailsIfArraysHaveDifferentLenghts() (gas: 40394)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testBatchPurchaseFailsIfIdAndIndexDontMatch() (gas: 1337336)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testBatchPurchasesOneUser() (gas: 1926267)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCannotBuyIfPeriodNotElapsed() (gas: 295740)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testCannotRescueIfNoAccumulatedRbtc() (gas: 21249)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testOnlyDcaManagerCanPurchase() (gas: 51055)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testOnlySwapperCanCallDcaManagerToPurchase() (gas: 66770)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testOnlyUserCanWithdrawRbtc() (gas: 13835)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testPurchaseFailsIfIdAndIndexDontMatch() (gas: 61259)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testRescueRbtcFromStuckContract() (gas: 308284)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testRevertPurchasetIfDocRunsOut() (gas: 1033028)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testSeveralPurchasesOneSchedule() (gas: 596710)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testSeveralPurchasesWithSeveralSchedules() (gas: 3817035)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testSinglePurchase() (gas: 267446)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 15 passed; 0 failed; 0 skipped; finished in 13.90ms (13.78ms CPU time)
+
+Ran 3 tests for test/unit/RbtcWithdrawalTest.t.sol:RbtcWithdrawalTest
+[PASS] testCannotWithdrawBeforePurchasing() (gas: 40102)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testWithdrawRbtcAfterOnePurchase() (gas: 260360)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+[PASS] testWithdrawRbtcAfterSeveralPurchases() (gas: 3841297)
+Logs:
+  Using stablecoin type: DOC
+  DOC token address: 0x41C3c259514f88211c4CA2fd805A93F8F9A57504
+  MoC Proxy address: 0x20067a7558168e12ad53b235F2f7408FeEa4985F
+  Deploying single handler for local/fork environment
+  Lending token address: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+  === getLendingTokenAddress called ===
+    stablecoinType: DOC
+    isMocSwaps: true
+    isDexSwaps: false
+    Using mocHelperConfig: 0x104fBc016F4bb334D775a19E8A6510109AC63E00
+    Using Tropykus kDocAddress: 0x0401911641c4781D93c41f9aa8094B171368E6a9
+
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 13.85ms (6.57ms CPU time)
+
+Ran 15 test suites in 156.39ms (165.62ms CPU time): 54 tests passed, 6 failed, 0 skipped (60 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/unit/AdminOperationsTest.t.sol:AdminOperationsTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered 1 failing test in test/unit/DcaConfigurationTest.t.sol:DcaConfigurationTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered 1 failing test in test/unit/DocDepositTest.t.sol:DocDepositTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered 1 failing test in test/unit/DocLendingTest.t.sol:DocLendingTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered 1 failing test in test/unit/DocWithdrawalTest.t.sol:DocWithdrawalTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered 1 failing test in test/unit/MockContractsTest.t.sol:MockContractsTest
+[FAIL: Lending token not available for the selected combination] setUp() (gas: 0)
+
+Encountered a total of 6 failing tests, 54 tests succeeded

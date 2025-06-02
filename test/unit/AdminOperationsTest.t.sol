@@ -31,12 +31,12 @@ contract AdminOperationsTest is DcaDappTest {
         vm.expectRevert(encodedRevert);
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(
-            address(docToken), s_lendingProtocolIndex, address(dummyERC165Contract)
+            address(stablecoin), s_lendingProtocolIndex, address(dummyERC165Contract)
         );
 
         vm.expectRevert();
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, address(dcaManager));
+        adminOperations.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, address(dcaManager));
     }
 
     function testUpdateTokenHandlerFailsIfAddressIsEoa() external {
@@ -45,19 +45,19 @@ contract AdminOperationsTest is DcaDappTest {
             abi.encodeWithSelector(IAdminOperations.AdminOperations__EoaCannotBeHandler.selector, dummyAddress);
         vm.expectRevert(encodedRevert);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), s_lendingProtocolIndex, dummyAddress);
+        adminOperations.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, dummyAddress);
     }
 
     function testTokenHandlerUpdated() external {
-        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex);
+        address prevTropykusDocHandlerMoc = adminOperations.getTokenHandler(address(stablecoin), s_lendingProtocolIndex);
         vm.startBroadcast();
         TropykusDocHandlerMoc newTropykusDocHandlerMoc = new TropykusDocHandlerMoc(
             address(dcaManager),
-            address(docToken),
+            address(stablecoin),
             address(lendingToken),
             MIN_PURCHASE_AMOUNT,
-            address(mocProxy),
             FEE_COLLECTOR,
+            address(mocProxy),
             IFeeHandler.FeeSettings({
                 minFeeRate: MIN_FEE_RATE,
                 maxFeeRate: MAX_FEE_RATE,
@@ -69,10 +69,10 @@ contract AdminOperationsTest is DcaDappTest {
         assert(prevTropykusDocHandlerMoc != address(newTropykusDocHandlerMoc));
         vm.prank(ADMIN);
         adminOperations.assignOrUpdateTokenHandler(
-            address(docToken), s_lendingProtocolIndex, address(newTropykusDocHandlerMoc)
+            address(stablecoin), s_lendingProtocolIndex, address(newTropykusDocHandlerMoc)
         );
         assertEq(
-            adminOperations.getTokenHandler(address(docToken), s_lendingProtocolIndex),
+            adminOperations.getTokenHandler(address(stablecoin), s_lendingProtocolIndex),
             address(newTropykusDocHandlerMoc)
         );
     }
@@ -115,7 +115,7 @@ contract AdminOperationsTest is DcaDappTest {
             abi.encodeWithSelector(IAdminOperations.AdminOperations__LendingProtocolNotAllowed.selector, 3);
         vm.expectRevert(encodedRevert);
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(docToken), 3, address(docHandler));
+        adminOperations.assignOrUpdateTokenHandler(address(stablecoin), 3, address(docHandler));
     }
 
     function testAddOrUpdateLendingProtocol() external {

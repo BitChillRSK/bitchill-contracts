@@ -15,6 +15,7 @@ import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {console} from "forge-std/Test.sol";
+import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract DeployMocAndUniswap is DeployBase {
@@ -45,6 +46,21 @@ contract DeployMocAndUniswap is DeployBase {
         uint256 amountOutMinimumSafetyCheck;
     }
     
+    string stablecoinType;
+    TokenConfig tokenConfig;
+    
+    constructor() {
+        // Initialize stablecoin type from environment or use default
+        try vm.envString("STABLECOIN_TYPE") returns (string memory coinType) {
+            stablecoinType = coinType;
+        } catch {
+            stablecoinType = DEFAULT_STABLECOIN;
+        }
+        
+        // Load token configuration based on the selected stablecoin
+        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
+    }
+    
     // Split the deployment into smaller functions to avoid stack too deep errors
     function deployMocContracts() 
         private 
@@ -56,7 +72,7 @@ contract DeployMocAndUniswap is DeployBase {
         ) 
     {
         helpConfMoc = new MocHelperConfig();
-        (address docToken, address mocProxy, address kDocToken, address iSusdToken) = helpConfMoc.activeNetworkConfig();
+        MocHelperConfig.NetworkConfig memory networkConfig = helpConfMoc.getActiveNetworkConfig();
         
         vm.startBroadcast();
         // Deploy admin operations and DCA manager
@@ -66,16 +82,41 @@ contract DeployMocAndUniswap is DeployBase {
         // Get fee collector address
         address feeCollector = getFeeCollector(environment);
         
-        // Select lending token based on protocol
-        address lendingToken = protocol == Protocol.TROPYKUS ? kDocToken : iSusdToken;
+        // Get token addresses from network config
+        address docTokenAddress = networkConfig.docTokenAddress;
+        address mocProxy = networkConfig.mocProxyAddress;
+        
+        // Select the appropriate lending token based on protocol
+        address lendingToken;
+        
+        if (protocol == Protocol.TROPYKUS) {
+            lendingToken = networkConfig.kDocAddress;
+        } else if (protocol == Protocol.SOVRYN) {
+            // Check if this stablecoin is supported by Sovryn
+            if (!tokenConfig.supportedBySovryn) {
+                revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+            }
+            lendingToken = networkConfig.iSusdAddress;
+        } else {
+            revert("Unsupported lending protocol");
+        }
 
         vm.stopBroadcast();
 
         // Deploy MoC handler
         DeployMocSwaps deployMocSwapContracts = new DeployMocSwaps();
-        handlerMoc = deployMocSwapContracts.deployDocHandlerMoc(
-            protocol, address(dcaManMoc), docToken, lendingToken, mocProxy, feeCollector
-        );
+        
+        // Create a DeployParams struct to pass to deployDocHandlerMoc
+        DeployMocSwaps.DeployParams memory params = DeployMocSwaps.DeployParams({
+            protocol: protocol,
+            dcaManager: address(dcaManMoc),
+            tokenAddress: docTokenAddress,
+            lendingToken: lendingToken,
+            mocProxy: mocProxy,
+            feeCollector: feeCollector
+        });
+        
+        handlerMoc = deployMocSwapContracts.deployDocHandlerMoc(params);
         console.log("MoC handler deployed at:", handlerMoc);
         
         // Get owner address based on environment
@@ -110,9 +151,23 @@ contract DeployMocAndUniswap is DeployBase {
         // Get fee collector address
         address feeCollector = getFeeCollector(environment);
         
-        // Select lending token based on protocol
-        address docToken = networkConfig.docTokenAddress;
-        address lendingToken = protocol == Protocol.TROPYKUS ? networkConfig.kDocAddress : networkConfig.iSusdAddress;
+        // Get token addresses from network config
+        address stablecoinAddress = networkConfig.stablecoinAddress;
+        
+        // Select the appropriate lending token based on protocol
+        address lendingToken;
+        
+        if (protocol == Protocol.TROPYKUS) {
+            lendingToken = networkConfig.tropykusLendingToken;
+        } else if (protocol == Protocol.SOVRYN) {
+            // Check if this stablecoin is supported by Sovryn
+            if (!tokenConfig.supportedBySovryn) {
+                revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+            }
+            lendingToken = networkConfig.sovrynLendingToken;
+        } else {
+            revert("Unsupported lending protocol");
+        }
         
         // Create Uniswap settings from the network config
         IPurchaseUniswap.UniswapSettings memory uniswapSettings = IPurchaseUniswap.UniswapSettings({
@@ -129,7 +184,7 @@ contract DeployMocAndUniswap is DeployBase {
         DexDeployParams memory params = DexDeployParams({
             protocol: protocol,
             dcaManager: address(dcaManUni),
-            tokenAddress: docToken,
+            tokenAddress: stablecoinAddress,
             lendingToken: lendingToken,
             uniswapSettings: uniswapSettings,
             feeCollector: feeCollector,
@@ -170,6 +225,7 @@ contract DeployMocAndUniswap is DeployBase {
         returns (DeployedContracts memory contracts)
     {
         console.log("Deploying both MoC and Uniswap handlers for comparison");
+        console.log("Using stablecoin type:", stablecoinType);
         
         // Deploy MoC contracts
         (contracts.adOpsMoc, contracts.handlerMoc, contracts.dcaManMoc, contracts.helpConfMoc) = deployMocContracts();

@@ -11,7 +11,7 @@ pragma solidity 0.8.19;
 // import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 // import {MocHelperConfig} from "../script/MocHelperConfig.s.sol";
 // import {DexHelperConfig} from "../script/DexHelperConfig.s.sol";
-// import {MockDocToken} from "../test/mocks/MockDocToken.sol";
+// import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 // import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 // import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 // import "../test/Constants.sol";
@@ -26,9 +26,9 @@ pragma solidity 0.8.19;
 //     address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
     
 //     // Testing constants
-//     uint256 constant USER_TOTAL_DOC = 20_000 ether;
-//     uint256 constant DOC_TO_DEPOSIT = 2000 ether;
-//     uint256 constant DOC_TO_SPEND = 200 ether;
+//     uint256 constant USER_TOTAL_AMOUNT = 20_000 ether;
+//     uint256 constant AMOUNT_TO_DEPOSIT = 2000 ether;
+//     uint256 constant AMOUNT_TO_SPEND = 200 ether;
 //     uint256 constant MIN_PURCHASE_PERIOD = 1 days;
 //     uint256 constant SCHEDULE_INDEX = 0;
 //     uint256 constant NUM_OF_SCHEDULES = 5;
@@ -42,7 +42,7 @@ pragma solidity 0.8.19;
 //     DeployMocAndUniswap.DeployedContracts deployedContracts;
     
 //     // Common contracts
-//     MockDocToken docToken;
+//     MockStablecoin docToken;
     
 //     // MoC-specific contracts
 //     MockMocProxy mocProxy;
@@ -85,7 +85,7 @@ pragma solidity 0.8.19;
         
 //         // Get DOC and MoC proxy contracts
 //         (address docTokenAddress, address mocProxyAddress,,) = deployedContracts.helpConfMoc.activeNetworkConfig();
-//         docToken = MockDocToken(docTokenAddress);
+//         docToken = MockStablecoin(docTokenAddress);
 //         mocProxy = MockMocProxy(mocProxyAddress);
         
 //         // Get Uniswap-specific contracts
@@ -141,14 +141,14 @@ pragma solidity 0.8.19;
 
 //         // Create initial DCA schedules
 //         vm.startPrank(USER);
-//         docToken.approve(handlerMoc, DOC_TO_DEPOSIT);
+//         docToken.approve(handlerMoc, AMOUNT_TO_DEPOSIT);
 //         dcaManMoc.createDcaSchedule(
-//             address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, lendingProtocolIndex
+//             address(docToken), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, lendingProtocolIndex
 //         );
         
-//         docToken.approve(handlerUni, DOC_TO_DEPOSIT);
+//         docToken.approve(handlerUni, AMOUNT_TO_DEPOSIT);
 //         dcaManUni.createDcaSchedule(
-//             address(docToken), DOC_TO_DEPOSIT, DOC_TO_SPEND, MIN_PURCHASE_PERIOD, lendingProtocolIndex
+//             address(docToken), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, lendingProtocolIndex
 //         );
 //         vm.stopPrank();
         
@@ -294,7 +294,7 @@ pragma solidity 0.8.19;
 //         uint256 uniRbtcPurchased = uniRbtcBalanceAfter - uniRbtcBalanceBefore;
         
 //         // Calculate actual DOC spent
-//         uint256 docPerSchedule = DOC_TO_SPEND / NUM_OF_SCHEDULES;
+//         uint256 docPerSchedule = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
 //         uint256 totalDocSpent = docPerSchedule * NUM_OF_SCHEDULES;
 //         console2.log("\nDOC spent per method:", totalDocSpent / 1e18);
         
@@ -426,7 +426,7 @@ pragma solidity 0.8.19;
 //         console2.log("  rBTC purchased: %s (%d sats)", _formatRbtc(uniRbtcPurchased), uniRbtcPurchased / 1e10);
         
 //         // Calculate actual DOC spent
-//         uint256 docPerSchedule = DOC_TO_SPEND / NUM_OF_SCHEDULES;
+//         uint256 docPerSchedule = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
 //         uint256 totalDocSpent = docPerSchedule * NUM_OF_SCHEDULES;
 //         console2.log("\nDOC spent per method:", totalDocSpent / 1e18);
         
@@ -478,8 +478,8 @@ pragma solidity 0.8.19;
 
 //         // Create multiple schedules with different parameters
 //         for (uint256 i = 0; i < NUM_OF_SCHEDULES; i++) {
-//             uint256 docToDeposit = DOC_TO_DEPOSIT / NUM_OF_SCHEDULES;
-//             uint256 purchaseAmount = DOC_TO_SPEND / NUM_OF_SCHEDULES;
+//             uint256 docToDeposit = AMOUNT_TO_DEPOSIT / NUM_OF_SCHEDULES;
+//             uint256 purchaseAmount = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
 //             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;
             
 //             vm.startPrank(USER);

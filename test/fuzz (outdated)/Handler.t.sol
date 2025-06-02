@@ -9,7 +9,7 @@ pragma solidity 0.8.19;
 // import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 // import {AdminOperations} from "src/AdminOperations.sol";
 // import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
-// import {MockDocToken} from "../mocks/MockDocToken.sol";
+// import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 // import "../Constants.sol";
 // // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
@@ -17,9 +17,9 @@ pragma solidity 0.8.19;
 //     AdminOperations public adminOperations;
 //     TropykusDocHandlerMoc public docHandlerMoc;
 //     DcaManager public dcaManager;
-//     MockDocToken public mockDocToken;
+//     MockStablecoin public MockStablecoin;
 //     // MockMocProxy public mockMocProxy;
-//     uint256 constant USER_TOTAL_DOC = 1_000_000 ether; // 1 million DOC owned by each user in total
+//     uint256 constant USER_TOTAL_AMOUNT = 1_000_000 ether; // 1 million DOC owned by each user in total
 //     uint256 constant MAX_DEPOSIT_AMOUNT = 10_000 ether; // at most 10.000 DOC per deposit
 //     uint256 constant MAX_PURCHASE_PERIOD = 520 weeks; // at least one purchase every 10 years
 //     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
@@ -33,13 +33,13 @@ pragma solidity 0.8.19;
 //         AdminOperations _adminOperations,
 //         TropykusDocHandlerMoc _docHandlerMoc,
 //         DcaManager _dcaManager,
-//         MockDocToken _mockDocToken,
+//         MockStablecoin _MockStablecoin,
 //         address[] memory users
 //     ) {
 //         adminOperations = _adminOperations;
 //         docHandlerMoc = _docHandlerMoc;
 //         dcaManager = _dcaManager;
-//         mockDocToken = _mockDocToken;
+//         MockStablecoin = _MockStablecoin;
 //         s_users = users;
 //         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
 //             s_lendingProtocolIndex = TROPYKUS_INDEX;
@@ -53,7 +53,7 @@ pragma solidity 0.8.19;
 //     function depositDoc(uint256 userSeed, uint256 scheduleIndex, uint256 depositAmount) public {
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
-//         mockDocToken.mint(user, USER_TOTAL_DOC);
+//         MockStablecoin.mint(user, USER_TOTAL_AMOUNT);
 //         if (depositAmount < 2 * MIN_PURCHASE_AMOUNT) {
 //             vm.stopPrank();
 //             return;
@@ -63,29 +63,29 @@ pragma solidity 0.8.19;
 //         //     vm.stopPrank();
 //         //     return;
 //         // }
-//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //         if (usersNumOfSchedules == 0) {
 //             scheduleIndex = 0;
 //             // We need to create a DCA schedule before depositing more DOC
 //             uint256 purchaseAmount = depositAmount / 10;
 //             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
-//             mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//             MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //             dcaManager.createDcaSchedule(
-//                 address(mockDocToken), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
+//                 address(MockStablecoin), depositAmount, purchaseAmount, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
 //             );
 //         } else {
 //             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 //         }
 
-//         mockDocToken.approve(address(docHandlerMoc), depositAmount);
-//         dcaManager.depositToken(address(mockDocToken), scheduleIndex, depositAmount);
+//         MockStablecoin.approve(address(docHandlerMoc), depositAmount);
+//         dcaManager.depositToken(address(MockStablecoin), scheduleIndex, depositAmount);
 //         vm.stopPrank();
 //     }
 
 //     function withdrawDoc(uint256 userSeed, uint256 scheduleIndex, uint256 withdrawalAmount) public {
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
-//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //         if (usersNumOfSchedules == 0) {
 //             scheduleIndex = 0;
 //             // We need to create a DCA schedule before withdrawing DOC
@@ -94,43 +94,43 @@ pragma solidity 0.8.19;
 //             uint256 purchaseAmount;
 //             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
 //             uint256 purchasePeriod = 3 days;
-//             mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//             MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //             dcaManager.createDcaSchedule(
-//                 address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+//                 address(MockStablecoin), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
 //             );
 //         } else {
 //             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 //         }
 
-//         uint256 maxWithdrawalAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
+//         uint256 maxWithdrawalAmount = dcaManager.getScheduleTokenBalance(address(MockStablecoin), scheduleIndex);
 //         withdrawalAmount = bound(withdrawalAmount, 0, maxWithdrawalAmount);
 //         if (withdrawalAmount == 0) {
 //             vm.stopPrank();
 //             return;
 //         }
-//         dcaManager.withdrawToken(address(mockDocToken), scheduleIndex, withdrawalAmount);
+//         dcaManager.withdrawToken(address(MockStablecoin), scheduleIndex, withdrawalAmount);
 //         vm.stopPrank();
 //     }
 
 //     function setPurchaseAmount(uint256 userSeed, uint256 scheduleIndex, uint256 purchaseAmount) external {
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
-//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //         if (usersNumOfSchedules == 0) {
 //             scheduleIndex = 0;
 //             purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, MAX_DEPOSIT_AMOUNT / 10);
 //             // We need to create a DCA schedule before modifying the purchase amount
 //             uint256 depositAmount = purchaseAmount * 10;
 //             uint256 purchasePeriod = 3 days;
-//             mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//             MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //             dcaManager.createDcaSchedule(
-//                 address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+//                 address(MockStablecoin), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
 //             );
 //         } else {
 //             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 //         }
 
-//         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex) / 2;
+//         uint256 maxPurchaseAmount = dcaManager.getScheduleTokenBalance(address(MockStablecoin), scheduleIndex) / 2;
 //         if (maxPurchaseAmount < MIN_PURCHASE_AMOUNT) {
 //             // This can happen if the DOC balance left is less than 2 DOC
 //             vm.stopPrank();
@@ -141,7 +141,7 @@ pragma solidity 0.8.19;
 //             vm.stopPrank();
 //             return;
 //         }
-//         dcaManager.setPurchaseAmount(address(mockDocToken), scheduleIndex, purchaseAmount);
+//         dcaManager.setPurchaseAmount(address(MockStablecoin), scheduleIndex, purchaseAmount);
 //         vm.stopPrank();
 //     }
 
@@ -149,21 +149,21 @@ pragma solidity 0.8.19;
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
 //         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
-//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //         if (usersNumOfSchedules == 0) {
 //             scheduleIndex = 0;
 //             uint256 depositAmount = 1000 ether;
 //             uint256 purchaseAmount = 100 ether;
 //             // We need to create a DCA schedule before modifying the purchase period
-//             mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//             MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //             dcaManager.createDcaSchedule(
-//                 address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+//                 address(MockStablecoin), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
 //             );
 //         } else {
 //             scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
 //         }
 
-//         dcaManager.setPurchasePeriod(address(mockDocToken), scheduleIndex, purchasePeriod);
+//         dcaManager.setPurchasePeriod(address(MockStablecoin), scheduleIndex, purchasePeriod);
 //         vm.stopPrank();
 //     }
 
@@ -179,9 +179,9 @@ pragma solidity 0.8.19;
 //         depositAmount = bound(depositAmount, 2 * MIN_PURCHASE_AMOUNT, MAX_DEPOSIT_AMOUNT);
 //         purchaseAmount = bound(purchaseAmount, MIN_PURCHASE_AMOUNT, depositAmount / 2);
 //         purchasePeriod = bound(purchasePeriod, MIN_PURCHASE_PERIOD, MAX_PURCHASE_PERIOD);
-//         mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//         MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //         dcaManager.createDcaSchedule(
-//             address(mockDocToken), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+//             address(MockStablecoin), depositAmount, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
 //         );
 //         vm.stopPrank();
 //     }
@@ -195,7 +195,7 @@ pragma solidity 0.8.19;
 //     ) public {
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
-//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//         uint256 usersNumOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //         if (usersNumOfSchedules == 0) {
 //             // If user has no schedules, update not possible
 //             vm.stopPrank();
@@ -206,16 +206,16 @@ pragma solidity 0.8.19;
 //         purchaseAmount = bound(purchaseAmount, 0, depositAmount / 2);
 //         purchasePeriod = bound(purchasePeriod, 0, MAX_PURCHASE_PERIOD);
 
-//         uint256 prevTokenBalance = dcaManager.getScheduleTokenBalance(address(mockDocToken), scheduleIndex);
+//         uint256 prevTokenBalance = dcaManager.getScheduleTokenBalance(address(MockStablecoin), scheduleIndex);
 
 //         // Schedule parameters that are 0 don't get updated
 //         if (purchasePeriod < MIN_PURCHASE_PERIOD) purchasePeriod = 0;
 //         if (purchaseAmount < MIN_PURCHASE_AMOUNT) purchaseAmount = 0;
 //         if (purchaseAmount > (prevTokenBalance + depositAmount) / 2) purchaseAmount = 0;
 
-//         mockDocToken.approve(address(docHandlerMoc), depositAmount);
+//         MockStablecoin.approve(address(docHandlerMoc), depositAmount);
 //         dcaManager.updateDcaSchedule(
-//             address(mockDocToken), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
+//             address(MockStablecoin), scheduleIndex, depositAmount, purchaseAmount, purchasePeriod
 //         );
 //         vm.stopPrank();
 //     }
@@ -223,7 +223,7 @@ pragma solidity 0.8.19;
 //     function deleteDcaSchedule(uint256 userSeed, uint256 scheduleIndex) public {
 //         address user = s_users[userSeed % s_users.length];
 //         vm.startPrank(user);
-//         IDcaManager.DcaDetails[] memory usersSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken));
+//         IDcaManager.DcaDetails[] memory usersSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin));
 //         uint256 usersNumOfSchedules = usersSchedules.length;
 //         if (usersNumOfSchedules == 0) {
 //             // If user has no schedules, update not possible
@@ -231,7 +231,7 @@ pragma solidity 0.8.19;
 //             return;
 //         }
 //         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
-//         dcaManager.deleteDcaSchedule(address(mockDocToken), usersSchedules[scheduleIndex].scheduleId);
+//         dcaManager.deleteDcaSchedule(address(MockStablecoin), usersSchedules[scheduleIndex].scheduleId);
 //         vm.stopPrank();
 //     }
 
@@ -242,7 +242,7 @@ pragma solidity 0.8.19;
 //         address buyer = users[buyerAddressSeed % users.length];
 
 //         vm.prank(buyer);
-//         IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(mockDocToken));
+//         IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(MockStablecoin));
 //         uint256 usersNumOfSchedules = dcaDetails.length;
 //         if (usersNumOfSchedules == 0) return;
 //         scheduleIndex = bound(scheduleIndex, 0, usersNumOfSchedules - 1);
@@ -255,7 +255,7 @@ pragma solidity 0.8.19;
 //         }
 
 //         vm.prank(OWNER);
-//         dcaManager.buyRbtc(buyer, address(mockDocToken), scheduleIndex, dcaDetails[scheduleIndex].scheduleId);
+//         dcaManager.buyRbtc(buyer, address(MockStablecoin), scheduleIndex, dcaDetails[scheduleIndex].scheduleId);
 //     }
 
 //     /**
@@ -270,7 +270,7 @@ pragma solidity 0.8.19;
 
 //         for (uint256 i; i < users.length; ++i) {
 //             vm.prank(users[i]);
-//             IDcaManager.DcaDetails[] memory dcaSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken));
+//             IDcaManager.DcaDetails[] memory dcaSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin));
 //             for (uint256 j; j < dcaSchedules.length; ++j) {
 //                 console.log("Purchase amount", dcaSchedules[j].purchaseAmount);
 //                 console.log("Token balance", dcaSchedules[j].tokenBalance);
@@ -292,7 +292,7 @@ pragma solidity 0.8.19;
 
 //             for (uint256 i; i < users.length; ++i) {
 //                 vm.prank(users[i]);
-//                 IDcaManager.DcaDetails[] memory dcaSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken));
+//                 IDcaManager.DcaDetails[] memory dcaSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin));
 //                 for (uint256 j; j < dcaSchedules.length; ++j) {
 //                     if (dcaSchedules[j].tokenBalance < dcaSchedules[j].purchaseAmount) continue;
 //                     buyers[buyersIndex] = users[i];
@@ -319,7 +319,7 @@ pragma solidity 0.8.19;
 //             vm.prank(OWNER);
 //             dcaManager.batchBuyRbtc(
 //                 buyers,
-//                 address(mockDocToken),
+//                 address(MockStablecoin),
 //                 scheduleIndexes,
 //                 scheduleIds,
 //                 purchaseAmounts,
@@ -374,7 +374,7 @@ pragma solidity 0.8.19;
 //         uint256[] memory lendingProtocolIndexes = new uint256[](1);
 //         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
 //         vm.startPrank(user);
-//         dcaManager.withdrawAllAccumulatedInterest(address(mockDocToken), lendingProtocolIndexes);
+//         dcaManager.withdrawAllAccumulatedInterest(address(MockStablecoin), lendingProtocolIndexes);
 //         vm.stopPrank();
 //     }
 // }
