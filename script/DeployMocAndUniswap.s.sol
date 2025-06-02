@@ -15,7 +15,6 @@ import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {console} from "forge-std/Test.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract DeployMocAndUniswap is DeployBase {
@@ -47,7 +46,6 @@ contract DeployMocAndUniswap is DeployBase {
     }
     
     string stablecoinType;
-    TokenConfig tokenConfig;
     
     constructor() {
         // Initialize stablecoin type from environment or use default
@@ -56,9 +54,6 @@ contract DeployMocAndUniswap is DeployBase {
         } catch {
             stablecoinType = DEFAULT_STABLECOIN;
         }
-        
-        // Load token configuration based on the selected stablecoin
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
     }
     
     // Split the deployment into smaller functions to avoid stack too deep errors
@@ -93,8 +88,9 @@ contract DeployMocAndUniswap is DeployBase {
             lendingToken = networkConfig.kDocAddress;
         } else if (protocol == Protocol.SOVRYN) {
             // Check if this stablecoin is supported by Sovryn
-            if (!tokenConfig.supportedBySovryn) {
-                revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+            bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
+            if (isUSDRIF) {
+                revert("USDRIF is not supported by Sovryn");
             }
             lendingToken = networkConfig.iSusdAddress;
         } else {
@@ -161,8 +157,9 @@ contract DeployMocAndUniswap is DeployBase {
             lendingToken = networkConfig.tropykusLendingToken;
         } else if (protocol == Protocol.SOVRYN) {
             // Check if this stablecoin is supported by Sovryn
-            if (!tokenConfig.supportedBySovryn) {
-                revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+            bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
+            if (isUSDRIF) {
+                revert("USDRIF is not supported by Sovryn");
             }
             lendingToken = networkConfig.sovrynLendingToken;
         } else {

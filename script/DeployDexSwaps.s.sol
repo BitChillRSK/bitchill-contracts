@@ -15,7 +15,6 @@ import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract DeployDexSwaps is DeployBase {
@@ -82,17 +81,19 @@ contract DeployDexSwaps is DeployBase {
         } catch {
             stablecoinType = DEFAULT_STABLECOIN;
         }
-
-        // Load token configuration
-        TokenConfig memory tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
         
         console.log("Using stablecoin type:", stablecoinType);
-
+        bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
+        
+        // Get tokens based on current stablecoin type
+        address stablecoinAddress = helperConfig.getStablecoinAddress();
+        console.log("Stablecoin address:", stablecoinAddress);
+        
         // Check if stablecoin is supported by the selected protocol
         bool isSovryn = protocol == Protocol.SOVRYN;
         
-        if (isSovryn && !tokenConfig.supportedBySovryn) {
-            revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+        if (isSovryn && isUSDRIF) {
+            revert("USDRIF is not supported by Sovryn");
         }
 
         vm.startBroadcast();
@@ -100,10 +101,6 @@ contract DeployDexSwaps is DeployBase {
         AdminOperations adminOperations = new AdminOperations();
         DcaManager dcaManager = new DcaManager(address(adminOperations));
         address feeCollector = getFeeCollector(environment);
-        
-        // Get the stablecoin address
-        address stablecoinAddress = helperConfig.getStablecoinAddress();
-        console.log("Stablecoin address:", stablecoinAddress);
         
         address docHandlerDexAddress;
 
@@ -155,68 +152,68 @@ contract DeployDexSwaps is DeployBase {
             adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
 
             // Deploy Tropykus handler if there's a valid lending token
-            address tropykusLendingToken = networkConfig.tropykusLendingToken;
+            address tropykusLendingToken = helperConfig.getLendingTokenAddress();
             
             if (tropykusLendingToken == address(0)) {
                 console.log("Warning: Tropykus lending token not available for this stablecoin");
             } else {
                 // Deploy Tropykus handler
-                DeployParams memory tropykusParams = DeployParams({
-                    protocol: Protocol.TROPYKUS,
-                    dcaManager: address(dcaManager),
-                    tokenAddress: stablecoinAddress,
-                    lendingToken: tropykusLendingToken,
-                    uniswapSettings: uniswapSettings,
-                    feeCollector: feeCollector,
-                    amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
-                    amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
-                });
-                
-                address tropykusHandler = deployDocHandlerDex(tropykusParams);
+                address tropykusHandler = deployDocHandlerDex(
+                    DeployParams({
+                        protocol: Protocol.TROPYKUS,
+                        dcaManager: address(dcaManager),
+                        tokenAddress: stablecoinAddress,
+                        lendingToken: tropykusLendingToken,
+                        uniswapSettings: uniswapSettings,
+                        feeCollector: feeCollector,
+                        amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+                        amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+                    })
+                );
                 console.log("Tropykus handler deployed at:", tropykusHandler);
                 
-                // Assign the Tropykus handler
+                // Assign the Tropykus handler to the DCA manager
                 adminOperations.assignOrUpdateTokenHandler(stablecoinAddress, TROPYKUS_INDEX, tropykusHandler);
                 
-                // If we're deploying for Tropykus, set this as our return handler
+                // If we're deploying for Tropykus, set this as our main handler
                 if (protocol == Protocol.TROPYKUS) {
                     docHandlerDexAddress = tropykusHandler;
                 }
             }
 
-            // Only deploy Sovryn handler if the stablecoin is supported
-            if (tokenConfig.supportedBySovryn) {
+            // Only deploy Sovryn handler if the stablecoin is supported by Sovryn
+            if (!isUSDRIF) {
                 // Get Sovryn lending token address
-                address sovrynLendingToken = networkConfig.sovrynLendingToken;
+                address sovrynLendingToken = helperConfig.getLendingTokenAddress();
                 
                 if (sovrynLendingToken == address(0)) {
                     console.log("Warning: Sovryn lending token not available for this stablecoin");
                 } else {
                     // Deploy Sovryn handler
-                    DeployParams memory sovrynParams = DeployParams({
-                        protocol: Protocol.SOVRYN,
-                        dcaManager: address(dcaManager),
-                        tokenAddress: stablecoinAddress,
-                        lendingToken: sovrynLendingToken,
-                        uniswapSettings: uniswapSettings,
-                        feeCollector: feeCollector,
-                        amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
-                        amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
-                    });
-                    
-                    address sovrynHandler = deployDocHandlerDex(sovrynParams);
+                    address sovrynHandler = deployDocHandlerDex(
+                        DeployParams({
+                            protocol: Protocol.SOVRYN,
+                            dcaManager: address(dcaManager),
+                            tokenAddress: stablecoinAddress,
+                            lendingToken: sovrynLendingToken,
+                            uniswapSettings: uniswapSettings,
+                            feeCollector: feeCollector,
+                            amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+                            amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+                        })
+                    );
                     console.log("Sovryn handler deployed at:", sovrynHandler);
                     
-                    // Assign the Sovryn handler
+                    // Assign the Sovryn handler to the DCA manager
                     adminOperations.assignOrUpdateTokenHandler(stablecoinAddress, SOVRYN_INDEX, sovrynHandler);
                     
-                    // If we're deploying for Sovryn, set this as our return handler
+                    // If we're deploying for Sovryn, set this as our main handler
                     if (protocol == Protocol.SOVRYN) {
                         docHandlerDexAddress = sovrynHandler;
                     }
                 }
             } else {
-                console.log("Skipping Sovryn handler deployment for %s as it's not supported", tokenConfig.tokenSymbol);
+                console.log("Skipping Sovryn handler deployment for USDRIF as it's not supported");
             }
 
             if (environment == Environment.TESTNET) {

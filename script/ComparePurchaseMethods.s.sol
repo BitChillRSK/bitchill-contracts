@@ -14,7 +14,6 @@ import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {console} from "forge-std/Test.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract ComparePurchaseMethods is Script {
@@ -47,7 +46,6 @@ contract ComparePurchaseMethods is Script {
     ICoinPairPrice mocOracle;
     uint256 btcPrice = BTC_PRICE;
     string stablecoinType;
-    TokenConfig tokenConfig;
 
     function run() external {
         console.log("Comparing MoC and Uniswap purchase methods");
@@ -58,10 +56,6 @@ contract ComparePurchaseMethods is Script {
         } catch {
             stablecoinType = DEFAULT_STABLECOIN;
         }
-        
-        // Load token configuration
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
-        console.log("Using stablecoin type:", stablecoinType);
         
         // Deploy both implementations
         DeployMocAndUniswap deployer = new DeployMocAndUniswap();

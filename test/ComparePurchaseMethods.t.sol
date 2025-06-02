@@ -14,7 +14,6 @@ import {DexHelperConfig} from "../script/DexHelperConfig.s.sol";
 import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract ComparePurchaseMethods is Test {
@@ -62,7 +61,6 @@ contract ComparePurchaseMethods is Test {
     uint256 lendingProtocolIndex;
     uint256 btcPrice;
     string stablecoinType;
-    TokenConfig tokenConfig;
 
     function setUp() public {
         if (block.chainid != RSK_MAINNET_CHAIN_ID) {
@@ -90,10 +88,6 @@ contract ComparePurchaseMethods is Test {
             stablecoinType = DEFAULT_STABLECOIN;
         }
         
-        // Load token configuration
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
-        console2.log("Using stablecoin type:", stablecoinType);
-
         // Deploy both implementations
         DeployMocAndUniswap deployer = new DeployMocAndUniswap();
         deployedContracts = deployer.run();

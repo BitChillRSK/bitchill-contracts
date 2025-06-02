@@ -12,7 +12,6 @@ import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 
 contract DeployMocSwaps is DeployBase {
@@ -91,9 +90,6 @@ contract DeployMocSwaps is DeployBase {
             stablecoinType = DEFAULT_STABLECOIN;
         }
         
-        // Load token configuration
-        TokenConfig memory tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
-
         console.log("Using stablecoin type:", stablecoinType);
         
         // Get the DOC token address
@@ -105,9 +101,10 @@ contract DeployMocSwaps is DeployBase {
 
         // Check if stablecoin is supported by the selected protocol
         bool isSovryn = protocol == Protocol.SOVRYN;
+        bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
         
-        if (isSovryn && !tokenConfig.supportedBySovryn) {
-            revert(string(abi.encodePacked(tokenConfig.tokenSymbol, " is not supported by Sovryn")));
+        if (isSovryn && isUSDRIF) {
+            revert("USDRIF is not supported by Sovryn");
         }
 
         vm.startBroadcast();
@@ -183,7 +180,7 @@ contract DeployMocSwaps is DeployBase {
             }
 
             // Only deploy Sovryn handler if the stablecoin is supported
-            if (tokenConfig.supportedBySovryn) {
+            if (!isUSDRIF) {
                 // Get Sovryn lending token address
                 address sovrynLendingToken = networkConfig.iSusdAddress;
                 
@@ -212,7 +209,7 @@ contract DeployMocSwaps is DeployBase {
                     }
                 }
             } else {
-                console.log("Skipping Sovryn handler deployment for %s as it's not supported", tokenConfig.tokenSymbol);
+                console.log("Skipping Sovryn handler deployment for USDRIF as it's not supported");
             }
 
             if (environment == Environment.TESTNET) {

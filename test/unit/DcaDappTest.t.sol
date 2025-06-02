@@ -23,7 +23,6 @@ import {ILendingToken} from "../interfaces/ILendingToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../mocks/MockSwapRouter02.sol";
-import {TokenConfig, TokenConfigs} from "../TokenConfigs.sol";
 import "../Constants.sol";
 import "./TestsHelper.t.sol";
 import {IkToken} from "../../src/interfaces/IkToken.sol";
@@ -45,7 +44,6 @@ contract DcaDappTest is Test {
 
     // Stablecoin configuration
     string stablecoinType;
-    TokenConfig tokenConfig;
 
     address USER = makeAddr(USER_STRING);
     address OWNER = makeAddr(OWNER_STRING);
@@ -55,10 +53,10 @@ contract DcaDappTest is Test {
     uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
     uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 0.2 BTC
 
-    // These constants are now flexible based on the stablecoin type
-    uint256 USER_TOTAL_AMOUNT; // Total stablecoin owned by the user
-    uint256 AMOUNT_TO_DEPOSIT; // Amount to deposit
-    uint256 AMOUNT_TO_SPEND;   // Amount for periodical purchases
+    // Fixed constants for all stablecoin types
+    uint256 constant USER_TOTAL_AMOUNT = 20000 ether;
+    uint256 constant AMOUNT_TO_DEPOSIT = 2000 ether;
+    uint256 constant AMOUNT_TO_SPEND = 200 ether;
 
     uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
@@ -157,30 +155,24 @@ contract DcaDappTest is Test {
             stablecoinType = DEFAULT_STABLECOIN;
         }
         
-        // Load token configuration
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
+        bool isSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING));
+        bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
         
-        // Set amounts based on token configuration
-        USER_TOTAL_AMOUNT = 10 * tokenConfig.defaultAmount;
-        AMOUNT_TO_DEPOSIT = tokenConfig.defaultAmount;
-        AMOUNT_TO_SPEND = tokenConfig.defaultAmount / 10;
-        
-        // Check if protocol supports the selected stablecoin
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING)) &&
-            !tokenConfig.supportedBySovryn) {
-            // Skip this test when running with Sovryn if the token is not supported
+        // Skip test if Sovryn + USDRIF combination (not supported)
+        if (isSovryn && isUSDRIF) {
+            console.log("Skipping test: USDRIF is not supported by Sovryn");
             vm.skip(true);
             return;
         }
         
         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
             s_lendingProtocolIndex = TROPYKUS_INDEX;
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+        } else if (isSovryn) {
             s_lendingProtocolIndex = SOVRYN_INDEX;
         } else {
             revert("Lending protocol not allowed");
         }
-
+        
         // Deal rBTC funds to user
         vm.deal(USER, STARTING_RBTC_USER_BALANCE);
         s_btcPrice = BTC_PRICE;
@@ -667,11 +659,10 @@ contract DcaDappTest is Test {
 
     // Helper function to get lending token address based on stablecoin type and lending protocol
     function getLendingTokenAddress(string memory _stablecoinType, uint256 lendingProtocolIndex) internal view returns (address) {
-        // Get token configuration for the stablecoin
-        TokenConfig memory localTokenConfig = TokenConfigs.getTokenConfig(_stablecoinType, block.chainid);
+        bool isUSDRIF = keccak256(abi.encodePacked(_stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
         
         // Check if this stablecoin is supported by Sovryn
-        if (lendingProtocolIndex == SOVRYN_INDEX && !localTokenConfig.supportedBySovryn) {
+        if (lendingProtocolIndex == SOVRYN_INDEX && isUSDRIF) {
             revert("Lending token not available for the selected combination");
         }
         

@@ -8,7 +8,6 @@ import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
 import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
@@ -16,8 +15,6 @@ import {console} from "forge-std/Test.sol";
 contract DexHelperConfig is Script {
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     string stablecoinType;
-    TokenConfig tokenConfig;
-    address mockLendingTokenAddress;
     bool lendingProtocolIsTropykus =
         keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
     bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
@@ -58,9 +55,6 @@ contract DexHelperConfig is Script {
         } catch {
             stablecoinType = DEFAULT_STABLECOIN;
         }
-        
-        // Load token configuration based on the selected stablecoin
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
         
         if (block.chainid == RSK_MAINNET_CHAIN_ID) {
             activeNetworkConfig = getRootstockMainnetConfig();
@@ -177,6 +171,7 @@ contract DexHelperConfig is Script {
         MockStablecoin mockStablecoin = new MockStablecoin(msg.sender);
         address mockStablecoinAddress = address(mockStablecoin);
         
+        address mockLendingTokenAddress;
         if (lendingProtocolIsTropykus) {
             MockKToken mockLendingToken = new MockKToken(mockStablecoinAddress);
             mockLendingTokenAddress = address(mockLendingToken);
@@ -199,7 +194,7 @@ contract DexHelperConfig is Script {
             vm.stopBroadcast();
         }
 
-        emit HelperConfig__CreatedMockStablecoin(mockStablecoinAddress, tokenConfig.tokenSymbol);
+        emit HelperConfig__CreatedMockStablecoin(mockStablecoinAddress, stablecoinType);
         emit HelperConfig__CreatedMockWrbtc(address(mockWrbtcToken));
         emit HelperConfig__CreatedMockSwapRouter02(address(mockSwapRouter02));
         emit HelperConfig__CreatedMockMocOracle(address(mockMocOracle));
@@ -247,8 +242,9 @@ contract DexHelperConfig is Script {
             return activeNetworkConfig.tropykusLendingToken;
         } else if (lendingProtocolIsSovryn) {
             // Check if this stablecoin is supported by Sovryn
-            if (!tokenConfig.supportedBySovryn) {
-                console.log("Warning: %s is not supported by Sovryn", tokenConfig.tokenSymbol);
+            bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
+            if (isUSDRIF) {
+                console.log("Warning: USDRIF is not supported by Sovryn");
                 return address(0);
             }
             return activeNetworkConfig.sovrynLendingToken;

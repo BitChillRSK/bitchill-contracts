@@ -5,7 +5,6 @@ import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
 import {MockIsusdToken} from "../test/mocks/MockIsusdToken.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
-import {TokenConfig, TokenConfigs} from "../test/TokenConfigs.sol";
 import "../test/Constants.sol";
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
@@ -25,7 +24,6 @@ contract MocHelperConfig is Script {
     }
     
     string stablecoinType;
-    TokenConfig tokenConfig;
     address mockLendingTokenAddress;
     NetworkConfig public activeNetworkConfig;
 
@@ -46,9 +44,6 @@ contract MocHelperConfig is Script {
         }
         
         console.log("Using stablecoin type:", stablecoinType);
-        
-        // Load token configuration based on the selected stablecoin
-        tokenConfig = TokenConfigs.getTokenConfig(stablecoinType, block.chainid);
         
         if (block.chainid == RSK_MAINNET_CHAIN_ID) {
             activeNetworkConfig = getRootstockMainnetConfig();
@@ -184,21 +179,19 @@ contract MocHelperConfig is Script {
         }
         console.log("getLendingTokenAddress - Current stablecoin type:", currentStablecoinType);
         
-        // Get token configuration for current stablecoin
-        TokenConfig memory currentTokenConfig = TokenConfigs.getTokenConfig(currentStablecoinType, block.chainid);
-        
         bool lendingProtocolIsTropykus =
             keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
         bool lendingProtocolIsSovryn = 
             keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+        bool isUSDRIF = keccak256(abi.encodePacked(currentStablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
         
         if (lendingProtocolIsTropykus) {
             console.log("getLendingTokenAddress - Returning kDocAddress:", activeNetworkConfig.kDocAddress);
             return activeNetworkConfig.kDocAddress;
         } else if (lendingProtocolIsSovryn) {
             // Check if this stablecoin is supported by Sovryn
-            if (!currentTokenConfig.supportedBySovryn) {
-                console.log("getLendingTokenAddress - WARNING: %s is not supported by Sovryn", currentTokenConfig.tokenSymbol);
+            if (isUSDRIF) {
+                console.log("getLendingTokenAddress - WARNING: USDRIF is not supported by Sovryn");
                 return address(0);
             }
             console.log("getLendingTokenAddress - Returning iSusdAddress:", activeNetworkConfig.iSusdAddress);
