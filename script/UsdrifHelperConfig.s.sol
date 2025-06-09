@@ -7,7 +7,7 @@ import {MockKToken} from "../test/mocks/MockKToken.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
 import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
-import "../test/Constants.sol";
+import "../src/Constants.sol";
 
 contract UsdrifHelperConfig is Script {
     struct NetworkConfig {

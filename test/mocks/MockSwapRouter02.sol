@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import "../Constants.sol";
+import "../../src/Constants.sol";
 import {MockWrbtcToken} from "./MockWrbtcToken.sol";
 
 // Minimal mock interface for Uniswap V3 SwapRouter

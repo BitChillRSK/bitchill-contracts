@@ -14,7 +14,7 @@ import {DexHelperConfig} from "../script/DexHelperConfig.s.sol";
 import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
-import "../test/Constants.sol";
+import "../src/Constants.sol";
 
 contract ComparePurchaseMethods is Test {
     // Constants for testing

@@ -7,7 +7,7 @@ import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
 import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
 import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
 import {MockMocOracle} from "../mocks/MockMocOracle.sol";
-import "../Constants.sol";
+import "../../src/Constants.sol";
 
 contract PurchaseUniswapSettingsTest is DcaDappTest {
 

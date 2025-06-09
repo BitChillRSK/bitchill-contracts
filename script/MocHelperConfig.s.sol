@@ -5,7 +5,7 @@ import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
 import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
 import {MockIsusdToken} from "../test/mocks/MockIsusdToken.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
-import "../test/Constants.sol";
+import "../src/Constants.sol";
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
 

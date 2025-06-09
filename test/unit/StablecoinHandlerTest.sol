@@ -8,7 +8,7 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import "../Constants.sol";
+import "../../src/Constants.sol";
 
 contract StablecoinHandlerTest is DcaDappTest {
     function setUp() public override {

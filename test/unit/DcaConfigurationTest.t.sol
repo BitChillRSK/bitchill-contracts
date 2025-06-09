@@ -6,7 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import "../Constants.sol";
+import "../../src/Constants.sol";
 
 contract DcaConfigurationTest is DcaDappTest {
     function setUp() public override {
