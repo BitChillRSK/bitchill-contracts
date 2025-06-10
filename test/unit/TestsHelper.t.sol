@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import "../../src/Constants.sol";
+import "../../script/Constants.sol";
 
 contract DummyERC165Contract {
     function supportsInterface(bytes4 interfaceID) external pure returns (bool) {

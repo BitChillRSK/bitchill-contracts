@@ -11,7 +11,7 @@ import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
 import {ILendingToken} from "../interfaces/ILendingToken.sol";
 import {IkToken} from "../../src/interfaces/IkToken.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
-import "../../src/Constants.sol";
+import "../../script/Constants.sol";
 
 contract StablecoinLendingTest is DcaDappTest {
     uint256 constant KDOC_STARTING_EXCHANGE_RATE = 2e16;

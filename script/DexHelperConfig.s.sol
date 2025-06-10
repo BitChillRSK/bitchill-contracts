@@ -8,7 +8,8 @@ import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
 import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
-import "../src/Constants.sol";
+import "./Constants.sol";
+
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
 

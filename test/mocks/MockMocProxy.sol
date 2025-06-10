@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 import {Test, console} from "forge-std/Test.sol";
-import "../../src/Constants.sol";
+import "../../script/Constants.sol";
 
 contract MockMocProxy {
     MockStablecoin mockDocToken;

@@ -12,7 +12,8 @@ import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {console} from "forge-std/Test.sol";
-import "../src/Constants.sol";
+import "./Constants.sol";
+
 
 contract DeployMocSwaps is DeployBase {
     // Struct to group deployment parameters to avoid stack too deep errors

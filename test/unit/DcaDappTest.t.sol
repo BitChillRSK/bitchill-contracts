@@ -23,7 +23,7 @@ import {ILendingToken} from "../interfaces/ILendingToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../mocks/MockSwapRouter02.sol";
-import "../../src/Constants.sol";
+import "../../script/Constants.sol";
 import "./TestsHelper.t.sol";
 import {IkToken} from "../../src/interfaces/IkToken.sol";
 import {IiSusdToken} from "../../src/interfaces/IiSusdToken.sol";

@@ -10,7 +10,8 @@ pragma solidity 0.8.19;
 // import {AdminOperations} from "src/AdminOperations.sol";
 // import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 // import {MockStablecoin} from "../mocks/MockStablecoin.sol";
-// import "../src/Constants.sol";
+// import "./Constants.sol";
+
 // // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 // contract Handler is Test {
