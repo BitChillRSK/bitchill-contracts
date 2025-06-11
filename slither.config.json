@@ -1,0 +1,7 @@
+{
+  "filter_paths": "test,script,lib,src/External interaction examples",
+  "exclude_dependencies": true,
+  "exclude_informational": false,
+  "exclude_optimization": false,
+  "exclude_low": false
+} 

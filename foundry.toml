@@ -1,0 +1,36 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    '@openzeppelin=lib/openzeppelin-contracts',
+    '@uniswap/v3-core=lib/v3-core',
+    '@uniswap/v3-periphery=lib/v3-periphery',
+    '@uniswap/swap-router-contracts=lib/swap-router-contracts',
+]
+
+# auto_detect_solc = true
+
+solc_version = "0.8.19"
+evm_version = "london"
+# gas_limit = "18446744073709551615" # u64::MAX
+
+# Add compiler overrides for dependencies
+[profile.default.solc_overrides]
+"lib/swap-router-contracts/contracts/interfaces/IApproveAndCall.sol" = "0.7.6"
+"lib/v3-core/" = "0.7.6"
+"lib/v3-periphery/" = "0.7.6"
+
+[fuzz]
+runs = 1000
+
+[invariant]
+runs = 64
+depth = 512
+# depth = 10            # For forge coverage
+fail_on_revert = true
+
+# This just for quicker testing
+# optimizer = false
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
