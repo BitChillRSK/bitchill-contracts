@@ -39,7 +39,7 @@ The protocol was designed with extensibility in mind, supporting multiple purcha
 
 1. Money on Chain (MoC) for DOC:
    - Better gas efficiency overall (slightly worse for small purchases)
-   - More stable pricing
+   - More stable pricing (primary market)
    - Direct redemption mechanism
    - No slippage
 
