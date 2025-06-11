@@ -54,7 +54,7 @@ The protocol was designed with extensibility in mind, supporting multiple purcha
 The current architecture balances extensibility with gas efficiency:
 
 1. Multiple inheritance layers to support different purchase methods
-2. Optimized code paths for each stablecoin type
+2. Optimized purchase paths for each stablecoin type
 3. Batch processing for gas savings
 
 ## Features
