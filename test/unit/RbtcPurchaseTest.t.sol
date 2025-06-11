@@ -79,7 +79,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         // }
     }
 
-    function testRevertPurchasetIfDocRunsOut() external {
+    function testRevertPurchasetIfStablecoinRunsOut() external {
         uint256 numOfPurchases = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
