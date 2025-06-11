@@ -46,7 +46,7 @@ The protocol was designed with extensibility in mind, supporting multiple purcha
 2. Uniswap V3 for other stablecoins:
    - Flexible integration for any ERC20 stablecoin
    - Market-based pricing
-   - Configurable slippage protection
+   - Owner-configurable slippage protection
    - Path optimization for best rates
 
 ### Gas Efficiency Considerations
