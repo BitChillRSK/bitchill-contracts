@@ -8,39 +8,39 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {IStablecoin} from "../../src/interfaces/IStablecoin.sol";
 import {console} from "forge-std/Test.sol";
 
-contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
-    IStablecoin immutable i_docToken;
+contract MockKToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
+    IStablecoin immutable i_stablecoin;
     uint256 constant DECIMALS = 1e18;
     uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 kDOC tokens, each kDOC token redeems 0.02 DOC tokens
     uint256 immutable i_deploymentTimestamp;
     uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each kDOC token increase by 5% annually (mocking behaviour)
     uint256 constant YEAR_IN_SECONDS = 31536000;
 
-    constructor(address docTokenAddress) ERC20("Tropykus kDOC", "kDOC") Ownable() ERC20Permit("Tropykus kDOC") {
-        i_docToken = IStablecoin(docTokenAddress);
+    constructor(address stablecoinAddress) ERC20("Tropykus kToken", "kToken") Ownable() ERC20Permit("Tropykus kToken") {
+        i_stablecoin = IStablecoin(stablecoinAddress);
         i_deploymentTimestamp = block.timestamp;
     }
 
     function mint(uint256 amount) public returns (uint256) {
-        require(i_docToken.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
-        i_docToken.transferFrom(msg.sender, address(this), amount); // Deposit DOC into Tropykus
+        require(i_stablecoin.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
+        i_stablecoin.transferFrom(msg.sender, address(this), amount); // Deposit DOC into Tropykus
         _mint(msg.sender, amount * DECIMALS / exchangeRateCurrent()); //  Mint kDOC to user that deposited DOC (in our case, the DocHandler contract)
         return 0;
     }
 
     function redeemUnderlying(uint256 amount) public returns (uint256) {
-        uint256 kDocToBurn = amount * DECIMALS / exchangeRateCurrent();
-        require(balanceOf(msg.sender) >= kDocToBurn, "Insufficient balance");
-        i_docToken.transfer(msg.sender, amount);
-        _burn(msg.sender, kDocToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
+        uint256 kTokenToBurn = amount * DECIMALS / exchangeRateCurrent();
+        require(balanceOf(msg.sender) >= kTokenToBurn, "Insufficient balance");
+        i_stablecoin.transfer(msg.sender, amount);
+        _burn(msg.sender, kTokenToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
         return 0;
     }
 
-    function redeem(uint256 kDocToBurn) public returns (uint256) {
-        uint256 docToRedeem = kDocToBurn * exchangeRateCurrent() / DECIMALS;
-        require(balanceOf(msg.sender) >= kDocToBurn, "Insufficient balance");
-        i_docToken.transfer(msg.sender, docToRedeem);
-        _burn(msg.sender, kDocToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
+    function redeem(uint256 kTokenToBurn) public returns (uint256) {
+        uint256 stablecoinToRedeem = kTokenToBurn * exchangeRateCurrent() / DECIMALS;
+        require(balanceOf(msg.sender) >= kTokenToBurn, "Insufficient balance");
+        i_stablecoin.transfer(msg.sender, stablecoinToRedeem);
+        _burn(msg.sender, kTokenToBurn); // Burn an amount of kDOC equivalent to the amount of DOC divided by the exchange rate (e.g.: 1 DOC redeemed => 1 / 0.02 = 50 kDOC burnt)
         return 0;
     }
 

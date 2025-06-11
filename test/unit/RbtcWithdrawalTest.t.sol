@@ -7,7 +7,7 @@ import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
-import "../Constants.sol";
+import "../../script/Constants.sol";
 
 contract RbtcWithdrawalTest is DcaDappTest {
     function setUp() public override {
@@ -19,14 +19,14 @@ contract RbtcWithdrawalTest is DcaDappTest {
     /////////////////////////////
 
     function testWithdrawRbtcAfterOnePurchase() external {
-        uint256 fee = feeCalculator.calculateFee(DOC_TO_SPEND);
-        uint256 netPurchaseAmount = DOC_TO_SPEND - fee;
+        uint256 fee = feeCalculator.calculateFee(AMOUNT_TO_SPEND);
+        uint256 netPurchaseAmount = AMOUNT_TO_SPEND - fee;
 
         vm.prank(USER);
-        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(docToken));
+        IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(stablecoin));
 
         vm.prank(SWAPPER);
-        dcaManager.buyRbtc(USER, address(docToken), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
@@ -46,7 +46,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
                 rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
                 netPurchaseAmount / s_btcPrice,
-                0.5e16 // Allow a maximum difference of 0.5%
+                MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5%
             );
         }
     }
@@ -68,7 +68,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
         assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
             rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
             totalDocSpent / s_btcPrice,
-            0.5e16 // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
+            MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
         );
         // }
     }

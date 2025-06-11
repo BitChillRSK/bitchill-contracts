@@ -216,13 +216,13 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
-            // @notice the amount of kToken each user repays is proportional to the ratio of that user's DOC getting redeemed over the total DOC getting redeemed
+            // @notice the amount of kToken each user repays is proportional to the ratio of that user's stablecoin getting redeemed over the total stablecoin getting redeemed
             uint256 usersRepayedKtoken = totalKtokenToRepay * purchaseAmounts[i] / totalStablecoinToRedeem;
             s_kTokenBalances[users[i]] -= usersRepayedKtoken;
             emit TokenLending__UnderlyingRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayedKtoken);
         }
         
-        // Store DOC balance before redemption
+        // Store stablecoin balance before redemption
         uint256 stablecoinBalanceBefore = i_stableToken.balanceOf(address(this));
         
         uint256 result = i_kToken.redeemUnderlying(totalStablecoinToRedeem);

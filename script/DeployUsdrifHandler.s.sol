@@ -12,7 +12,8 @@ import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {console} from "forge-std/Test.sol";
-import "../test/Constants.sol";
+import "./Constants.sol";
+
 
 contract DeployUsdrifHandler is DeployBase {
     // Struct to group deployment parameters to avoid stack too deep errors

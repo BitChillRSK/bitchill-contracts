@@ -7,22 +7,22 @@ import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
-contract DocWithdrawalTest is DcaDappTest {
+contract StablecoinWithdrawalTest is DcaDappTest {
     function setUp() public override {
         super.setUp();
     }
 
-    ////////////////////////////
-    /// DOC Withdrawal tests ///
-    ////////////////////////////
-    function testDocWithdrawal() external {
+    ////////////////////////////////////
+    /// Stablecoin Withdrawal tests ///
+    ////////////////////////////////////
+    function testStablecoinWithdrawal() external {
         super.withdrawDoc();
     }
 
-    function testCannotWithdrawZeroDoc() external {
+    function testCannotWithdrawZeroStablecoin() external {
         vm.startPrank(USER);
         vm.expectRevert(IDcaManager.DcaManager__WithdrawalAmountMustBeGreaterThanZero.selector);
-        dcaManager.withdrawToken(address(docToken), SCHEDULE_INDEX, 0);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, 0);
         vm.stopPrank();
     }
 
@@ -30,12 +30,12 @@ contract DocWithdrawalTest is DcaDappTest {
         vm.startPrank(USER);
         bytes memory encodedRevert = abi.encodeWithSelector(
             IDcaManager.DcaManager__WithdrawalAmountExceedsBalance.selector,
-            address(docToken),
-            USER_TOTAL_DOC,
-            DOC_TO_DEPOSIT
+            address(stablecoin),
+            USER_TOTAL_AMOUNT,
+            AMOUNT_TO_DEPOSIT
         );
         vm.expectRevert(encodedRevert);
-        dcaManager.withdrawToken(address(docToken), SCHEDULE_INDEX, USER_TOTAL_DOC);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, USER_TOTAL_AMOUNT);
         vm.stopPrank();
     }
-}
+} 

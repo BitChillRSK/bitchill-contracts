@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {MockDocToken} from "../mocks/MockDocToken.sol";
+import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 import {Test, console} from "forge-std/Test.sol";
-import "../Constants.sol";
+import "../../script/Constants.sol";
 
 contract MockMocProxy {
-    MockDocToken mockDocToken;
+    MockStablecoin mockDocToken;
 
     event MockMocProxy__DocRedeemed(address indexed user, uint256 docAmount, uint256 btcAmount);
 
     constructor(address docTokenAddress) {
-        mockDocToken = MockDocToken(docTokenAddress);
+        mockDocToken = MockStablecoin(docTokenAddress);
     }
 
     function redeemDocRequest(uint256 docAmount) external {}

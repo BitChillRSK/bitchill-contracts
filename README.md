@@ -1,7 +1,7 @@
 # BitChill - Smart Contracts
 
 ## Introduction
-BitChill is a decentralized protocol that enables users to automate their BTC purchases through Dollar-Cost Averaging (DCA) strategies. The protocol supports the Dollar On Chain stablecoin and Tropykus and Sovryn lending protocols, allowing users to create, update, and delete DCA schedules while potentially earning yield on their deposits.
+BitChill is a decentralized protocol that enables users to automate their BTC purchases through Dollar-Cost Averaging (DCA) strategies. The protocol supports multiple stablecoins (DOC and USDRIF) and integrates with Tropykus and Sovryn lending protocols, allowing users to create, update, and delete DCA schedules while potentially earning yield on their deposits.
 
 ## Protocol Architecture
 
@@ -24,38 +24,38 @@ BitChill is a decentralized protocol that enables users to automate their BTC pu
    - `TokenLending` abstract contract
       - Manages conversion of balances from stablecoins to lending tokens and viceversa
    - Supports multiple lending protocols (Tropykus, Sovryn)
-   - `TropykusErc20Handler` and `SovrynDocHandler`
+   - `TropykusErc20Handler` and `SovrynErc20Handler`
       - Implement deposits and withdrawals overriding `TokenHandler` to deposit to and withdraw from lending protocols
       - Handle withdrawal of accrued interests
 
 4. **Purchase Methods**
-   - `PurchaseMoc`: Direct redemption through Money on Chain
-   - `PurchaseUniswap`: Swaps through Uniswap V3 (currently deprecated)
-   - Both implementations tested and compared for efficiency
+   - `PurchaseMoc`: Direct redemption through Money on Chain (for DOC)
+   - `PurchaseUniswap`: Swaps through Uniswap V3 (for other stablecoins)
+   - Both implementations tested and optimized for their specific use cases
 
 ### Architecture Design Considerations
 
-The protocol was initially designed with extensibility in mind, supporting multiple purchase methods (MoC and Uniswap). However, after comprehensive testing and analysis, it was determined that:
+The protocol was designed with extensibility in mind, supporting multiple purchase methods and stablecoins:
 
-1. Money on Chain (MoC) provides:
+1. Money on Chain (MoC) for DOC:
    - Better gas efficiency overall (slightly worse for small purchases)
    - More stable pricing
    - Direct redemption mechanism
    - No slippage
 
-2. Current Implementation:
-   - Maintains both implementations for future flexibility, since integrating other stablecoins shall require using the Uniswap version. 
-   - Only the MoC version shall be deployed on mainnet for BitChill v1.
-   - Could be optimized by removing the abstraction used to accomodate both methods
+2. Uniswap V3 for other stablecoins:
+   - Flexible integration for any ERC20 stablecoin
+   - Market-based pricing
+   - Configurable slippage protection
+   - Path optimization for best rates
 
 ### Gas Efficiency Considerations
 
-The current architecture, while extensible, has some gas inefficiencies:
+The current architecture balances extensibility with gas efficiency:
 
-1. Multiple inheritance layers
-2. Redundant code paths for different purchase methods
-
-These are intentional, considering the possibility of adding support for other stablecoins in the future.
+1. Multiple inheritance layers to support different purchase methods
+2. Optimized code paths for each stablecoin type
+3. Batch processing for gas savings
 
 ## Features
 
@@ -66,8 +66,7 @@ These are intentional, considering the possibility of adding support for other s
    - Automatic yield generation on deposits
 
 2. **Token Management**
-   - Currently only DOC supported
-   - Support for multiple stablecoins
+   - Support for multiple stablecoins (DOC, USDRIF)
    - Integration with lending protocols
    - Interest accrual and withdrawal
    - Fee management system
@@ -105,12 +104,14 @@ These are intentional, considering the possibility of adding support for other s
 ### Contract Dependencies
 - Rootstock-compatible compiler version (v0.8.19)
 - OpenZeppelin Contracts v4.9.3
-- Money on Chain Protocol
+- Money on Chain Protocol (for DOC)
+- Uniswap V3 Protocol (for other stablecoins)
 
 ### Key Security Assumptions
-1. Money on Chain protocol security
-2. Token contract integrity
-3. Lending protocol reliability
+1. Money on Chain protocol security (for DOC)
+2. Uniswap V3 protocol security (for other stablecoins)
+3. Token contract integrity
+4. Lending protocol reliability
 
 ### Known Limitations
 1. Gas efficiency trade-offs for extensibility
@@ -134,8 +135,20 @@ git checkout smart-contracts
 
 ### Testing
 ```bash
-make moc-tropykus # Runs all unit tests with Tropykus interactions
-make moc-sovryn # Runs all the unit tests with Sovryn interactions
+# Run tests with DOC and Tropykus
+make moc-tropykus 
+
+# Run tests with DOC and Sovryn
+make moc-sovryn 
+
+# Run tests with USDRIF and Tropykus
+make dex-tropykus
+
+# Run tests with USDRIF and Sovryn
+make dex-sovryn
+
+# Run specific test file with custom parameters
+STABLECOIN_TYPE=USDRIF SWAP_TYPE=dexSwaps LENDING_PROTOCOL=tropykus forge test --match-path test/unit/DcaDappTest.t.sol -vvv
 ```
 
 ### Deployment
@@ -151,13 +164,14 @@ BLOCKSCOUT_API_KEY=your_blockscout_api_key
 BLOCKSCOUT_API_URL=https://rootstock-testnet.blockscout.com/api
 
 # Deployment configuration
-export SWAP_TYPE=mocSwaps  # or dexSwaps
+export SWAP_TYPE=mocSwaps  # for DOC, or dexSwaps for other stablecoins
+export STABLECOIN_TYPE=DOC  # or USDRIF
 export REAL_DEPLOYMENT=true  # Set to true for actual deployment on a live network
 ```
 
 2. Deploy the contracts:
 ```bash
-forge script script/DeployMocSwaps.s.sol \
+forge script script/DeployMocSwaps.s.sol \  # or DeployDexSwaps.s.sol for other stablecoins
   --rpc-url $RSK_TESTNET_RPC_URL \
   --private-key $PRIVATE_KEY \
   --broadcast \

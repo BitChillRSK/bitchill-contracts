@@ -7,31 +7,31 @@ import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
-contract DocDepositTest is DcaDappTest {
+contract StablecoinDepositTest is DcaDappTest {
     function setUp() public override {
         super.setUp();
     }
 
-    /////////////////////////
-    /// DOC deposit tests ///
-    /////////////////////////
-    function testDocDeposit() external {
+    /////////////////////////////////
+    /// Stablecoin deposit tests ///
+    /////////////////////////////////
+    function testStablecoinDeposit() external {
         (uint256 userBalanceAfterDeposit, uint256 userBalanceBeforeDeposit) = super.depositDoc();
-        assertEq(DOC_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+        assertEq(AMOUNT_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
     }
 
-    function testCannotDepositZeroDoc() external {
+    function testCannotDepositZeroStablecoin() external {
         vm.startPrank(USER);
-        docToken.approve(address(docHandler), DOC_TO_DEPOSIT);
+        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
         vm.expectRevert(IDcaManager.DcaManager__DepositAmountMustBeGreaterThanZero.selector);
-        dcaManager.depositToken(address(docToken), SCHEDULE_INDEX, 0);
+        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, 0);
         vm.stopPrank();
     }
 
-    function testDepositRevertsIfDocNotApproved() external {
+    function testDepositRevertsIfStablecoinNotApproved() external {
         vm.startPrank(USER);
         vm.expectRevert();
-        dcaManager.depositToken(address(docToken), SCHEDULE_INDEX, DOC_TO_DEPOSIT);
+        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_DEPOSIT);
         vm.stopPrank();
     }
-}
+} 

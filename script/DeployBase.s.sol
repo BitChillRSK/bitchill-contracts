@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/Test.sol";
-import "../test/Constants.sol";
+import "./Constants.sol";
 
 contract DeployBase is Script {
     enum Environment {

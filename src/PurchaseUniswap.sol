@@ -53,7 +53,6 @@ abstract contract PurchaseUniswap is
         i_wrBtcToken = uniswapSettings.wrBtcToken;
         s_mocOracle = uniswapSettings.mocOracle;
         
-        // Set the initial values for the minimum amount out percentages
         if (amountOutMinimumPercent > HUNDRED_PERCENT) {
             revert PurchaseUniswap__AmountOutMinimumPercentTooHigh();
         }

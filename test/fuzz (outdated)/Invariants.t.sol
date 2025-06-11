@@ -9,21 +9,22 @@ pragma solidity 0.8.19;
 // import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 // // import {TropykusDocHandlerMocDex} from "../../src/TropykusDocHandlerMocDex.sol";
 // import {IDocHandler} from "src/interfaces/IDocHandler.sol";
-// import {MockDocToken} from "../mocks/MockDocToken.sol";
+// import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 // import {MockKdocToken} from "../mocks/MockKdocToken.sol";
 // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 // import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 // import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
 // import {Handler} from "./Handler.t.sol";
 // import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-// import "../Constants.sol";
+// import "./Constants.sol";
+
 
 // contract InvariantTest is StdInvariant, Test {
 //     DcaManager dcaManager;
 //     AdminOperations adminOperations;
 //     TropykusDocHandlerMoc docHandlerMoc;
 //     // TropykusDocHandlerMocDex docHandlerMocDex;
-//     MockDocToken mockDocToken;
+//     MockStablecoin MockStablecoin;
 //     MockKdocToken mockKdocToken;
 //     MockMocProxy mocProxy;
 //     DeployMocSwaps deployer;
@@ -35,7 +36,7 @@ pragma solidity 0.8.19;
 //     address OWNER = makeAddr(OWNER_STRING);
 //     address ADMIN = makeAddr(ADMIN_STRING);
 //     address SWAPPER = makeAddr(SWAPPER_STRING);
-//     uint256 constant USER_TOTAL_DOC = 1_000_000 ether; // 1 million DOC owned by each user in total
+//     uint256 constant USER_TOTAL_AMOUNT = 1_000_000 ether; // 1 million DOC owned by each user in total
 //     uint256 constant INITIAL_DOC_DEPOSIT = 1000 ether;
 //     uint256 constant INITIAL_PURCHASE_AMOUNT = 100 ether;
 //     uint256 constant INITIAL_PURCHASE_PERIOD = 1 weeks;
@@ -60,7 +61,7 @@ pragma solidity 0.8.19;
 //         docHandlerMoc = TropykusDocHandlerMoc(payable(docHandlerAddress));
 //         (address docTokenAddress, address mocProxyAddress, address kDocToken, ) =
 //             helperConfig.activeNetworkConfig();
-//         mockDocToken = MockDocToken(docTokenAddress);
+//         MockStablecoin = MockStablecoin(docTokenAddress);
 //         mockKdocToken = MockKdocToken(kDocToken);
 
 //         vm.prank(OWNER);
@@ -82,26 +83,26 @@ pragma solidity 0.8.19;
 //             // address user = makeAddr(string(abi.encodePacked("user", i)));
 //             // console.log(string(abi.encodePacked("user", i)));
 //             s_users.push(user);
-//             mockDocToken.mint(user, USER_TOTAL_DOC);
+//             MockStablecoin.mint(user, USER_TOTAL_AMOUNT);
 //         }
 
 //         // Mint 10000 DOC for the user
-//         // mockDocToken.mint(USER, USER_TOTAL_DOC);
+//         // MockStablecoin.mint(USER, USER_TOTAL_AMOUNT);
 
 //         // Deal rBTC to MoC proxy contract
 //         vm.deal(mocProxyAddress, MOC_START_RBTC_BALANCE);
 
 //         // Give the MoC proxy contract allowance to move DOC from docHandlerMoc (this is mocking behaviour -> check that such approval is not necessary in production)
 //         vm.prank(address(docHandlerMoc));
-//         mockDocToken.approve(mocProxyAddress, type(uint256).max);
+//         MockStablecoin.approve(mocProxyAddress, type(uint256).max);
 
 //         // Deploy the invariant tests handler contract and set it as target contract for the tests
-//         handler = new Handler(adminOperations, docHandlerMoc, dcaManager, mockDocToken, s_users);
+//         handler = new Handler(adminOperations, docHandlerMoc, dcaManager, MockStablecoin, s_users);
 //         targetContract(address(handler));
 
 //         // vm.startPrank(USER);
 //         // // Here we make the starting point of the invariant tests that the user has created a DCA schedule depositing 1000 DOC to spend 100 DOC every week
-//         // mockDocToken.approve(address(docHandlerMoc), USER_TOTAL_DOC);
+//         // MockStablecoin.approve(address(docHandlerMoc), USER_TOTAL_AMOUNT);
 //         // dcaManager.createOrUpdateDcaSchedule(docTokenAddress, 0, INITIAL_DOC_DEPOSIT, INITIAL_PURCHASE_AMOUNT, INITIAL_PURCHASE_PERIOD);
 //         // vm.stopPrank();
 
@@ -119,22 +120,22 @@ pragma solidity 0.8.19;
 //         uint256 sumOfUsersDepositedDoc;
 //         for (uint256 i; i < users.length; ++i) {
 //             vm.startPrank(users[i]);
-//             uint256 numOfSchedules = dcaManager.getMyDcaSchedules(address(mockDocToken)).length;
+//             uint256 numOfSchedules = dcaManager.getMyDcaSchedules(address(MockStablecoin)).length;
 //             for (uint256 j; j < numOfSchedules; ++j) {
-//                 sumOfUsersDepositedDoc += dcaManager.getScheduleTokenBalance(address(mockDocToken), j);
+//                 sumOfUsersDepositedDoc += dcaManager.getScheduleTokenBalance(address(MockStablecoin), j);
 //             }
 //             vm.stopPrank();
 //         }
 //         // DOC deposited in Bitchill is immediately lent in Tropykus
-//         assertEq(mockDocToken.balanceOf(address(docHandlerMoc)), 0); // No DOC in TropykusDocHandlerMoc
+//         assertEq(MockStablecoin.balanceOf(address(docHandlerMoc)), 0); // No DOC in TropykusDocHandlerMoc
 
 //         // Update the amount of DOC in the mock kDOC contract according to the interest that has been generated
 //         uint256 interestFactor = 1e18 + (block.timestamp - setUpTimestamp) * 5 * 1e18 / (100 * 31536000); // 1 + timeInYears * yearlyIncrease
-//         uint256 currentDocBalanceInTropykus = mockDocToken.balanceOf(address(mockKdocToken));
+//         uint256 currentDocBalanceInTropykus = MockStablecoin.balanceOf(address(mockKdocToken));
 //         uint256 docToAdd = currentDocBalanceInTropykus * interestFactor / 1e18 - currentDocBalanceInTropykus;
-//         mockDocToken.mint(address(mockKdocToken), docToAdd);
+//         MockStablecoin.mint(address(mockKdocToken), docToAdd);
 
-//         assertEq(mockDocToken.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // All of the users's deposited DOC is in Tropykus
+//         assertEq(MockStablecoin.balanceOf(address(mockKdocToken)), sumOfUsersDepositedDoc); // All of the users's deposited DOC is in Tropykus
 //         // kDOC to DOC correspondence holds
 //         uint256 sumOfUsersKdoc;
 //         for (uint256 i; i < users.length; ++i) {
@@ -154,7 +155,7 @@ pragma solidity 0.8.19;
 //             sumOfUsersDepositedDoc
 //         );
 //         // console.log("Sum of users' DOC balances:", DepositedDoc);
-//         // console.log("DOC balance of the DOC token handler contract:", mockDocToken.balanceOf(address(docHandlerMoc)));
+//         // console.log("DOC balance of the DOC token handler contract:", MockStablecoin.balanceOf(address(docHandlerMoc)));
 //     }
 
 //     function invariant_TropykusDocHandlerMocRbtcBalanceNearlyEqualsSumOfAllUsers() public {

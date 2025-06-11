@@ -9,7 +9,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 /**
  * @title TropykusErc20HandlerDex
- * @notice This contract handles swaps of DOC for rBTC using Uniswap V3
+ * @notice This contract handles swaps of stablecoin for rBTC using Uniswap V3
  */
 contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
     using SafeERC20 for IERC20;
@@ -18,7 +18,7 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
      * @param kTokenAddress the address of Tropykus' kToken contract
-     * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
+     * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
      * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap (default: 99.7%)
@@ -53,8 +53,8 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
 
     /**
      * @notice Override the _redeemStablecoin function to resolve ambiguity between parent contracts
-     * @param user The address of the user for whom DOC is being redeemed
-     * @param amount The amount of DOC to redeem
+     * @param user The address of the user for whom the stablecoin is being redeemed
+     * @param amount The amount of stablecoin to redeem
      */
     function _redeemStablecoin(address user, uint256 amount)
         internal
@@ -67,9 +67,9 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
 
     /**
      * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
-     * @param users The array of user addresses for whom DOC is being redeemed
-     * @param purchaseAmounts The array of amounts of DOC to redeem for each user
-     * @param totalDocAmountToSpend The total amount of DOC to redeem
+     * @param users The array of user addresses for whom the stablecoin is being redeemed
+     * @param purchaseAmounts The array of amounts of stablecoin to redeem for each user
+     * @param totalDocAmountToSpend The total amount of stablecoin to redeem
      */
     function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
         internal

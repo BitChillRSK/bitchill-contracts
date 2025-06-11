@@ -1,48 +1,62 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import {MockDocToken} from "../test/mocks/MockDocToken.sol";
-import {MockKdocToken} from "../test/mocks/MockKdocToken.sol";
+import {MockStablecoin} from "../test/mocks/MockStablecoin.sol";
+import {MockKToken} from "../test/mocks/MockKToken.sol";
 import {MockIsusdToken} from "../test/mocks/MockIsusdToken.sol";
 import {MockMocProxy} from "../test/mocks/MockMocProxy.sol";
 import {MockWrbtcToken} from "../test/mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../test/mocks/MockSwapRouter02.sol";
 import {MockMocOracle} from "../test/mocks/MockMocOracle.sol";
-import "../test/Constants.sol";
+import "./Constants.sol";
+
 import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/Test.sol";
 
 contract DexHelperConfig is Script {
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
-    address mockLendingTokenAddress;
+    string stablecoinType;
     bool lendingProtocolIsTropykus =
         keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
     bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
 
     struct NetworkConfig {
-        address docTokenAddress;
-        address kDocAddress;
-        address iSusdAddress;
+        // Stablecoin address
+        address stablecoinAddress;
+        
+        // Lending token addresses by protocol
+        address tropykusLendingToken;  // The lending token for Tropykus (e.g., kDOC, kUSDRIF)
+        address sovrynLendingToken;    // The lending token for Sovryn (e.g., iSUSD)
+        
+        // Swap-related addresses
         address wrbtcTokenAddress;
         address swapRouter02Address; // @notice NOT DEPLOYED ON RSK TESTNET!!
         address[] swapIntermediateTokens;
         uint24[] swapPoolFeeRates;
         address mocOracleAddress;
         address mocProxyAddress; // @notice: needed only for fork testing, where we need to call MoC::mintDoc()
+        // Swap settings
         uint256 amountOutMinimumPercent;
         uint256 amountOutMinimumSafetyCheck;
     }
 
     NetworkConfig internal activeNetworkConfig;
 
-    event HelperConfig__CreatedMockDocToken(address docTokenAddress);
-    // event HelperConfig__CreatedMockKdocToken(address kDocAddress);
-    event HelperConfig__CreatedMockLendingToken(address lendingTokenAddress);
+    event HelperConfig__CreatedMockStablecoin(address stablecoinAddress, string symbol);
+    event HelperConfig__CreatedMockLendingToken(address lendingTokenAddress, string protocol);
     event HelperConfig__CreatedMockWrbtc(address wrbtcTokenAddress);
     event HelperConfig__CreatedMockSwapRouter02(address swapRouter02Address);
     event HelperConfig__CreatedMockMocOracle(address mocOracleAddress);
     event HelperConfig__CreatedMockMocProxy(address mocProxyAddress);
 
     constructor() {
+        // Initialize stablecoin type from environment or use default
+        try vm.envString("STABLECOIN_TYPE") returns (string memory coinType) {
+            stablecoinType = coinType;
+        } catch {
+            stablecoinType = DEFAULT_STABLECOIN;
+        }
+        
         if (block.chainid == RSK_MAINNET_CHAIN_ID) {
             activeNetworkConfig = getRootstockMainnetConfig();
         } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
@@ -50,24 +64,39 @@ contract DexHelperConfig is Script {
         } else {
             activeNetworkConfig = getOrCreateAnvilConfig();
         }
-        // else if Sepolia y RSK
     }
 
-    // 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab WRBTC - RSK TESTNET
-    // 0x4D5aRSK_TESTNET_CHAIN_ID6D23eBE168d8f887b4447bf8DbFA4901CC rUSDT - RSK TESTNET
-    function getRootstockTestnetConfig() public pure returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
+    function getRootstockTestnetConfig() public view returns (NetworkConfig memory RootstockTestnetNetworkConfig) {
         address[] memory intermediateTokens = new address[](1);
-        intermediateTokens[0] = 0x4d5A316d23EBe168D8f887b4447BF8DBfA4901cc; // Address of the rUSDT token in Rootstock testnet
-
         uint24[] memory poolFeeRates = new uint24[](2);
-        poolFeeRates[0] = 500;
-        poolFeeRates[1] = 500;
+        address stablecoinAddress;
+        address tropykusLendingToken;
+        address sovrynLendingToken;
+        
+        // Configure based on stablecoin type
+        if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"))) {
+            // USDRIF specific configuration for testnet
+            intermediateTokens[0] = 0x19F64674D8A5B4E652319F5e239eFd3bc969A1fE; // Intermediate token for USDRIF on testnet
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 3000;
+            stablecoinAddress = 0x8C3Cc5c26dcd3CC4Fc4c887fFeFC39F22E1d0F09; // USDRIF token on testnet
+            tropykusLendingToken = 0x11Fd4DDe59b237f801EC12eD2fCb9b13371f1AaF; // kUSDRIF on testnet
+            sovrynLendingToken = 0x0000000000000000000000000000000000000000; // Sovryn doesn't support USDRIF
+        } else {
+            // Default DOC configuration for testnet
+            intermediateTokens[0] = 0x4d5A316d23EBe168D8f887b4447BF8DBfA4901cc; // Address of the rUSDT token in Rootstock testnet
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 500;
+            stablecoinAddress = 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0; // DOC token on testnet
+            tropykusLendingToken = 0x71e6B108d823C2786f8EF63A3E0589576B4F3914; // kDOC proxy on testnet
+            sovrynLendingToken = 0x74e00A8CeDdC752074aad367785bFae7034ed89f; // iSUSD proxy on testnet
+        }
 
         RootstockTestnetNetworkConfig = NetworkConfig({
-            docTokenAddress: 0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0, // Address of the DOC token contract in Rootstock testnet
-            kDocAddress: 0x71e6B108d823C2786f8EF63A3E0589576B4F3914, // Address of the kDOC proxy contract in Rootstock testnet
-            iSusdAddress: 0x74e00A8CeDdC752074aad367785bFae7034ed89f, // Address of the iSusd proxy contract in Rootstock testnet
-            wrbtcTokenAddress: 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab, // Address of the WRBTC token in Rootstock testnet
+            stablecoinAddress: stablecoinAddress,
+            tropykusLendingToken: tropykusLendingToken,
+            sovrynLendingToken: sovrynLendingToken,
+            wrbtcTokenAddress: 0x69FE5cEC81D5eF92600c1A0dB1F11986AB3758Ab, // WRBTC token on testnet
             swapRouter02Address: 0x0000000000000000000000000000000000000000, // Uniswap's contracts are not deployed on RSK testnet
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
@@ -78,19 +107,37 @@ contract DexHelperConfig is Script {
         });
     }
 
-    function getRootstockMainnetConfig() public pure returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
+    function getRootstockMainnetConfig() public view returns (NetworkConfig memory RootstockMainnetNetworkConfig) {
         address[] memory intermediateTokens = new address[](1);
-        intermediateTokens[0] = 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96; // Address of the rUSDT token in Rootstock testnet
-
         uint24[] memory poolFeeRates = new uint24[](2);
-        poolFeeRates[0] = 500;
-        poolFeeRates[1] = 500;
+        address stablecoinAddress;
+        address tropykusLendingToken;
+        address sovrynLendingToken;
+        
+        // Configure based on stablecoin type
+        if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"))) {
+            // USDRIF specific configuration
+            intermediateTokens[0] = 0xAf368c91793CB22739386DFCbBb2F1A9e4bCBeBf; // Intermediate token for USDRIF
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 3000;
+            stablecoinAddress = 0x3A15461d8aE0F0Fb5Fa2629e9DA7D66A794a6e37; // USDRIF token on mainnet
+            tropykusLendingToken = 0xDdf3CE45fcf080DF61ee61dac5Ddefef7ED4F46C; // kUSDRIF on mainnet
+            sovrynLendingToken = 0x0000000000000000000000000000000000000000; // Sovryn doesn't support USDRIF
+        } else {
+            // Default DOC configuration
+            intermediateTokens[0] = 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96; // Address of the rUSDT token in Rootstock mainnet
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 500;
+            stablecoinAddress = 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db; // DOC token on mainnet
+            tropykusLendingToken = 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2; // kDOC proxy on mainnet
+            sovrynLendingToken = 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1; // iSUSD proxy on mainnet
+        }
 
         RootstockMainnetNetworkConfig = NetworkConfig({
-            docTokenAddress: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db, // Address of the DOC token contract in Rootstock mainnet
-            kDocAddress: 0x544Eb90e766B405134b3B3F62b6b4C23Fcd5fDa2, // Address of the kDOC proxy contract in Rootstock mainnet
-            iSusdAddress: 0xd8D25f03EBbA94E15Df2eD4d6D38276B595593c1, // Address of the iSusd proxy contract in Rootstock mainnet
-            wrbtcTokenAddress: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d, // Address of the WRBTC token in Rootstock mainnet
+            stablecoinAddress: stablecoinAddress,
+            tropykusLendingToken: tropykusLendingToken,
+            sovrynLendingToken: sovrynLendingToken,
+            wrbtcTokenAddress: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d, // WRBTC token on mainnet
             swapRouter02Address: 0x0B14ff67f0014046b4b99057Aec4509640b3947A, 
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
@@ -102,7 +149,7 @@ contract DexHelperConfig is Script {
     }
 
     function getOrCreateAnvilConfig() public returns (NetworkConfig memory anvilNetworkConfig) {
-        if (activeNetworkConfig.docTokenAddress != address(0)) {
+        if (activeNetworkConfig.stablecoinAddress != address(0)) {
             return activeNetworkConfig;
         }
 
@@ -121,31 +168,34 @@ contract DexHelperConfig is Script {
             vm.startBroadcast();
         }
 
-        MockDocToken mockDocToken = new MockDocToken(msg.sender);
-
+        // Create mock tokens based on the selected stablecoin type
+        MockStablecoin mockStablecoin = new MockStablecoin(msg.sender);
+        address mockStablecoinAddress = address(mockStablecoin);
+        
+        address mockLendingTokenAddress;
         if (lendingProtocolIsTropykus) {
-            MockKdocToken mockLendingToken = new MockKdocToken(address(mockDocToken));
+            MockKToken mockLendingToken = new MockKToken(mockStablecoinAddress);
             mockLendingTokenAddress = address(mockLendingToken);
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "tropykus");
         } else if (lendingProtocolIsSovryn) {
-            MockIsusdToken mockLendingToken = new MockIsusdToken(address(mockDocToken));
+            MockIsusdToken mockLendingToken = new MockIsusdToken(mockStablecoinAddress);
             mockLendingTokenAddress = address(mockLendingToken);
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "sovryn");
         } else {
             revert("Invalid lending protocol");
         }
 
-        // MockKdocToken mockKdocToken = new MockKdocToken(address(mockDocToken));
         MockWrbtcToken mockWrbtcToken = new MockWrbtcToken();
         MockSwapRouter02 mockSwapRouter02 = new MockSwapRouter02(mockWrbtcToken, BTC_PRICE);
         MockMocOracle mockMocOracle = new MockMocOracle();
-        MockMocProxy mockMocProxy = new MockMocProxy(address(mockDocToken));
+        MockMocProxy mockMocProxy = new MockMocProxy(mockStablecoinAddress);
         
         // Only stop the broadcast if we started it
         if (!isBroadcasting) {
             vm.stopBroadcast();
         }
 
-        emit HelperConfig__CreatedMockDocToken(address(mockDocToken));
-        emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress);
+        emit HelperConfig__CreatedMockStablecoin(mockStablecoinAddress, stablecoinType);
         emit HelperConfig__CreatedMockWrbtc(address(mockWrbtcToken));
         emit HelperConfig__CreatedMockSwapRouter02(address(mockSwapRouter02));
         emit HelperConfig__CreatedMockMocOracle(address(mockMocOracle));
@@ -155,46 +205,51 @@ contract DexHelperConfig is Script {
         intermediateTokens[0] = makeAddr("rUSDT");
 
         uint24[] memory poolFeeRates = new uint24[](2);
-        poolFeeRates[0] = 500;
-        poolFeeRates[1] = 500;
-
-        if (lendingProtocolIsTropykus) {
-            anvilNetworkConfig = NetworkConfig({
-                docTokenAddress: address(mockDocToken),
-                kDocAddress: mockLendingTokenAddress,
-                iSusdAddress: address(0),
-                wrbtcTokenAddress: address(mockWrbtcToken),
-                swapRouter02Address: address(mockSwapRouter02),
-                swapIntermediateTokens: intermediateTokens,
-                swapPoolFeeRates: poolFeeRates,
-                mocOracleAddress: address(mockMocOracle),
-                mocProxyAddress: address(mockMocProxy),
-                amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
-                amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
-            });
-        } else if (lendingProtocolIsSovryn) {
-            anvilNetworkConfig = NetworkConfig({
-                docTokenAddress: address(mockDocToken),
-                kDocAddress: address(0),
-                iSusdAddress: mockLendingTokenAddress,
-                wrbtcTokenAddress: address(mockWrbtcToken),
-                swapRouter02Address: address(mockSwapRouter02),
-                swapIntermediateTokens: intermediateTokens,
-                swapPoolFeeRates: poolFeeRates,
-                mocOracleAddress: address(mockMocOracle),
-                mocProxyAddress: address(mockMocProxy),
-                amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
-                amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
-            });
+        
+        // Set different pool fees based on stablecoin type, even for mocks
+        if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"))) {
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 3000;
+        } else {
+            poolFeeRates[0] = 500;
+            poolFeeRates[1] = 500;
         }
+
+        anvilNetworkConfig = NetworkConfig({
+            stablecoinAddress: mockStablecoinAddress,
+            tropykusLendingToken: lendingProtocolIsTropykus ? mockLendingTokenAddress : address(0),
+            sovrynLendingToken: lendingProtocolIsSovryn ? mockLendingTokenAddress : address(0),
+            wrbtcTokenAddress: address(mockWrbtcToken),
+            swapRouter02Address: address(mockSwapRouter02),
+            swapIntermediateTokens: intermediateTokens,
+            swapPoolFeeRates: poolFeeRates,
+            mocOracleAddress: address(mockMocOracle),
+            mocProxyAddress: address(mockMocProxy),
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
+        });
     }
 
     function getActiveNetworkConfig() public view returns (NetworkConfig memory) {
         return activeNetworkConfig;
     }
 
-    // MAINNET CONTRACTS
-    // DOC: 0xe700691dA7b9851F2F35f8b8182c69c53CcaD9Db
-    // rUSDT: 0xef213441A85dF4d7ACbDaE0Cf78004e1E486bB96
-    // WRBTC: 0x542fDA317318eBF1d3DEAf76E0b632741A7e677d
+    function getStablecoinAddress() public view returns (address) {
+        return activeNetworkConfig.stablecoinAddress;
+    }
+
+    function getLendingTokenAddress() public view returns (address) {
+        if (lendingProtocolIsTropykus) {
+            return activeNetworkConfig.tropykusLendingToken;
+        } else if (lendingProtocolIsSovryn) {
+            // Check if this stablecoin is supported by Sovryn
+            bool isUSDRIF = keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
+            if (isUSDRIF) {
+                console.log("Warning: USDRIF is not supported by Sovryn");
+                return address(0);
+            }
+            return activeNetworkConfig.sovrynLendingToken;
+        }
+        revert("Unsupported lending protocol");
+    }
 }
