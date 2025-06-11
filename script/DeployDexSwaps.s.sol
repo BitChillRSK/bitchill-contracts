@@ -18,14 +18,19 @@ import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
 contract DeployDexSwaps is DeployBase {
-    function deployDocHandlerDex(
-        Protocol protocol,
-        address dcaManager,
-        address docToken,
-        address lendingToken,
-        IPurchaseUniswap.UniswapSettings memory uniswapSettings,
-        address feeCollector
-    ) public returns (address) {
+    // Struct to group deployment parameters to avoid stack too deep errors
+    struct DeployParams {
+        Protocol protocol;
+        address dcaManager;
+        address tokenAddress;
+        address lendingToken;
+        IPurchaseUniswap.UniswapSettings uniswapSettings;
+        address feeCollector;
+        uint256 amountOutMinimumPercent;
+        uint256 amountOutMinimumSafetyCheck;
+    }
+
+    function deployDocHandlerDex(DeployParams memory params) public returns (address) {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
             maxFeeRate: MAX_FEE_RATE,
@@ -33,16 +38,32 @@ contract DeployDexSwaps is DeployBase {
             purchaseUpperBound: PURCHASE_UPPER_BOUND
         });
 
-        if (protocol == Protocol.TROPYKUS) {
+        if (params.protocol == Protocol.TROPYKUS) {
             return address(
                 new TropykusErc20HandlerDex(
-                    dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
+                    params.dcaManager, 
+                    params.tokenAddress, 
+                    params.lendingToken, 
+                    params.uniswapSettings, 
+                    MIN_PURCHASE_AMOUNT, 
+                    params.feeCollector, 
+                    feeSettings,
+                    params.amountOutMinimumPercent,
+                    params.amountOutMinimumSafetyCheck
                 )
             );
         } else {
             return address(
                 new SovrynErc20HandlerDex(
-                    dcaManager, docToken, lendingToken, uniswapSettings, MIN_PURCHASE_AMOUNT, feeCollector, feeSettings
+                    params.dcaManager, 
+                    params.tokenAddress, 
+                    params.lendingToken, 
+                    params.uniswapSettings, 
+                    MIN_PURCHASE_AMOUNT, 
+                    params.feeCollector, 
+                    feeSettings,
+                    params.amountOutMinimumPercent,
+                    params.amountOutMinimumSafetyCheck
                 )
             );
         }
@@ -74,9 +95,19 @@ contract DeployDexSwaps is DeployBase {
         if (environment == Environment.LOCAL || environment == Environment.FORK) {
             console.log("Deploying single handler for local/fork environment");
             address lendingToken = protocol == Protocol.TROPYKUS ? kDocToken : iSusdToken;
-            docHandlerDexAddress = deployDocHandlerDex(
-                protocol, address(dcaManager), docToken, lendingToken, uniswapSettings, feeCollector
-            );
+            
+            DeployParams memory params = DeployParams({
+                protocol: protocol,
+                dcaManager: address(dcaManager),
+                tokenAddress: docToken,
+                lendingToken: lendingToken,
+                uniswapSettings: uniswapSettings,
+                feeCollector: feeCollector,
+                amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+                amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+            });
+            
+            docHandlerDexAddress = deployDocHandlerDex(params);
 
             address owner = adminAddresses[environment];
             adminOperations.transferOwnership(owner);
@@ -92,14 +123,34 @@ contract DeployDexSwaps is DeployBase {
             adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
             adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
 
-            address tropykusHandler = deployDocHandlerDex(
-                Protocol.TROPYKUS, address(dcaManager), docToken, kDocToken, uniswapSettings, feeCollector
-            );
+            // Deploy Tropykus handler
+            DeployParams memory tropykusParams = DeployParams({
+                protocol: Protocol.TROPYKUS,
+                dcaManager: address(dcaManager),
+                tokenAddress: docToken,
+                lendingToken: kDocToken,
+                uniswapSettings: uniswapSettings,
+                feeCollector: feeCollector,
+                amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+                amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+            });
+            
+            address tropykusHandler = deployDocHandlerDex(tropykusParams);
             console.log("Tropykus handler deployed at:", tropykusHandler);
 
-            address sovrynHandler = deployDocHandlerDex(
-                Protocol.SOVRYN, address(dcaManager), docToken, iSusdToken, uniswapSettings, feeCollector
-            );
+            // Deploy Sovryn handler
+            DeployParams memory sovrynParams = DeployParams({
+                protocol: Protocol.SOVRYN,
+                dcaManager: address(dcaManager),
+                tokenAddress: docToken,
+                lendingToken: iSusdToken,
+                uniswapSettings: uniswapSettings,
+                feeCollector: feeCollector,
+                amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+                amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+            });
+            
+            address sovrynHandler = deployDocHandlerDex(sovrynParams);
             console.log("Sovryn handler deployed at:", sovrynHandler);
 
             // Now assign the handlers

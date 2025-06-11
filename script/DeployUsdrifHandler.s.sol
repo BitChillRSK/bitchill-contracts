@@ -15,6 +15,19 @@ import {console} from "forge-std/Test.sol";
 import "../test/Constants.sol";
 
 contract DeployUsdrifHandler is DeployBase {
+    // Struct to group deployment parameters to avoid stack too deep errors
+    struct DeployParams {
+        address dcaManagerAddress;
+        address tokenAddress;
+        address lendingTokenAddress;
+        IPurchaseUniswap.UniswapSettings uniswapSettings;
+        uint256 minPurchaseAmount;
+        address feeCollector;
+        IFeeHandler.FeeSettings feeSettings;
+        uint256 amountOutMinimumPercent;
+        uint256 amountOutMinimumSafetyCheck;
+    }
+
     function run(UsdrifHelperConfig existingConfig) external returns (address) {
         // Use the provided config or create a new one if not provided
         UsdrifHelperConfig helperConfig = existingConfig != UsdrifHelperConfig(address(0)) 
@@ -53,15 +66,30 @@ contract DeployUsdrifHandler is DeployBase {
             purchaseUpperBound: PURCHASE_UPPER_BOUND
         });
         
+        // Set up deployment parameters
+        DeployParams memory params = DeployParams({
+            dcaManagerAddress: networkConfig.dcaManagerAddress,
+            tokenAddress: networkConfig.usdrifTokenAddress,
+            lendingTokenAddress: networkConfig.kUsdrifTokenAddress,
+            uniswapSettings: uniswapSettings,
+            minPurchaseAmount: MIN_PURCHASE_AMOUNT,
+            feeCollector: feeCollector,
+            feeSettings: feeSettings,
+            amountOutMinimumPercent: networkConfig.amountOutMinimumPercent,
+            amountOutMinimumSafetyCheck: networkConfig.amountOutMinimumSafetyCheck
+        });
+        
         // Deploy the USDRIF handler
         TropykusErc20HandlerDex usdrifHandler = new TropykusErc20HandlerDex(
-            networkConfig.dcaManagerAddress,
-            networkConfig.usdrifTokenAddress,
-            networkConfig.kUsdrifTokenAddress,
-            uniswapSettings,
-            MIN_PURCHASE_AMOUNT,
-            feeCollector,
-            feeSettings
+            params.dcaManagerAddress,
+            params.tokenAddress,
+            params.lendingTokenAddress,
+            params.uniswapSettings,
+            params.minPurchaseAmount,
+            params.feeCollector,
+            params.feeSettings,
+            params.amountOutMinimumPercent,
+            params.amountOutMinimumSafetyCheck
         );
         
         console.log("USDRIF handler deployed at:", address(usdrifHandler));

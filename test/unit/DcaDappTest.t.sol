@@ -538,7 +538,6 @@ contract DcaDappTest is Test {
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             s_lendingProtocolIndex
         );
 
@@ -589,7 +588,6 @@ contract DcaDappTest is Test {
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             s_lendingProtocolIndex
         );
         // uint256 postDocHandlerBalance2 = address(docHandler).balance;

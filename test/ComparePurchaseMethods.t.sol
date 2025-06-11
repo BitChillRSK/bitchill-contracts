@@ -597,7 +597,6 @@ contract ComparePurchaseMethods is Test {
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             lendingProtocolIndex
         );
         uint256 gasUsed = gasStart - gasleft();
@@ -657,7 +656,6 @@ contract ComparePurchaseMethods is Test {
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             lendingProtocolIndex
         );
         uint256 gasUsed = gasStart - gasleft();

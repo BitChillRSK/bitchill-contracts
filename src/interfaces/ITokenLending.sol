@@ -54,7 +54,7 @@ interface ITokenLending is ITokenHandler {
      * @param user The address of the user withdrawing the interest.
      * @param tokenLockedInDcaSchedules The amount of stablecoin locked in DCA schedules by the user.
      */
-    function withdrawInterest(address user, uint256 tokenLockedInDcaSchedules) external; // TODO: check if this should go here
+    function withdrawInterest(address user, uint256 tokenLockedInDcaSchedules) external;
 
     /**
      * @dev Checks the interest earned by a user in total.

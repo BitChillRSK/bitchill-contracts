@@ -20,6 +20,8 @@ contract UsdrifHelperConfig is Script {
         address mocOracleAddress;
         address adminOperationsAddress;
         address dcaManagerAddress;
+        uint256 amountOutMinimumPercent;
+        uint256 amountOutMinimumSafetyCheck;
     }
 
     NetworkConfig internal activeNetworkConfig;
@@ -55,7 +57,9 @@ contract UsdrifHelperConfig is Script {
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD,  // MoC Oracle on mainnet
             adminOperationsAddress: 0x07623b4bfA188687B683CbF242C12A7d4bD7D355, // AdminOperations 
-            dcaManagerAddress: 0x6287F0Ef7dcb288603B484d666785c59f7F6aa70  // DcaManager
+            dcaManagerAddress: 0x6287F0Ef7dcb288603B484d666785c59f7F6aa70,  // DcaManager
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
         });
     }
 
@@ -76,7 +80,9 @@ contract UsdrifHelperConfig is Script {
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0x0000000000000000000000000000000000000000,  // Replace with MoC Oracle on testnet
             adminOperationsAddress: 0x0000000000000000000000000000000000000000, // Placeholder for AdminOperations
-            dcaManagerAddress: 0x0000000000000000000000000000000000000000  // Placeholder for DcaManager
+            dcaManagerAddress: 0x0000000000000000000000000000000000000000,  // Placeholder for DcaManager
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
         });
     }
     
@@ -145,7 +151,9 @@ contract UsdrifHelperConfig is Script {
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: address(mockMocOracle),
             adminOperationsAddress: adminOpsAddress,
-            dcaManagerAddress: dcaManagerAddress
+            dcaManagerAddress: dcaManagerAddress,
+            amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
+            amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
         });
 
         // Save the config

@@ -37,17 +37,15 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
      * @param buyer: the user on behalf of which the contract is making the rBTC purchase
      * @param scheduleId: the schedule id
      * @param purchaseAmount: the amount to spend on rBTC
-     * @param purchasePeriod: the period between purchases
      * @notice this function will be called periodically through a CRON job running on a web server
-     * @notice it is checked that the purchase period has elapsed, as added security on top of onlyOwner modifier
      */
-    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount, uint256 purchasePeriod)
+    function buyRbtc(address buyer, bytes32 scheduleId, uint256 purchaseAmount)
         external
         override
         onlyDcaManager
     {
         // Redeem DOC (repaying kDOC)
-        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); // TODO: Check if this is correct
+        purchaseAmount = _redeemStablecoin(buyer, purchaseAmount); 
 
         // Charge fee
         uint256 fee = _calculateFee(purchaseAmount);
@@ -72,13 +70,11 @@ abstract contract PurchaseMoc is FeeHandler, PurchaseRbtc {
      * @param buyers: the users on behalf of which the contract is making the rBTC purchase
      * @param scheduleIds: the schedule ids
      * @param purchaseAmounts: the amounts to spend on rBTC
-     * @param purchasePeriods: the periods between purchases
      */
     function batchBuyRbtc(
         address[] memory buyers,
         bytes32[] memory scheduleIds,
-        uint256[] memory purchaseAmounts,
-        uint256[] memory purchasePeriods
+        uint256[] memory purchaseAmounts
     ) external override onlyDcaManager {
         uint256 numOfPurchases = buyers.length;
 

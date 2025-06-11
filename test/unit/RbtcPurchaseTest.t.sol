@@ -129,7 +129,7 @@ contract RbtcPurchaseTest is DcaDappTest {
             abi.encodePacked(USER, address(docToken), block.timestamp, dcaManager.getMyDcaSchedules(address(docToken)).length - 1)
         );
         vm.expectRevert(IDcaManagerAccessControl.DcaManagerAccessControl__OnlyDcaManagerCanCall.selector);
-        IPurchaseRbtc(address(docHandler)).buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT, MIN_PURCHASE_PERIOD);
+        IPurchaseRbtc(address(docHandler)).buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT);
         uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(docToken), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
@@ -155,7 +155,6 @@ contract RbtcPurchaseTest is DcaDappTest {
             emptyUintArray,
             emptyBytes32Array,
             emptyUintArray,
-            emptyUintArray,
             s_lendingProtocolIndex
         );
     }
@@ -171,7 +170,6 @@ contract RbtcPurchaseTest is DcaDappTest {
             address(docToken),
             dummyUintArray,
             dummyBytes32Array,
-            dummyUintArray,
             dummyUintArray,
             s_lendingProtocolIndex
         );
@@ -244,7 +242,6 @@ contract RbtcPurchaseTest is DcaDappTest {
             scheduleIndexes,
             scheduleIds,
             purchaseAmounts,
-            purchasePeriods,
             s_lendingProtocolIndex
         );
 

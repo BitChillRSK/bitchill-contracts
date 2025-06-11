@@ -21,15 +21,19 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      * @param minPurchaseAmount  the minimum amount of DOC for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
+     * @param amountOutMinimumPercent The minimum percentage of rBTC that must be received from the swap (default: 99.7%)
+     * @param amountOutMinimumSafetyCheck The safety check percentage for minimum rBTC output (default: 99%)
      */
     constructor(
         address dcaManagerAddress,
-        address docTokenAddress, // TODO: modify this to passing the interface
-        address kTokenAddress, // TODO: modify this to passing the interface
+        address docTokenAddress,
+        address kTokenAddress,
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings
+        FeeSettings memory feeSettings,
+        uint256 amountOutMinimumPercent,
+        uint256 amountOutMinimumSafetyCheck
     )
         TropykusErc20Handler(
             dcaManagerAddress,
@@ -39,7 +43,12 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
             feeCollector,
             feeSettings
         )
-        PurchaseUniswap(docTokenAddress, uniswapSettings)
+        PurchaseUniswap(
+            docTokenAddress, 
+            uniswapSettings, 
+            amountOutMinimumPercent, 
+            amountOutMinimumSafetyCheck
+        )
     {}
 
     /**
