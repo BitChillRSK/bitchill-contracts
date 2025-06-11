@@ -199,4 +199,5 @@ For audit-related inquiries or security concerns, please contact:
 - Smart Contract Developer: [Antonio Rodríguez-Ynyesto](https://www.linkedin.com/in/antonio-maria-rodriguez-ynyesto-sanchez/)
 
 ## Disclaimer
-This protocol is currently undergoing security audit. Use at your own risk. Always perform due diligence before interacting with smart contracts.
+This protocol has been audited but could still have bugs. Use at your own risk. Always perform due diligence before interacting with smart contracts.
+
