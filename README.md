@@ -1,7 +1,7 @@
 # BitChill - Smart Contracts
 
 ## Introduction
-BitChill is a decentralized protocol that enables users to automate their BTC purchases through Dollar-Cost Averaging (DCA) strategies. The protocol supports multiple stablecoins (DOC and USDRIF) and integrates with Tropykus and Sovryn lending protocols, allowing users to create, update, and delete DCA schedules while potentially earning yield on their deposits.
+BitChill is a decentralized protocol on Rootstock that enables users to automate their BTC purchases with Dollar-Cost Averaging (DCA) strategies. The protocol currently supports stablecoins DOC and USDRIF and integrates with Tropykus and Sovryn lending protocols, allowing users to create, update, and delete DCA schedules while earning yield on their deposits.
 
 ## Protocol Architecture
 
