@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {IDocToken} from "../../src/interfaces/IDocToken.sol";
+import {IStablecoin} from "../../src/interfaces/IStablecoin.sol";
 import {console} from "forge-std/Test.sol";
 
 contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
-    IDocToken immutable i_docToken;
+    IStablecoin immutable i_docToken;
     uint256 constant DECIMALS = 1e18;
     uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 kDOC tokens, each kDOC token redeems 0.02 DOC tokens
     uint256 immutable i_deploymentTimestamp;
@@ -17,7 +17,7 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     uint256 constant YEAR_IN_SECONDS = 31536000;
 
     constructor(address docTokenAddress) ERC20("Tropykus kDOC", "kDOC") Ownable() ERC20Permit("Tropykus kDOC") {
-        i_docToken = IDocToken(docTokenAddress);
+        i_docToken = IStablecoin(docTokenAddress);
         i_deploymentTimestamp = block.timestamp;
     }
 
