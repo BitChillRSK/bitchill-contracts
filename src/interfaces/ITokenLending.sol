@@ -62,5 +62,5 @@ interface ITokenLending is ITokenHandler {
      * @param tokenLockedInDcaSchedules The amount of stablecoin locked in DCA schedules by the user in total.
      * @return The amount of accrued interest.
      */
-    function getAccruedInterest(address user, uint256 tokenLockedInDcaSchedules) external returns (uint256);
+    function getAccruedInterest(address user, uint256 tokenLockedInDcaSchedules) external view returns (uint256);
 }
