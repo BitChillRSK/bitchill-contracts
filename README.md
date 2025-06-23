@@ -171,7 +171,7 @@ export REAL_DEPLOYMENT=true  # Set to true for actual deployment on a live netwo
 
 2. Deploy the contracts:
 ```bash
-forge script script/DeployMocSwaps.s.sol \  # or DeployDexSwaps.s.sol for other stablecoins
+forge script script/DeployMocSwaps.s.sol \
   --rpc-url $RSK_TESTNET_RPC_URL \
   --private-key $PRIVATE_KEY \
   --broadcast \
