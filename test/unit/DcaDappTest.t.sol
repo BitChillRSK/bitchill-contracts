@@ -210,13 +210,7 @@ contract DcaDappTest is Test {
                     bytes32(uint256(214)),
                     bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
                 );
-                // vm.prank(USER);
-                // // Use the appropriate mint function based on token type
-                // (bool success, ) = address(mocProxy).call{value: 0.21 ether}(
-                //     abi.encodeWithSignature(string(abi.encodePacked(tokenConfig.mintFunctionName, "(uint256)")), RBTC_TO_MINT_DOC)
-                // );
-                // require(success, "Mint function call failed");
-                
+
                 // Fork tests - use token holders instead of minting
                 if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("DOC"))) {
                     // Set USER to DOC holder address
@@ -229,21 +223,24 @@ contract DcaDappTest is Test {
                 // Get BTC price from oracle
                 mocOracle = ICoinPairPrice(MOC_ORACLE_MAINNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
-            // } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
-            //     vm.store(
-            //         address(MOC_IN_RATE_TESTNET),
-            //         bytes32(uint256(214)),
-            //         bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
-            //     );
-            //     vm.prank(USER);
-            //     // Use the appropriate mint function based on token type
-            //     (bool success, ) = address(mocProxy).call{value: 0.21 ether}(
-            //         abi.encodeWithSignature(string(abi.encodePacked(tokenConfig.mintFunctionName, "(uint256)")), RBTC_TO_MINT_DOC)
-            //     );
-            //     require(success, "Mint function call failed");
+            } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
+                vm.store(
+                    address(MOC_IN_RATE_TESTNET),
+                    bytes32(uint256(214)),
+                    bytes32(uint256(uint160(DUMMY_COMMISSION_RECEIVER)))
+                );
 
-            //     mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
-            //     s_btcPrice = mocOracle.getPrice() / 1e18;
+                // Fork tests - use token holders instead of minting
+                if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("DOC"))) {
+                    // Set USER to DOC holder address
+                    USER = DOC_HOLDER_TESTNET;
+                } else if (keccak256(abi.encodePacked(stablecoinType)) == keccak256(abi.encodePacked("USDRIF"))) {
+                    // Set USER to USDRIF holder address
+                    USER = USDRIF_HOLDER;
+                }
+
+                mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
+                s_btcPrice = mocOracle.getPrice() / 1e18;
             }
         } else if (isDexSwaps) {
             DeployDexSwaps deployContracts = new DeployDexSwaps();
@@ -626,9 +623,9 @@ contract DcaDappTest is Test {
         );
     }
 
-    function updateExchangeRate(uint256 daysPassed) internal {
-        vm.roll(block.number + 2880 * daysPassed); // Jump to daysPassed days (2880 blocks per day) into the future so that some interest has been generated.
-        vm.warp(block.timestamp + 2880 * daysPassed * 30);
+    function updateExchangeRate(uint256 secondsPassed) internal {
+        vm.roll(block.number + secondsPassed / 30); // Jump to secondsPassed seconds (30 seconds per block) into the future so that some interest has been generated.
+        vm.warp(block.timestamp + secondsPassed);
 
         address newUser = makeAddr("Lending protocol new user");
 
@@ -641,16 +638,17 @@ contract DcaDappTest is Test {
             lendingToken.mint(100 ether);
             console.log("Exchange rate after stablecoin deposit:", lendingToken.exchangeRateStored());
             vm.stopPrank();
-        } // else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
-            //     vm.prank(USER);
-            //     stablecoin.transfer(newUser, 100 ether);
-            //     vm.startPrank(newUser);
-            //     stablecoin.approve(address(lendingToken), 100 ether);
-            //     console.log("Exchange rate before stablecoin deposit:", lendingToken.tokenPrice());
-            //     lendingToken.mint(newUser, 100 ether);
-            //     console.log("Exchange rate after stablecoin deposit:", lendingToken.tokenPrice());
-            //     vm.stopPrank();
-            // }
+        }
+        // else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
+        //         vm.prank(USER);
+        //         stablecoin.transfer(newUser, 100 ether);
+        //         vm.startPrank(newUser);
+        //         stablecoin.approve(address(lendingToken), 100 ether);
+        //         console.log("Exchange rate before stablecoin deposit:", lendingToken.tokenPrice());
+        //         lendingToken.mint(newUser, 100 ether);
+        //         console.log("Exchange rate after stablecoin deposit:", lendingToken.tokenPrice());
+        //         vm.stopPrank();
+        // }
     }
 
     /*//////////////////////////////////////////////////////////////

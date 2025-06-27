@@ -693,6 +693,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
         external
+        view
         override
         returns (uint256)
     {

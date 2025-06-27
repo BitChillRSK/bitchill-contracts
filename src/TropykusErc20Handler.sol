@@ -114,11 +114,12 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
 
     function getAccruedInterest(address user, uint256 stablecoinLockedInDcaSchedules)
         external
+        view
         override
         onlyDcaManager
         returns (uint256 stablecoinInterestAmount)
     {
-        uint256 totalStablecoinInLending = _lendingTokenToStablecoin(s_kTokenBalances[user], i_kToken.exchangeRateCurrent());
+        uint256 totalStablecoinInLending = _lendingTokenToStablecoin(s_kTokenBalances[user], i_kToken.exchangeRateStored());
         stablecoinInterestAmount = totalStablecoinInLending - stablecoinLockedInDcaSchedules;
     }
 
