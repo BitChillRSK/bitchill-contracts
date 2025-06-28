@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import {DeployBase} from "./DeployBase.s.sol";
 import {UsdrifHelperConfig} from "./UsdrifHelperConfig.s.sol";
 import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
-import {AdminOperations} from "../src/AdminOperations.sol";
+import {OperationsAdmin} from "../src/OperationsAdmin.sol";
 import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
@@ -38,11 +38,11 @@ contract DeployUsdrifHandler is DeployBase {
         UsdrifHelperConfig.NetworkConfig memory networkConfig = helperConfig.getNetworkConfig();
         
         // Validate addresses
-        if (networkConfig.adminOperationsAddress == address(0) || networkConfig.dcaManagerAddress == address(0)) {
-            revert("AdminOperations and DcaManager addresses must be set in UsdrifHelperConfig");
+        if (networkConfig.operationsAdminAddress == address(0) || networkConfig.dcaManagerAddress == address(0)) {
+            revert("OperationsAdmin and DcaManager addresses must be set in UsdrifHelperConfig");
         }
         
-        console.log("AdminOperations address:", networkConfig.adminOperationsAddress);
+        console.log("OperationsAdmin address:", networkConfig.operationsAdminAddress);
         console.log("DcaManager address:", networkConfig.dcaManagerAddress);
         
         vm.startBroadcast();
@@ -95,29 +95,29 @@ contract DeployUsdrifHandler is DeployBase {
         
         console.log("USDRIF handler deployed at:", address(usdrifHandler));
         
-        // Register the handler with AdminOperations
-        AdminOperations adminOperations = AdminOperations(networkConfig.adminOperationsAddress);
-        bool isAdmin = adminOperations.hasRole(keccak256("ADMIN"), msg.sender);
+        // Register the handler with OperationsAdmin
+        OperationsAdmin operationsAdmin = OperationsAdmin(networkConfig.operationsAdminAddress);
+        bool isAdmin = operationsAdmin.hasRole(keccak256("ADMIN"), msg.sender);
         
         if (!isAdmin) {
             console.log("Warning: Deployer is not an admin. Cannot register handler.");
-            console.log("Please call adminOperations.assignOrUpdateTokenHandler() manually with an admin account and parameters:");
+            console.log("Please call operationsAdmin.assignOrUpdateTokenHandler() manually with an admin account and parameters:");
             console.log("tokenAddress:", networkConfig.usdrifTokenAddress);
             console.log("index:", TROPYKUS_INDEX);
             console.log("handlerAddress:", address(usdrifHandler));
         } else {
             // Register the handler using the existing Tropykus index
-            adminOperations.assignOrUpdateTokenHandler(
+            operationsAdmin.assignOrUpdateTokenHandler(
                 networkConfig.usdrifTokenAddress,
                 TROPYKUS_INDEX,
                 address(usdrifHandler)
             );
             
-            console.log("USDRIF handler registered with AdminOperations using Tropykus index", TROPYKUS_INDEX);
+            console.log("USDRIF handler registered with OperationsAdmin using Tropykus index", TROPYKUS_INDEX);
         }
         
         // Transfer ownership of the handler to the protocol owner
-        address currentOwner = adminOperations.owner();
+        address currentOwner = operationsAdmin.owner();
         usdrifHandler.transferOwnership(currentOwner);
         console.log("Handler ownership transferred to:", currentOwner);
         

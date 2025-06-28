@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import {Test, console2} from "forge-std/Test.sol";
 import {DeployMocAndUniswap} from "../script/DeployMocAndUniswap.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
-import {AdminOperations} from "../src/AdminOperations.sol";
+import {OperationsAdmin} from "../src/OperationsAdmin.sol";
 import {IDocHandler} from "../src/interfaces/IDocHandler.sol";
 import {IPurchaseRbtc} from "../src/interfaces/IPurchaseRbtc.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";

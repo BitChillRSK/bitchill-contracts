@@ -10,7 +10,7 @@ import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DexHelperConfig} from "./DexHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
-import {AdminOperations} from "../src/AdminOperations.sol";
+import {OperationsAdmin} from "../src/OperationsAdmin.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
@@ -21,13 +21,13 @@ contract DeployMocAndUniswap is DeployBase {
     // Define a struct to hold all deployment results
     struct DeployedContracts {
         // MoC contracts
-        AdminOperations adOpsMoc;
+        OperationsAdmin adOpsMoc;
         address handlerMoc;
         DcaManager dcaManMoc;
         MocHelperConfig helpConfMoc;
         
         // Uniswap contracts
-        AdminOperations adOpsUni;
+        OperationsAdmin adOpsUni;
         address handlerUni;
         DcaManager dcaManUni;
         DexHelperConfig helpConfUni;
@@ -60,7 +60,7 @@ contract DeployMocAndUniswap is DeployBase {
     function deployMocContracts() 
         private 
         returns (
-            AdminOperations adOpsMoc,
+            OperationsAdmin adOpsMoc,
             address handlerMoc,
             DcaManager dcaManMoc,
             MocHelperConfig helpConfMoc
@@ -71,7 +71,7 @@ contract DeployMocAndUniswap is DeployBase {
         
         vm.startBroadcast();
         // Deploy admin operations and DCA manager
-        adOpsMoc = new AdminOperations();
+        adOpsMoc = new OperationsAdmin();
         dcaManMoc = new DcaManager(address(adOpsMoc));
         
         // Get fee collector address
@@ -130,7 +130,7 @@ contract DeployMocAndUniswap is DeployBase {
     function deployUniswapContracts() 
         private 
         returns (
-            AdminOperations adOpsUni,
+            OperationsAdmin adOpsUni,
             address handlerUni,
             DcaManager dcaManUni,
             DexHelperConfig helpConfUni
@@ -141,7 +141,7 @@ contract DeployMocAndUniswap is DeployBase {
         
         vm.startBroadcast();
         // Deploy admin operations and DCA manager
-        adOpsUni = new AdminOperations();
+        adOpsUni = new OperationsAdmin();
         dcaManUni = new DcaManager(address(adOpsUni));
         
         // Get fee collector address

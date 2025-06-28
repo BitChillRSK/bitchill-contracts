@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IAdminOperations} from "./interfaces/IAdminOperations.sol";
+import {IOperationsAdmin} from "./interfaces/IOperationsAdmin.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {IERC165} from "lib/forge-std/src/interfaces/IERC165.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -9,10 +9,10 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /**
- * @title AdminOperations
+ * @title OperationsAdmin
  * @dev Contract to manage administrative tasks and token handlers
  */
-contract AdminOperations is IAdminOperations, Ownable, AccessControl {
+contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
     using Address for address;
     /*//////////////////////////////////////////////////////////////
                             STATE VARIABLES
@@ -41,9 +41,9 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl {
         external
         onlyRole(ADMIN_ROLE)
     {
-        if (!address(handler).isContract()) revert AdminOperations__EoaCannotBeHandler(handler);
+        if (!address(handler).isContract()) revert OperationsAdmin__EoaCannotBeHandler(handler);
         if (lendingProtocolIndex != 0 && bytes(s_protocolNames[lendingProtocolIndex]).length == 0) {
-            revert AdminOperations__LendingProtocolNotAllowed(lendingProtocolIndex);
+            revert OperationsAdmin__LendingProtocolNotAllowed(lendingProtocolIndex);
         }
 
         IERC165 tokenHandler = IERC165(handler);
@@ -51,9 +51,9 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl {
         if (tokenHandler.supportsInterface(type(ITokenHandler).interfaceId)) {
             bytes32 key = _encodeKey(token, lendingProtocolIndex);
             s_tokenHandler[key] = handler;
-            emit AdminOperations__TokenHandlerUpdated(token, lendingProtocolIndex, handler);
+            emit OperationsAdmin__TokenHandlerUpdated(token, lendingProtocolIndex, handler);
         } else {
-            revert AdminOperations__ContractIsNotTokenHandler(handler);
+            revert OperationsAdmin__ContractIsNotTokenHandler(handler);
         }
     }
 
@@ -107,11 +107,11 @@ contract AdminOperations is IAdminOperations, Ownable, AccessControl {
      * @notice The index cannot be zero, since all elements in a mapping map to 0 by default
      */
     function addOrUpdateLendingProtocol(string memory lowerCaseName, uint256 index) external onlyRole(ADMIN_ROLE) {
-        if (index == 0) revert AdminOperations__LendingProtocolIndexCannotBeZero();
-        if (bytes(lowerCaseName).length == 0) revert AdminOperations__LendingProtocolNameNotSet();
+        if (index == 0) revert OperationsAdmin__LendingProtocolIndexCannotBeZero();
+        if (bytes(lowerCaseName).length == 0) revert OperationsAdmin__LendingProtocolNameNotSet();
         s_protocolIndexes[lowerCaseName] = index;
         s_protocolNames[index] = lowerCaseName;
-        emit AdminOperations__LendingProtocolAdded(index, lowerCaseName);
+        emit OperationsAdmin__LendingProtocolAdded(index, lowerCaseName);
     }
 
     /**

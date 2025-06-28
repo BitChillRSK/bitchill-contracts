@@ -7,7 +7,7 @@ import {MocHelperConfig} from "./MocHelperConfig.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {TropykusDocHandlerMoc} from "../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../src/SovrynDocHandlerMoc.sol";
-import {AdminOperations} from "../src/AdminOperations.sol";
+import {OperationsAdmin} from "../src/OperationsAdmin.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {IFeeHandler} from "../src/interfaces/IFeeHandler.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -61,7 +61,7 @@ contract DeployMocSwaps is DeployBase {
         }
     }
 
-    function run() external returns (AdminOperations, address, DcaManager, MocHelperConfig) {
+    function run() external returns (OperationsAdmin, address, DcaManager, MocHelperConfig) {
         console.log("==== DeployMocSwaps.run() called ====");
         console.log("LENDING_PROTOCOL (env var):", vm.envString("LENDING_PROTOCOL"));
         console.log("STABLECOIN_TYPE (env var):", vm.envString("STABLECOIN_TYPE"));
@@ -110,8 +110,8 @@ contract DeployMocSwaps is DeployBase {
 
         vm.startBroadcast();
 
-        AdminOperations adminOperations = new AdminOperations();
-        DcaManager dcaManager = new DcaManager(address(adminOperations));
+        OperationsAdmin operationsAdmin = new OperationsAdmin();
+        DcaManager dcaManager = new DcaManager(address(operationsAdmin));
         address feeCollector = getFeeCollector(environment);
         address docHandlerMocAddress;
 
@@ -139,7 +139,7 @@ contract DeployMocSwaps is DeployBase {
             docHandlerMocAddress = deployDocHandlerMoc(params);
 
             address owner = adminAddresses[environment];
-            adminOperations.transferOwnership(owner);
+            operationsAdmin.transferOwnership(owner);
             dcaManager.transferOwnership(owner);
             Ownable(docHandlerMocAddress).transferOwnership(owner);
         }
@@ -148,9 +148,9 @@ contract DeployMocSwaps is DeployBase {
             console.log("Deploying handlers for lending protocols for live network");
 
             // First register the lending protocols
-            adminOperations.setAdminRole(tx.origin);
-            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
-            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
+            operationsAdmin.setAdminRole(tx.origin);
+            operationsAdmin.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
+            operationsAdmin.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
 
             // Deploy Tropykus handler if there's a valid lending token
             address tropykusLendingToken = networkConfig.kDocAddress;
@@ -172,7 +172,7 @@ contract DeployMocSwaps is DeployBase {
                 console.log("Tropykus handler deployed at:", tropykusHandler);
                 
                 // Assign the Tropykus handler
-                adminOperations.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, tropykusHandler);
+                operationsAdmin.assignOrUpdateTokenHandler(docTokenAddress, TROPYKUS_INDEX, tropykusHandler);
                 
                 // If we're deploying for Tropykus, set this as our return handler
                 if (protocol == Protocol.TROPYKUS) {
@@ -202,7 +202,7 @@ contract DeployMocSwaps is DeployBase {
                     console.log("Sovryn handler deployed at:", sovrynHandler);
                     
                     // Assign the Sovryn handler
-                    adminOperations.assignOrUpdateTokenHandler(docTokenAddress, SOVRYN_INDEX, sovrynHandler);
+                    operationsAdmin.assignOrUpdateTokenHandler(docTokenAddress, SOVRYN_INDEX, sovrynHandler);
                     
                     // If we're deploying for Sovryn, set this as our return handler
                     if (protocol == Protocol.SOVRYN) {
@@ -214,12 +214,12 @@ contract DeployMocSwaps is DeployBase {
             }
 
             if (environment == Environment.TESTNET) {
-                adminOperations.setAdminRole(adminAddresses[Environment.TESTNET]);
+                operationsAdmin.setAdminRole(adminAddresses[Environment.TESTNET]);
             }
         }
 
         vm.stopBroadcast();
 
-        return (adminOperations, docHandlerMocAddress, dcaManager, helperConfig);
+        return (operationsAdmin, docHandlerMocAddress, dcaManager, helperConfig);
     }
 }

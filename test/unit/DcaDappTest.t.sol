@@ -12,8 +12,8 @@ import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
-import {AdminOperations} from "../../src/AdminOperations.sol";
-import {IAdminOperations} from "../../src/interfaces/IAdminOperations.sol";
+import {OperationsAdmin} from "../../src/OperationsAdmin.sol";
+import {IOperationsAdmin} from "../../src/interfaces/IOperationsAdmin.sol";
 import {MocHelperConfig} from "../../script/MocHelperConfig.s.sol";
 import {DexHelperConfig} from "../../script/DexHelperConfig.s.sol";
 import {DeployDexSwaps} from "../../script/DeployDexSwaps.s.sol";
@@ -32,7 +32,7 @@ contract DcaDappTest is Test {
     DcaManager dcaManager;
     MockMocProxy mocProxy;
     IDocHandler docHandler;
-    AdminOperations adminOperations;
+    OperationsAdmin operationsAdmin;
     MockStablecoin stablecoin;
     ILendingToken lendingToken;
     MockWrbtcToken wrBtcToken;
@@ -115,8 +115,8 @@ contract DcaDappTest is Test {
         address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
     );
 
-    // AdminOperations
-    event AdminOperations__TokenHandlerUpdated(
+    // OperationsAdmin
+    event OperationsAdmin__TokenHandlerUpdated(
         address indexed token, uint256 indexed lendinProtocolIndex, address indexed newHandler
     );
 
@@ -179,7 +179,7 @@ contract DcaDappTest is Test {
 
         if (isMocSwaps) {
             DeployMocSwaps deployContracts = new DeployMocSwaps();
-            (adminOperations, docHandlerAddress, dcaManager, mocHelperConfig) = deployContracts.run();
+            (operationsAdmin, docHandlerAddress, dcaManager, mocHelperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
             MocHelperConfig.NetworkConfig memory networkConfig = mocHelperConfig.getActiveNetworkConfig();
 
@@ -244,7 +244,7 @@ contract DcaDappTest is Test {
             }
         } else if (isDexSwaps) {
             DeployDexSwaps deployContracts = new DeployDexSwaps();
-            (adminOperations, docHandlerAddress, dcaManager, dexHelperConfig) = deployContracts.run();
+            (operationsAdmin, docHandlerAddress, dcaManager, dexHelperConfig) = deployContracts.run();
             docHandler = IDocHandler(docHandlerAddress);
             
             address stablecoinAddress = dexHelperConfig.getStablecoinAddress();
@@ -321,19 +321,19 @@ contract DcaDappTest is Test {
 
         // Set roles
         vm.prank(OWNER);
-        adminOperations.setAdminRole(ADMIN);
+        operationsAdmin.setAdminRole(ADMIN);
         vm.startPrank(ADMIN);
-        adminOperations.setSwapperRole(SWAPPER);
+        operationsAdmin.setSwapperRole(SWAPPER);
         // Add Troypkus and Sovryn as allowed lending protocols
-        adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, 1);
-        adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
+        operationsAdmin.addOrUpdateLendingProtocol(TROPYKUS_STRING, 1);
+        operationsAdmin.addOrUpdateLendingProtocol(SOVRYN_STRING, 2);
         vm.stopPrank();
 
         // Add tokenHandler
         vm.expectEmit(true, true, true, false);
-        emit AdminOperations__TokenHandlerUpdated(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
+        emit OperationsAdmin__TokenHandlerUpdated(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
+        operationsAdmin.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
 
         // The starting point of the tests is that the user has already deposited stablecoin (so withdrawals can also be tested without much hassle)
         vm.startPrank(USER);

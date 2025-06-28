@@ -7,7 +7,7 @@ pragma solidity 0.8.19;
 // import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 // import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 // import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
-// import {AdminOperations} from "src/AdminOperations.sol";
+// import {OperationsAdmin} from "src/OperationsAdmin.sol";
 // import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 // import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 // import "./Constants.sol";
@@ -15,7 +15,7 @@ pragma solidity 0.8.19;
 // // import {MockMocProxy} from "../mocks/MockMocProxy.sol";
 
 // contract Handler is Test {
-//     AdminOperations public adminOperations;
+//     OperationsAdmin public operationsAdmin;
 //     TropykusDocHandlerMoc public docHandlerMoc;
 //     DcaManager public dcaManager;
 //     MockStablecoin public MockStablecoin;
@@ -31,13 +31,13 @@ pragma solidity 0.8.19;
 //     uint256 s_lendingProtocolIndex;
 
 //     constructor(
-//         AdminOperations _adminOperations,
+//         OperationsAdmin _operationsAdmin,
 //         TropykusDocHandlerMoc _docHandlerMoc,
 //         DcaManager _dcaManager,
 //         MockStablecoin _MockStablecoin,
 //         address[] memory users
 //     ) {
-//         adminOperations = _adminOperations;
+//         operationsAdmin = _operationsAdmin;
 //         docHandlerMoc = _docHandlerMoc;
 //         dcaManager = _dcaManager;
 //         MockStablecoin = _MockStablecoin;
@@ -337,7 +337,7 @@ pragma solidity 0.8.19;
 //         tokenHandlerIndex = bound(tokenHandlerIndex, 0, depositedTokens.length - 1);
 //         vm.startPrank(user);
 //         uint256 rbtcBalance = IPurchaseRbtc(
-//             adminOperations.getTokenHandler(depositedTokens[tokenHandlerIndex], s_lendingProtocolIndex)
+//             operationsAdmin.getTokenHandler(depositedTokens[tokenHandlerIndex], s_lendingProtocolIndex)
 //         ).getAccumulatedRbtcBalance();
 //         if (rbtcBalance == 0) {
 //             vm.stopPrank();
@@ -357,7 +357,7 @@ pragma solidity 0.8.19;
 //         }
 //         uint256 rbtcBalance = 0;
 //         for (uint256 i; i < depositedTokens.length; ++i) {
-//             rbtcBalance += IPurchaseRbtc(adminOperations.getTokenHandler(depositedTokens[i], s_lendingProtocolIndex))
+//             rbtcBalance += IPurchaseRbtc(operationsAdmin.getTokenHandler(depositedTokens[i], s_lendingProtocolIndex))
 //                 .getAccumulatedRbtcBalance();
 //         }
 //         if (rbtcBalance == 0) {

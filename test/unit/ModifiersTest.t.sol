@@ -15,17 +15,17 @@ contract ModifiersTest is DcaDappTest {
     /*//////////////////////////////////////////////////////////////
                             ONLYOWNER TESTS
     //////////////////////////////////////////////////////////////*/
-    function testonlyOwnerCanSetAdminOperations() external {
-        address adminOperationsBefore = dcaManager.getAdminOperationsAddress();
+    function testonlyOwnerCanSetOperationsAdmin() external {
+        address operationsAdminBefore = dcaManager.getOperationsAdminAddress();
         vm.expectRevert("Ownable: caller is not the owner"); // Adapt to v4.9.3 Ownable contract
         vm.prank(USER); // User can't
-        dcaManager.setAdminOperations(address(dcaManager)); // dummy address, e.g. that of DcaManager
-        address adminOperationsAfter = dcaManager.getAdminOperationsAddress();
-        assertEq(adminOperationsBefore, adminOperationsAfter);
+        dcaManager.setOperationsAdmin(address(dcaManager)); // dummy address, e.g. that of DcaManager
+        address operationsAdminAfter = dcaManager.getOperationsAdminAddress();
+        assertEq(operationsAdminBefore, operationsAdminAfter);
         vm.prank(OWNER); // Owner can
-        dcaManager.setAdminOperations(address(dcaManager));
-        adminOperationsAfter = dcaManager.getAdminOperationsAddress();
-        assertEq(adminOperationsAfter, address(dcaManager));
+        dcaManager.setOperationsAdmin(address(dcaManager));
+        operationsAdminAfter = dcaManager.getOperationsAdminAddress();
+        assertEq(operationsAdminAfter, address(dcaManager));
     }
 
     function testonlyOwnerCanModifyMinPurchasePeriod() external {
