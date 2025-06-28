@@ -19,7 +19,7 @@ contract UsdrifHelperConfig is Script {
         address[] swapIntermediateTokens;
         uint24[] swapPoolFeeRates;
         address mocOracleAddress;
-        address adminOperationsAddress;
+        address operationsAdminAddress;
         address dcaManagerAddress;
         uint256 amountOutMinimumPercent;
         uint256 amountOutMinimumSafetyCheck;
@@ -57,7 +57,7 @@ contract UsdrifHelperConfig is Script {
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD,  // MoC Oracle on mainnet
-            adminOperationsAddress: 0x07623b4bfA188687B683CbF242C12A7d4bD7D355, // AdminOperations 
+            operationsAdminAddress: 0x07623b4bfA188687B683CbF242C12A7d4bD7D355, // OperationsAdmin 
             dcaManagerAddress: 0x6287F0Ef7dcb288603B484d666785c59f7F6aa70,  // DcaManager
             amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
             amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
@@ -80,7 +80,7 @@ contract UsdrifHelperConfig is Script {
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: 0x0000000000000000000000000000000000000000,  // Replace with MoC Oracle on testnet
-            adminOperationsAddress: 0x0000000000000000000000000000000000000000, // Placeholder for AdminOperations
+            operationsAdminAddress: 0x0000000000000000000000000000000000000000, // Placeholder for OperationsAdmin
             dcaManagerAddress: 0x0000000000000000000000000000000000000000,  // Placeholder for DcaManager
             amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
             amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
@@ -95,7 +95,7 @@ contract UsdrifHelperConfig is Script {
         if (activeNetworkConfig.wrbtcTokenAddress != address(0)) {
             // Update with provided addresses if not zero
             if (adminOpsAddress != address(0)) {
-                activeNetworkConfig.adminOperationsAddress = adminOpsAddress;
+                activeNetworkConfig.operationsAdminAddress = adminOpsAddress;
             }
             if (dcaManagerAddress != address(0)) {
                 activeNetworkConfig.dcaManagerAddress = dcaManagerAddress;
@@ -151,7 +151,7 @@ contract UsdrifHelperConfig is Script {
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracleAddress: address(mockMocOracle),
-            adminOperationsAddress: adminOpsAddress,
+            operationsAdminAddress: adminOpsAddress,
             dcaManagerAddress: dcaManagerAddress,
             amountOutMinimumPercent: DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT,
             amountOutMinimumSafetyCheck: DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK
@@ -162,7 +162,7 @@ contract UsdrifHelperConfig is Script {
     }
 
     function updateProtocolAddresses(address adminOpsAddress, address dcaManagerAddress) external {
-        activeNetworkConfig.adminOperationsAddress = adminOpsAddress;
+        activeNetworkConfig.operationsAdminAddress = adminOpsAddress;
         activeNetworkConfig.dcaManagerAddress = dcaManagerAddress;
     }
 

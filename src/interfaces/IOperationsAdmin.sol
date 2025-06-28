@@ -4,25 +4,25 @@ pragma solidity 0.8.19;
 /**
  * @title IAdminOperation
  * @author BitChill team: Antonio Rodríguez-Ynyesto
- * @dev Interface for the AdminOperations contract.
+ * @dev Interface for the OperationsAdmin contract.
  */
-interface IAdminOperations {
+interface IOperationsAdmin {
     //////////////////////
     // Events ////////////
     //////////////////////
-    event AdminOperations__TokenHandlerUpdated(
+    event OperationsAdmin__TokenHandlerUpdated(
         address indexed token, uint256 indexed lendingProtocolIndex, address indexed newHandler
     );
-    event AdminOperations__LendingProtocolAdded(uint256 indexed index, string indexed name);
+    event OperationsAdmin__LendingProtocolAdded(uint256 indexed index, string indexed name);
 
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error AdminOperations__EoaCannotBeHandler(address newHandler);
-    error AdminOperations__ContractIsNotTokenHandler(address newHandler);
-    error AdminOperations__LendingProtocolIndexCannotBeZero();
-    error AdminOperations__LendingProtocolNameNotSet();
-    error AdminOperations__LendingProtocolNotAllowed(uint256 index);
+    error OperationsAdmin__EoaCannotBeHandler(address newHandler);
+    error OperationsAdmin__ContractIsNotTokenHandler(address newHandler);
+    error OperationsAdmin__LendingProtocolIndexCannotBeZero();
+    error OperationsAdmin__LendingProtocolNameNotSet();
+    error OperationsAdmin__LendingProtocolNotAllowed(uint256 index);
 
     ///////////////////////////////
     // External functions /////////

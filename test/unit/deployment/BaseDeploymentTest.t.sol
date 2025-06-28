@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {Test, console} from "forge-std/Test.sol";
 import {DeployMocSwaps} from "../../../script/DeployMocSwaps.s.sol";
-import {AdminOperations} from "../../../src/AdminOperations.sol";
+import {OperationsAdmin} from "../../../src/OperationsAdmin.sol";
 import {DcaManager} from "../../../src/DcaManager.sol";
 import {TropykusDocHandlerMoc} from "../../../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../../../src/SovrynDocHandlerMoc.sol";
@@ -12,7 +12,7 @@ import "../../Constants.sol";
 
 contract BaseDeploymentTest is Test {
     // Core contracts
-    AdminOperations public adminOperations;
+    OperationsAdmin public operationsAdmin;
     DcaManager public dcaManager;
     address public docHandlerMocAddress;
     MocHelperConfig public helperConfig;
@@ -30,7 +30,7 @@ contract BaseDeploymentTest is Test {
         
         // Deploy the core protocol
         DeployMocSwaps deployer = new DeployMocSwaps();
-        (adminOperations, docHandlerMocAddress, dcaManager, helperConfig) = deployer.run();
+        (operationsAdmin, docHandlerMocAddress, dcaManager, helperConfig) = deployer.run();
         
         // Check which handler type was deployed based on the lending protocol
         string memory lendingProtocol = vm.envString("LENDING_PROTOCOL");
@@ -42,17 +42,17 @@ contract BaseDeploymentTest is Test {
 
         // Grant admin role to test contract and register the handler
         vm.prank(OWNER);
-        adminOperations.setAdminRole(ADMIN);
+        operationsAdmin.setAdminRole(ADMIN);
         vm.prank(ADMIN);
-        adminOperations.addOrUpdateLendingProtocol(
+        operationsAdmin.addOrUpdateLendingProtocol(
             "tropykus",
             TROPYKUS_INDEX
         );
     }
     
     function testCoreProtocolDeployment() public {
-        // Verify AdminOperations deployment
-        assertNotEq(address(adminOperations), address(0), "AdminOperations not deployed");
+        // Verify OperationsAdmin deployment
+        assertNotEq(address(operationsAdmin), address(0), "OperationsAdmin not deployed");
         
         // Verify DcaManager deployment
         assertNotEq(address(dcaManager), address(0), "DcaManager not deployed");
@@ -61,7 +61,7 @@ contract BaseDeploymentTest is Test {
         assertNotEq(docHandlerMocAddress, address(0), "DocHandler not deployed");
         
         // Check ownership
-        assertEq(adminOperations.owner(), makeAddr(OWNER_STRING), "AdminOperations owner not set correctly");
+        assertEq(operationsAdmin.owner(), makeAddr(OWNER_STRING), "OperationsAdmin owner not set correctly");
         assertEq(dcaManager.owner(), makeAddr(OWNER_STRING), "DcaManager owner not set correctly");
         
         // Verify DcaManager reference in handler

@@ -8,7 +8,7 @@ import {DcaManager} from "../src/DcaManager.sol";
 import {TropykusErc20HandlerDex} from "../src/TropykusErc20HandlerDex.sol";
 import {SovrynErc20HandlerDex} from "../src/SovrynErc20HandlerDex.sol";
 import {IPurchaseUniswap} from "../src/interfaces/IPurchaseUniswap.sol";
-import {AdminOperations} from "../src/AdminOperations.sol";
+import {OperationsAdmin} from "../src/OperationsAdmin.sol";
 import {IWRBTC} from "../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
@@ -69,7 +69,7 @@ contract DeployDexSwaps is DeployBase {
         }
     }
 
-    function run() external returns (AdminOperations, address, DcaManager, DexHelperConfig) {
+    function run() external returns (OperationsAdmin, address, DcaManager, DexHelperConfig) {
         // Initialize DexHelperConfig which reads the STABLECOIN_TYPE env var
         DexHelperConfig helperConfig = new DexHelperConfig();
         DexHelperConfig.NetworkConfig memory networkConfig = helperConfig.getActiveNetworkConfig();
@@ -98,8 +98,8 @@ contract DeployDexSwaps is DeployBase {
 
         vm.startBroadcast();
 
-        AdminOperations adminOperations = new AdminOperations();
-        DcaManager dcaManager = new DcaManager(address(adminOperations));
+        OperationsAdmin operationsAdmin = new OperationsAdmin();
+        DcaManager dcaManager = new DcaManager(address(operationsAdmin));
         address feeCollector = getFeeCollector(environment);
         
         address docHandlerDexAddress;
@@ -138,7 +138,7 @@ contract DeployDexSwaps is DeployBase {
             docHandlerDexAddress = deployDocHandlerDex(params);
 
             address owner = adminAddresses[environment];
-            adminOperations.transferOwnership(owner);
+            operationsAdmin.transferOwnership(owner);
             dcaManager.transferOwnership(owner);
             Ownable(docHandlerDexAddress).transferOwnership(owner);
         }
@@ -147,9 +147,9 @@ contract DeployDexSwaps is DeployBase {
             console.log("Deploying handlers for lending protocols for live network");
 
             // First register the lending protocols
-            adminOperations.setAdminRole(tx.origin);
-            adminOperations.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
-            adminOperations.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
+            operationsAdmin.setAdminRole(tx.origin);
+            operationsAdmin.addOrUpdateLendingProtocol(TROPYKUS_STRING, TROPYKUS_INDEX); // index 1
+            operationsAdmin.addOrUpdateLendingProtocol(SOVRYN_STRING, SOVRYN_INDEX); // index 2
 
             // Deploy Tropykus handler if there's a valid lending token
             address tropykusLendingToken = helperConfig.getLendingTokenAddress();
@@ -173,7 +173,7 @@ contract DeployDexSwaps is DeployBase {
                 console.log("Tropykus handler deployed at:", tropykusHandler);
                 
                 // Assign the Tropykus handler to the DCA manager
-                adminOperations.assignOrUpdateTokenHandler(stablecoinAddress, TROPYKUS_INDEX, tropykusHandler);
+                operationsAdmin.assignOrUpdateTokenHandler(stablecoinAddress, TROPYKUS_INDEX, tropykusHandler);
                 
                 // If we're deploying for Tropykus, set this as our main handler
                 if (protocol == Protocol.TROPYKUS) {
@@ -205,7 +205,7 @@ contract DeployDexSwaps is DeployBase {
                     console.log("Sovryn handler deployed at:", sovrynHandler);
                     
                     // Assign the Sovryn handler to the DCA manager
-                    adminOperations.assignOrUpdateTokenHandler(stablecoinAddress, SOVRYN_INDEX, sovrynHandler);
+                    operationsAdmin.assignOrUpdateTokenHandler(stablecoinAddress, SOVRYN_INDEX, sovrynHandler);
                     
                     // If we're deploying for Sovryn, set this as our main handler
                     if (protocol == Protocol.SOVRYN) {
@@ -217,12 +217,12 @@ contract DeployDexSwaps is DeployBase {
             }
 
             if (environment == Environment.TESTNET) {
-                adminOperations.setAdminRole(adminAddresses[Environment.TESTNET]);
+                operationsAdmin.setAdminRole(adminAddresses[Environment.TESTNET]);
             }
         }
 
         vm.stopBroadcast();
 
-        return (adminOperations, docHandlerDexAddress, dcaManager, helperConfig);
+        return (operationsAdmin, docHandlerDexAddress, dcaManager, helperConfig);
     }
 }

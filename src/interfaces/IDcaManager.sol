@@ -94,7 +94,7 @@ interface IDcaManager {
      * @param depositAmount The amount of the stablecoin to deposit.
      * @param purchaseAmount The amount of to spend periodically in buying rBTC
      * @param purchasePeriod The period for recurrent purchases
-     * @param lendingProtocolIndex: the index in the AdminOperations contract of the lending protocol, if any, where the token will be deposited to generate yield
+     * @param lendingProtocolIndex: the index in the OperationsAdmin contract of the lending protocol, if any, where the token will be deposited to generate yield
      */
     function createDcaSchedule(
         address token,
@@ -147,7 +147,7 @@ interface IDcaManager {
      * @notice Withdraw a specified amount of a stablecoin from the contract.
      * @param tokenHandlerFactoryAddress The address of the new token handler factory contract
      */
-    function setAdminOperations(address tokenHandlerFactoryAddress) external;
+    function setOperationsAdmin(address tokenHandlerFactoryAddress) external;
 
     /**
      * @param buyer The address of the user on behalf of whom rBTC is going to be bought
@@ -275,7 +275,7 @@ interface IDcaManager {
      * @notice get the admin operations contract's address
      * @return the admin operations contract's address
      */
-    function getAdminOperationsAddress() external view returns (address);
+    function getOperationsAdminAddress() external view returns (address);
 
     /**
      * @notice get the users deposited tokens

@@ -20,7 +20,7 @@ contract NewHandlerDeploymentTest is BaseDeploymentTest {
         
         // Initialize USDRIF helper config and update with protocol addresses
         usdrifHelperConfig = new UsdrifHelperConfig();
-        usdrifHelperConfig.updateProtocolAddresses(address(adminOperations), address(dcaManager));
+        usdrifHelperConfig.updateProtocolAddresses(address(operationsAdmin), address(dcaManager));
         
         // Deploy USDRIF handler with our configured helper
         DeployUsdrifHandler usdrifDeployer = new DeployUsdrifHandler();
@@ -31,7 +31,7 @@ contract NewHandlerDeploymentTest is BaseDeploymentTest {
         address usdrifTokenAddress = usdrifHelperConfig.getNetworkConfig().usdrifTokenAddress;
 
         vm.prank(ADMIN);
-        adminOperations.assignOrUpdateTokenHandler(
+        operationsAdmin.assignOrUpdateTokenHandler(
             usdrifTokenAddress,
             TROPYKUS_INDEX,
             usdrifHandlerAddress
@@ -48,9 +48,9 @@ contract NewHandlerDeploymentTest is BaseDeploymentTest {
         // Verify ownership transferred correctly
         assertEq(usdrifHandler.owner(), makeAddr(OWNER_STRING), "USDRIF handler owner not set correctly");
         
-        // Verify handler is registered in AdminOperations
+        // Verify handler is registered in OperationsAdmin
         UsdrifHelperConfig.NetworkConfig memory config = usdrifHelperConfig.getNetworkConfig();
-        address registeredHandler = adminOperations.getTokenHandler(config.usdrifTokenAddress, TROPYKUS_INDEX);
-        assertEq(registeredHandler, usdrifHandlerAddress, "USDRIF handler not registered in AdminOperations");
+        address registeredHandler = operationsAdmin.getTokenHandler(config.usdrifTokenAddress, TROPYKUS_INDEX);
+        assertEq(registeredHandler, usdrifHandlerAddress, "USDRIF handler not registered in OperationsAdmin");
     }
 }

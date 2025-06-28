@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 // import {Test, console} from "forge-std/Test.sol";
 // import {StdInvariant} from "forge-std/StdInvariant.sol";
 // import {DcaManager} from "src/DcaManager.sol";
-// import {AdminOperations} from "src/AdminOperations.sol";
+// import {OperationsAdmin} from "src/OperationsAdmin.sol";
 // import {TropykusDocHandlerMoc} from "src/TropykusDocHandlerMoc.sol";
 // // import {TropykusDocHandlerMocDex} from "../../src/TropykusDocHandlerMocDex.sol";
 // import {IDocHandler} from "src/interfaces/IDocHandler.sol";
@@ -21,7 +21,7 @@ pragma solidity 0.8.19;
 
 // contract InvariantTest is StdInvariant, Test {
 //     DcaManager dcaManager;
-//     AdminOperations adminOperations;
+//     OperationsAdmin operationsAdmin;
 //     TropykusDocHandlerMoc docHandlerMoc;
 //     // TropykusDocHandlerMocDex docHandlerMocDex;
 //     MockStablecoin MockStablecoin;
@@ -57,7 +57,7 @@ pragma solidity 0.8.19;
 //         setUpTimestamp = block.timestamp;
 //         deployer = new DeployMocSwaps();
 //         address docHandlerAddress;
-//         (adminOperations, docHandlerAddress, dcaManager, helperConfig) = deployer.run();
+//         (operationsAdmin, docHandlerAddress, dcaManager, helperConfig) = deployer.run();
 //         docHandlerMoc = TropykusDocHandlerMoc(payable(docHandlerAddress));
 //         (address docTokenAddress, address mocProxyAddress, address kDocToken, ) =
 //             helperConfig.activeNetworkConfig();
@@ -65,14 +65,14 @@ pragma solidity 0.8.19;
 //         mockKdocToken = MockKdocToken(kDocToken);
 
 //         vm.prank(OWNER);
-//         adminOperations.setAdminRole(ADMIN);
+//         operationsAdmin.setAdminRole(ADMIN);
 //         vm.prank(ADMIN);
-//         adminOperations.setSwapperRole(SWAPPER);
+//         operationsAdmin.setSwapperRole(SWAPPER);
 
 //         // Assign DOC token handler
 //         // vm.prank(OWNER);
 //         vm.prank(ADMIN);
-//         adminOperations.assignOrUpdateTokenHandler(docTokenAddress, s_lendingProtocolIndex, address(docHandlerMoc));
+//         operationsAdmin.assignOrUpdateTokenHandler(docTokenAddress, s_lendingProtocolIndex, address(docHandlerMoc));
 
 //         // Initialize users and distribute 10000 DOC tokens
 //         for (uint256 i = 0; i < NUM_USERS; i++) {
@@ -97,7 +97,7 @@ pragma solidity 0.8.19;
 //         MockStablecoin.approve(mocProxyAddress, type(uint256).max);
 
 //         // Deploy the invariant tests handler contract and set it as target contract for the tests
-//         handler = new Handler(adminOperations, docHandlerMoc, dcaManager, MockStablecoin, s_users);
+//         handler = new Handler(operationsAdmin, docHandlerMoc, dcaManager, MockStablecoin, s_users);
 //         targetContract(address(handler));
 
 //         // vm.startPrank(USER);

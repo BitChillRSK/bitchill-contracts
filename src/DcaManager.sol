@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {ITokenHandler} from "./interfaces/ITokenHandler.sol";
 import {ITokenLending} from "./interfaces/ITokenLending.sol";
-import {AdminOperations} from "./AdminOperations.sol";
+import {OperationsAdmin} from "./OperationsAdmin.sol";
 import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 
 /**
@@ -21,7 +21,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
                             STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
 
-    AdminOperations private s_adminOperations;
+    OperationsAdmin private s_operationsAdmin;
 
     /**
      * @notice Each user may create different schedules with one or more stablecoins
@@ -53,7 +53,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice only allow swapper role
      */
     modifier onlySwapper() {
-        if (!s_adminOperations.hasRole(s_adminOperations.SWAPPER_ROLE(), msg.sender)) {
+        if (!s_operationsAdmin.hasRole(s_operationsAdmin.SWAPPER_ROLE(), msg.sender)) {
             revert DcaManager__UnauthorizedSwapper(msg.sender);
         }
         _;
@@ -64,10 +64,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @param adminOperationsAddress the address of the admin operations contract
+     * @param operationsAdminAddress the address of the admin operations contract
      */
-    constructor(address adminOperationsAddress) Ownable() {
-        s_adminOperations = AdminOperations(adminOperationsAddress);
+    constructor(address operationsAdminAddress) Ownable() {
+        s_operationsAdmin = OperationsAdmin(operationsAdminAddress);
     }
 
     /**
@@ -376,10 +376,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     /**
      * @notice update the admin operations contract
-     * @param adminOperationsAddress: the address of admin operations
+     * @param operationsAdminAddress: the address of admin operations
      */
-    function setAdminOperations(address adminOperationsAddress) external override onlyOwner {
-        s_adminOperations = AdminOperations(adminOperationsAddress);
+    function setOperationsAdmin(address operationsAdminAddress) external override onlyOwner {
+        s_operationsAdmin = OperationsAdmin(operationsAdminAddress);
     }
 
     /**
@@ -459,7 +459,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @return the token handler
      */
     function _handler(address token, uint256 lendingProtocolIndex) internal view returns (ITokenHandler) {
-        address tokenHandlerAddress = s_adminOperations.getTokenHandler(token, lendingProtocolIndex);
+        address tokenHandlerAddress = s_operationsAdmin.getTokenHandler(token, lendingProtocolIndex);
         if (tokenHandlerAddress == address(0)) revert DcaManager__TokenNotAccepted();
         return ITokenHandler(tokenHandlerAddress);
     }
@@ -544,7 +544,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _checkTokenYieldsInterest(address token, uint256 lendingProtocolIndex) internal view {
         bytes32 protocolNameHash =
-            keccak256(abi.encodePacked(s_adminOperations.getLendingProtocolName(lendingProtocolIndex)));
+            keccak256(abi.encodePacked(s_operationsAdmin.getLendingProtocolName(lendingProtocolIndex)));
         if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
     }
 
@@ -655,8 +655,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice get the admin operations address
      * @return the admin operations address
      */
-    function getAdminOperationsAddress() external view override returns (address) {
-        return address(s_adminOperations);
+    function getOperationsAdminAddress() external view override returns (address) {
+        return address(s_operationsAdmin);
     }
 
     /**
