@@ -12,13 +12,7 @@ interface ITokenHandler {
     //////////////////////
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
-
-    //////////////////////
-    // Errors ////////////
-    //////////////////////
-    error TokenHandler__PurchaseAmountMustBeGreaterThanZero();
-    error TokenHandler__PurchasePeriodMustBeGreaterThanZero();
-    error TokenHandler__PurchaseAmountMustBeLowerThanHalfOfBalance();
+    event TokenHandler__MinPurchaseAmountModified(uint256 indexed newMinPurchaseAmount);
 
     ///////////////////////////////
     // External functions /////////

@@ -380,6 +380,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function setOperationsAdmin(address operationsAdminAddress) external override onlyOwner {
         s_operationsAdmin = OperationsAdmin(operationsAdminAddress);
+        emit DcaManager__OperationsAdminUpdated(operationsAdminAddress);
     }
 
     /**
@@ -388,6 +389,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function modifyMinPurchasePeriod(uint256 minPurchasePeriod) external override onlyOwner {
         s_minPurchasePeriod = minPurchasePeriod;
+        emit DcaManager__MinPurchasePeriodModified(minPurchasePeriod);
     }
 
     /**
@@ -396,6 +398,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function modifyMaxSchedulesPerToken(uint256 maxSchedulesPerToken) external override onlyOwner {
         s_maxSchedulesPerToken = maxSchedulesPerToken;
+        emit DcaManager__MaxSchedulesPerTokenModified(maxSchedulesPerToken);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -431,7 +434,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param purchasePeriod the purchase period to validate
      */
     function _validatePurchasePeriod(uint256 purchasePeriod) internal view {
-        if (purchasePeriod < s_minPurchasePeriod) revert DcaManager__PurchasePeriodMustBeGreaterThanMin();
+        if (purchasePeriod < s_minPurchasePeriod) revert DcaManager__PurchasePeriodMustBeGreaterThanMinimum();
     }
 
     /**
@@ -493,8 +496,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             revert DcaManager__ScheduleBalanceNotEnoughForPurchase(token, dcaSchedule.tokenBalance);
         }
         dcaSchedule.tokenBalance -= dcaSchedule.purchaseAmount;
+        emit DcaManager__TokenBalanceUpdated(token, scheduleId, dcaSchedule.tokenBalance);
         // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
         dcaSchedule.lastPurchaseTimestamp += lastPurchaseTimestamp == 0 ? block.timestamp : purchasePeriod; 
+        emit DcaManager__LastPurchaseTimestampUpdated(token, scheduleId, dcaSchedule.lastPurchaseTimestamp);
 
         return (dcaSchedule.purchaseAmount, dcaSchedule.lendingProtocolIndex);
     }

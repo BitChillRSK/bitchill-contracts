@@ -46,7 +46,7 @@ contract DcaConfigurationTest is DcaDappTest {
     }
 
     function testPurchasePeriodMustBeGreaterThanMin() external {
-        vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMin.selector);
+        vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMinimum.selector);
         vm.prank(USER);
         dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
     }

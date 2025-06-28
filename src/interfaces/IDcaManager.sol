@@ -46,6 +46,10 @@ interface IDcaManager {
         uint256 purchasePeriod
     );
     event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
+    event DcaManager__MaxSchedulesPerTokenModified(uint256 indexed newMaxSchedulesPerToken);
+    event DcaManager__OperationsAdminUpdated(address indexed newOperationsAdmin);
+    event DcaManager__MinPurchasePeriodModified(uint256 indexed newMinPurchasePeriod);
+    event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed lastPurchaseTimestamp);
 
     //////////////////////
     // Errors ////////////
@@ -55,7 +59,7 @@ interface IDcaManager {
     error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
     error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token);
-    error DcaManager__PurchasePeriodMustBeGreaterThanMin();
+    error DcaManager__PurchasePeriodMustBeGreaterThanMinimum();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
     error DcaManager__InexistentScheduleIndex();

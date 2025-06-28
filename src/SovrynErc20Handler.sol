@@ -57,8 +57,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
     {
         super.depositToken(user, depositAmount);
         if (i_stableToken.allowance(address(this), address(i_iSusdToken)) < depositAmount) {
-            bool approvalSuccess = i_stableToken.approve(address(i_iSusdToken), depositAmount);
-            if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
+            i_stableToken.safeApprove(address(i_iSusdToken), depositAmount);
         }
         uint256 mintedAmount = i_iSusdToken.mint(address(this), depositAmount);
         if (mintedAmount == 0) revert TokenLending__LendingProtocolDepositFailed();
