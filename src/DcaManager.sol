@@ -558,70 +558,148 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /**
-     * @notice get all DCA schedules for a user
+     * @notice get all DCA schedules for the caller
      * @param token: the token to get schedules for
      * @return the DCA schedules
      */
     function getMyDcaSchedules(address token) external view override returns (DcaDetails[] memory) {
-        return s_dcaSchedules[msg.sender][token];
+        return getDcaSchedules(msg.sender, token);
     }
 
     /**
-     * @notice get the token balance for a DCA schedule
+     * @notice get all DCA schedules for a specific user
+     * @param user: the user to get schedules for
+     * @param token: the token to get schedules for
+     * @return the DCA schedules
+     */
+    function getDcaSchedules(address user, address token) public view override returns (DcaDetails[] memory) {
+        return s_dcaSchedules[user][token];
+    }
+
+    /**
+     * @notice get the token balance for a DCA schedule (caller's schedule)
      * @param token: the token to get the balance for
      * @param scheduleIndex: the index of the schedule
      * @return the token balance
      */
-    function getScheduleTokenBalance(address token, uint256 scheduleIndex)
+    function getMyScheduleTokenBalance(address token, uint256 scheduleIndex)
         external
         view
         override
-        validateIndex(token, scheduleIndex)
         returns (uint256)
     {
-        return s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
+        return getScheduleTokenBalance(msg.sender, token, scheduleIndex);
     }
 
     /**
-     * @notice get the purchase amount for a DCA schedule
+     * @notice get the token balance for a DCA schedule
+     * @param user: the user to get the balance for
+     * @param token: the token to get the balance for
+     * @param scheduleIndex: the index of the schedule
+     * @return the token balance
+     */
+    function getScheduleTokenBalance(address user, address token, uint256 scheduleIndex)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
+            revert DcaManager__InexistentScheduleIndex();
+        }
+        return s_dcaSchedules[user][token][scheduleIndex].tokenBalance;
+    }
+
+    /**
+     * @notice get the purchase amount for a DCA schedule (caller's schedule)
      * @param token: the token to get the purchase amount for
      * @param scheduleIndex: the index of the schedule
      * @return the purchase amount
      */
-    function getSchedulePurchaseAmount(address token, uint256 scheduleIndex)
+    function getMySchedulePurchaseAmount(address token, uint256 scheduleIndex)
         external
         view
         override
-        validateIndex(token, scheduleIndex)
         returns (uint256)
     {
-        return s_dcaSchedules[msg.sender][token][scheduleIndex].purchaseAmount;
+        return getSchedulePurchaseAmount(msg.sender, token, scheduleIndex);
     }
 
     /**
-     * @notice get the purchase period for a DCA schedule
+     * @notice get the purchase amount for a DCA schedule
+     * @param user: the user to get the purchase amount for
+     * @param token: the token to get the purchase amount for
+     * @param scheduleIndex: the index of the schedule
+     * @return the purchase amount
+     */
+    function getSchedulePurchaseAmount(address user, address token, uint256 scheduleIndex)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
+            revert DcaManager__InexistentScheduleIndex();
+        }
+        return s_dcaSchedules[user][token][scheduleIndex].purchaseAmount;
+    }
+
+    /**
+     * @notice get the purchase period for a DCA schedule (caller's schedule)
      * @param token: the token to get the purchase period for
      * @param scheduleIndex: the index of the schedule
      * @return the purchase period
      */
-    function getSchedulePurchasePeriod(address token, uint256 scheduleIndex)
+    function getMySchedulePurchasePeriod(address token, uint256 scheduleIndex)
         external
         view
         override
-        validateIndex(token, scheduleIndex)
         returns (uint256)
     {
-        return s_dcaSchedules[msg.sender][token][scheduleIndex].purchasePeriod;
+        return getSchedulePurchasePeriod(msg.sender, token, scheduleIndex);
     }
 
     /**
-     * @notice get the schedule id for a DCA schedule
+     * @notice get the purchase period for a DCA schedule
+     * @param user: the user to get the purchase period for
+     * @param token: the token to get the purchase period for
+     * @param scheduleIndex: the index of the schedule
+     * @return the purchase period
+     */
+    function getSchedulePurchasePeriod(address user, address token, uint256 scheduleIndex)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
+            revert DcaManager__InexistentScheduleIndex();
+        }
+        return s_dcaSchedules[user][token][scheduleIndex].purchasePeriod;
+    }
+
+    /**
+     * @notice get the schedule id for a DCA schedule (caller's schedule)
      * @param token: the token to get the schedule id for
      * @param scheduleIndex: the index of the schedule
      * @return the schedule id
      */
-    function getScheduleId(address token, uint256 scheduleIndex) external view override returns (bytes32) {
-        return s_dcaSchedules[msg.sender][token][scheduleIndex].scheduleId;
+    function getMyScheduleId(address token, uint256 scheduleIndex) external view override returns (bytes32) {
+        return getScheduleId(msg.sender, token, scheduleIndex);
+    }
+
+    /**
+     * @notice get the schedule id for a DCA schedule
+     * @param user: the user to get the schedule id for
+     * @param token: the token to get the schedule id for
+     * @param scheduleIndex: the index of the schedule
+     * @return the schedule id
+     */
+    function getScheduleId(address user, address token, uint256 scheduleIndex) external view override returns (bytes32) {
+        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
+            revert DcaManager__InexistentScheduleIndex();
+        }
+        return s_dcaSchedules[user][token][scheduleIndex].scheduleId;
     }
 
     /**
@@ -687,6 +765,16 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function getUsersDepositedTokens(address user) external view override returns (address[] memory) {
         return s_usersDepositedTokens[user];
+    }
+
+    /**
+     * @notice get the interest accrued by a user for a token and lending protocol index (caller's schedule)
+     * @param token: the token to get the interest for
+     * @param lendingProtocolIndex: the lending protocol index to get the interest for
+     * @return the interest accrued
+     */
+    function getMyInterestAccrued(address token, uint256 lendingProtocolIndex) external view override returns (uint256) {
+        return getInterestAccruedByUser(msg.sender, token, lendingProtocolIndex);
     }
 
     /**

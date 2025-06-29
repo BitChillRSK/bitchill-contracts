@@ -236,36 +236,72 @@ interface IDcaManager {
     function getMyDcaSchedules(address token) external view returns (DcaDetails[] memory);
 
     /**
-     * @notice get the balance of a schedule
+     * @notice get the DCA schedules for a specific user and token
+     * @param user the user address
+     * @param token the token address
+     * @return the DCA schedules for the user and the token
+     */
+    function getDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
+
+    /**
+     * @notice get the balance of a schedule for the caller
      * @param token the token address
      * @param scheduleIndex the index of the schedule
      * @return the balance of the schedule
      */
-    function getScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256);
+    function getMyScheduleTokenBalance(address token, uint256 scheduleIndex) external view returns (uint256);
 
     /**
-     * @notice get the purchase amount of a schedule
+     * @notice get the balance of a schedule for a specific user
+     * @param user the user address
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the balance of the schedule
+     */
+    function getScheduleTokenBalance(address user, address token, uint256 scheduleIndex) external view returns (uint256);
+
+    /**
+     * @notice get the purchase amount of a schedule for the caller
      * @param token the token address
      * @param scheduleIndex the index of the schedule
      * @return the purchase amount of the schedule
      */
-    function getSchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256);
+    function getMySchedulePurchaseAmount(address token, uint256 scheduleIndex) external view returns (uint256);
 
     /**
-     * @notice get the purchase period of a schedule
+     * @notice get the purchase amount of a schedule for a specific user
+     * @param user the user address
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the purchase amount of the schedule
+     */
+    function getSchedulePurchaseAmount(address user, address token, uint256 scheduleIndex) external view returns (uint256);
+
+    /**
+     * @notice get the purchase period of a schedule for the caller
      * @param token the token address
      * @param scheduleIndex the index of the schedule
      * @return the purchase period of the schedule
      */
-    function getSchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256);
+    function getMySchedulePurchasePeriod(address token, uint256 scheduleIndex) external view returns (uint256);
+
+    /**
+     * @notice get the purchase period of a schedule for a specific user
+     * @param user the user address
+     * @param token the token address
+     * @param scheduleIndex the index of the schedule
+     * @return the purchase period of the schedule
+     */
+    function getSchedulePurchasePeriod(address user, address token, uint256 scheduleIndex) external view returns (uint256);
 
     /**
      * @notice get the schedule ID of a schedule
+     * @param user the user address
      * @param token the token address
      * @param scheduleIndex the index of the schedule
      * @return the schedule ID of the schedule
      */
-    function getScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32);
+    function getScheduleId(address user, address token, uint256 scheduleIndex) external view returns (bytes32);
 
     /**
      * @notice get the users DCA schedules

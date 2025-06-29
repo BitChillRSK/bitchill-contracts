@@ -106,14 +106,14 @@ contract RbtcPurchaseTest is DcaDappTest {
 
     function testOnlySwapperCanCallDcaManagerToPurchase() external {
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes memory encodedRevert = abi.encodeWithSelector(IDcaManager.DcaManager__UnauthorizedSwapper.selector, USER);
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
         vm.expectRevert(encodedRevert);
         dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
@@ -123,14 +123,14 @@ contract RbtcPurchaseTest is DcaDappTest {
 
     function testOnlyDcaManagerCanPurchase() external {
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
         );
         vm.expectRevert(IDcaManagerAccessControl.DcaManagerAccessControl__OnlyDcaManagerCanCall.selector);
         IPurchaseRbtc(address(docHandler)).buyRbtc(USER, scheduleId, MIN_PURCHASE_AMOUNT);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
         // Check that balances didn't change
@@ -181,7 +181,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         );
 
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
 
@@ -190,7 +190,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
 
         vm.startPrank(USER);
-        uint256 docBalanceAfterPurchase = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 docBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         uint256 rbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
 
@@ -221,7 +221,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
             vm.startPrank(USER);
-            uint256 schedulePurchaseAmount = dcaManager.getSchedulePurchaseAmount(address(stablecoin), scheduleIndex);
+            uint256 schedulePurchaseAmount = dcaManager.getMySchedulePurchaseAmount(address(stablecoin), scheduleIndex);
             vm.stopPrank();
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
