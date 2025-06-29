@@ -34,7 +34,6 @@ interface ITokenLending is ITokenHandler {
     //////////////////////////////////////////////////////////////*/
 
     error TokenLending__UnderlyingRedeemAmountExceedsBalance(uint256 redeemAmount, uint256 balance);
-    error TokenLending__LendingTokenApprovalFailed(address user, uint256 depositAmount);
     error TokenLending__LendingProtocolDepositFailed();
     error TokenLending__BatchRedeemUnderlyingFailed();
 

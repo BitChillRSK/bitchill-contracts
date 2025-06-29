@@ -84,6 +84,7 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
      */
     function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
         s_minPurchaseAmount = minPurchaseAmount;
+        emit TokenHandler__MinPurchaseAmountModified(minPurchaseAmount);
     }
 
     /*//////////////////////////////////////////////////////////////

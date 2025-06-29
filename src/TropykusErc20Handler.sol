@@ -57,8 +57,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
     {
         super.depositToken(user, depositAmount);
         if (i_stableToken.allowance(address(this), address(i_kToken)) < depositAmount) {
-            bool approvalSuccess = i_stableToken.approve(address(i_kToken), depositAmount);
-            if (!approvalSuccess) revert TokenLending__LendingTokenApprovalFailed(user, depositAmount);
+            i_stableToken.safeApprove(address(i_kToken), depositAmount);
         }
         uint256 prevKtokenBalance = i_kToken.balanceOf(address(this));
         if(i_kToken.mint(depositAmount) != 0) revert TokenLending__LendingProtocolDepositFailed();

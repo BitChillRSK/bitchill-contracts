@@ -30,10 +30,10 @@ contract DcaScheduleTest is DcaDappTest {
         dcaManager.createDcaSchedule(
             address(stablecoin), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
-        uint256 scheduleBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(stablecoin), scheduleIndex);
+        uint256 scheduleBalanceAfterDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
         assertEq(AMOUNT_TO_DEPOSIT, scheduleBalanceAfterDeposit);
-        assertEq(AMOUNT_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(stablecoin), scheduleIndex));
-        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(stablecoin), scheduleIndex));
+        assertEq(AMOUNT_TO_SPEND, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), scheduleIndex));
+        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), scheduleIndex));
         vm.stopPrank();
     }
 
@@ -69,7 +69,7 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 newPurchasePeriod = MIN_PURCHASE_PERIOD * 10;
         uint256 extraDocToDeposit = AMOUNT_TO_DEPOSIT / 3;
         vm.startPrank(USER);
-        uint256 userBalanceBeforeDeposit = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 userBalanceBeforeDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         stablecoin.approve(address(docHandler), extraDocToDeposit);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
@@ -81,10 +81,10 @@ contract DcaScheduleTest is DcaDappTest {
         dcaManager.updateDcaSchedule(
             address(stablecoin), SCHEDULE_INDEX, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
         );
-        uint256 userBalanceAfterDeposit = dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 userBalanceAfterDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         assertEq(extraDocToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
-        assertEq(newPurchaseAmount, dcaManager.getSchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
-        assertEq(newPurchasePeriod, dcaManager.getSchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
+        assertEq(newPurchaseAmount, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
+        assertEq(newPurchasePeriod, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
@@ -205,11 +205,11 @@ contract DcaScheduleTest is DcaDappTest {
     function testCannotConsultInexistentSchedule() external {
         vm.startPrank(USER);
         vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
-        dcaManager.getScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX + 1);
+        dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX + 1);
         vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
-        dcaManager.getSchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX + 1);
+        dcaManager.getMySchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX + 1);
         vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
-        dcaManager.getSchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX + 1);
+        dcaManager.getMySchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX + 1);
         vm.stopPrank();
     }
 
