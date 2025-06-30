@@ -245,7 +245,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             _handler(token, lendingProtocolIndex).withdrawToken(msg.sender, tokenBalance);
         }
 
-        // Emit event
         emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleId, tokenBalance);
     }
 
