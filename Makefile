@@ -2,7 +2,7 @@
 SWAP_TYPE ?= mocSwaps
 LENDING_PROTOCOL ?= tropykus
 STABLECOIN_TYPE ?= DOC
-TEST_CMD := forge test --no-match-test invariant
+TEST_CMD := forge test --no-match-test invariant -j 1
 
 # Targets
 .PHONY: all test moc dex help
