@@ -31,8 +31,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
-    uint256 private s_minPurchasePeriod = 1 days; // At most one purchase each day
-    uint256 private s_maxSchedulesPerToken = 10; // Maximum number of schedules per token
+    uint256 private s_minPurchasePeriod = 1 days; // Default to at most one purchase each day
+    uint256 private s_maxSchedulesPerToken = 10; // Default to a maximum of 10 schedules per token
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
@@ -299,7 +299,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         bytes32[] memory scheduleIds,
         uint256[] memory purchaseAmounts,
         uint256 lendingProtocolIndex
-    ) external override nonReentrant /*onlyOwner*/ onlySwapper {
+    ) external override nonReentrant onlySwapper {
         uint256 numOfPurchases = buyers.length;
         if (numOfPurchases == 0) revert DcaManager__EmptyBatchPurchaseArrays();
         if (
@@ -443,7 +443,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _validateDeposit(address token, uint256 depositAmount) internal {
         if (depositAmount == 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
-        // if (!_isTokenDeposited(token)) s_usersDepositedTokens[msg.sender].push(token);
         if (!s_tokenIsDeposited[msg.sender][token]) {
             s_tokenIsDeposited[msg.sender][token] = true;
             s_usersDepositedTokens[msg.sender].push(token);
@@ -699,22 +698,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             revert DcaManager__InexistentScheduleIndex();
         }
         return s_dcaSchedules[user][token][scheduleIndex].scheduleId;
-    }
-
-    /**
-     * @notice get all DCA schedules for a user
-     * @param user: the user to get schedules for
-     * @param token: the token to get schedules for
-     * @return the DCA schedules
-     */
-    function ownerGetUsersDcaSchedules(address user, address token)
-        external
-        view
-        override
-        onlyOwner
-        returns (DcaDetails[] memory)
-    {
-        return s_dcaSchedules[user][token];
     }
 
     /**
