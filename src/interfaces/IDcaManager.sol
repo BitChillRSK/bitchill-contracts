@@ -304,12 +304,12 @@ interface IDcaManager {
     function getScheduleId(address user, address token, uint256 scheduleIndex) external view returns (bytes32);
 
     /**
-     * @notice get the users DCA schedules
-     * @param user the user address
+     * @notice get the schedule ID of a schedule for the caller
      * @param token the token address
-     * @return the DCA schedules for the user and the token
+     * @param scheduleIndex the index of the schedule
+     * @return the schedule ID of the schedule
      */
-    function ownerGetUsersDcaSchedules(address user, address token) external view returns (DcaDetails[] memory);
+    function getMyScheduleId(address token, uint256 scheduleIndex) external view returns (bytes32);
 
     /**
      * @notice get the admin operations contract's address
@@ -345,15 +345,24 @@ interface IDcaManager {
      */
     function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
         external
+        view
         returns (uint256);
+
+    /**
+     * @notice get the interest accrued by a user for a token and lending protocol index (caller's schedule)
+     * @param token the token address
+     * @param lendingProtocolIndex the lending protocol index
+     * @return the interest accrued by the user for the token and lending protocol index
+     */
+    function getMyInterestAccrued(address token, uint256 lendingProtocolIndex) external view returns (uint256);
 
     /**
      * @dev returns the minimum period that can be set for purchases
      */
-    function getMinPurchasePeriod() external returns (uint256);
+    function getMinPurchasePeriod() external view returns (uint256);
 
     /**
      * @dev returns the maximum number of schedules per token
      */
-    function getMaxSchedulesPerToken() external returns (uint256);
+    function getMaxSchedulesPerToken() external view returns (uint256);
 }

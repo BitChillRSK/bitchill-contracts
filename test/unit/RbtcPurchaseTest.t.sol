@@ -229,8 +229,8 @@ contract RbtcPurchaseTest is DcaDappTest {
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
             scheduleIndexes[i] = i;
             vm.startPrank(OWNER);
-            purchaseAmounts[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(stablecoin))[i].purchaseAmount;
-            purchasePeriods[i] = dcaManager.ownerGetUsersDcaSchedules(users[0], address(stablecoin))[i].purchasePeriod;
+            purchaseAmounts[i] = dcaManager.getDcaSchedules(users[0], address(stablecoin))[i].purchaseAmount;
+            purchasePeriods[i] = dcaManager.getDcaSchedules(users[0], address(stablecoin))[i].purchasePeriod;
             scheduleIds[i] = scheduleId;
             vm.stopPrank();
         }

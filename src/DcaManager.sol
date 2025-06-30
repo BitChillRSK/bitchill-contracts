@@ -210,7 +210,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token of the schedule to delete
      * @param scheduleId: the id of the schedule to delete
      */
-    function deleteDcaSchedule(address token, bytes32 scheduleId) external nonReentrant {
+    function deleteDcaSchedule(address token, bytes32 scheduleId) external override nonReentrant {
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
 
         uint256 scheduleIndex;
@@ -693,7 +693,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param scheduleIndex: the index of the schedule
      * @return the schedule id
      */
-    function getScheduleId(address user, address token, uint256 scheduleIndex) external view override returns (bytes32) {
+    function getScheduleId(address user, address token, uint256 scheduleIndex) public view override returns (bytes32) {
         if (scheduleIndex >= s_dcaSchedules[user][token].length) {
             revert DcaManager__InexistentScheduleIndex();
         }
@@ -767,7 +767,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @return the interest accrued
      */
     function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
-        external
+        public
         view
         override
         returns (uint256)
