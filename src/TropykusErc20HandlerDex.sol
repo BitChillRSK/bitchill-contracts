@@ -4,16 +4,12 @@ pragma solidity 0.8.19;
 import {PurchaseUniswap} from "./PurchaseUniswap.sol";
 import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title TropykusErc20HandlerDex
  * @notice This contract handles swaps of stablecoin for rBTC using Uniswap V3
  */
 contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
-    using SafeERC20 for IERC20;
-
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
