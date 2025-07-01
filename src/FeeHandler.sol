@@ -48,6 +48,10 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         override
         onlyOwner
     {
+        // Validate parameters
+        if (minFeeRate > maxFeeRate) revert FeeHandler__MinFeeRateCannotBeHigherThanMax();
+        if (feePurchaseLowerBound > feePurchaseUpperBound) revert FeeHandler__FeeLowerBoundCAnnotBeHigherThanUpperBound();
+
         if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
         if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
         if (s_feePurchaseLowerBound != feePurchaseLowerBound) setPurchaseLowerBound(feePurchaseLowerBound);
@@ -151,48 +155,53 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @return The fee amount to be deducted from the purchase amount.
      */
     function _calculateFee(uint256 purchaseAmount) internal view returns (uint256) {
-        // If min and max rates are equal, apply a flat fee rate regardless of purchase amount
-        if (s_minFeeRate == s_maxFeeRate) {
-            return purchaseAmount * s_minFeeRate / FEE_PERCENTAGE_DIVISOR;
+        uint256 minFeeRate = s_minFeeRate;
+        uint256 maxFeeRate = s_maxFeeRate;
+        uint256 feePurchaseLowerBound = s_feePurchaseLowerBound;
+        uint256 feePurchaseUpperBound = s_feePurchaseUpperBound;
+
+        if (minFeeRate == maxFeeRate || purchaseAmount >= feePurchaseUpperBound) {
+            return purchaseAmount * minFeeRate / FEE_PERCENTAGE_DIVISOR;
         }
-        
+
+        if (purchaseAmount <= feePurchaseLowerBound) {
+            return purchaseAmount * maxFeeRate / FEE_PERCENTAGE_DIVISOR;
+        }
+
         uint256 feeRate;
-        
-        if (purchaseAmount >= s_feePurchaseUpperBound) {
-            feeRate = s_minFeeRate;
-        } else if (purchaseAmount <= s_feePurchaseLowerBound) {
-            feeRate = s_maxFeeRate;
-        } else {
-            // Calculate the linear fee rate based on purchase amount
-            feeRate = s_maxFeeRate
-                - ((purchaseAmount - s_feePurchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_feePurchaseUpperBound - s_feePurchaseLowerBound);
+        unchecked {
+            feeRate = maxFeeRate
+                - ((purchaseAmount - feePurchaseLowerBound)
+                    * (maxFeeRate - minFeeRate))
+                    / (feePurchaseUpperBound - feePurchaseLowerBound);
         }
-        
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }
 
     /**
-     * @notice calculate the fee and net amounts
-     * @param purchaseAmounts: the purchase amounts
-     * @return the fee, the net amounts, and the total amount to spend on the rBTC purchase
+     * @notice Calculate the fee and net amounts for a batch of purchase amounts.
+     * @param purchaseAmounts The array with the raw purchase amounts specified by users.
+     * @return aggregatedFee      The total fee to be collected for all purchases.
+     * @return netAmountsToSpend  An array with the net amounts (purchase amount minus fee) for each user.
+     * @return totalAmountToSpend The aggregated net amount that will actually be used to buy rBTC.
      */
     function _calculateFeeAndNetAmounts(uint256[] memory purchaseAmounts)
         internal
         view
-        returns (uint256, uint256[] memory, uint256)
+        returns (uint256 aggregatedFee, uint256[] memory netAmountsToSpend, uint256 totalAmountToSpend)
     {
-        uint256 fee;
-        uint256 aggregatedFee;
-        uint256[] memory netAmountsToSpend = new uint256[](purchaseAmounts.length);
-        uint256 totalAmountToSpend;
-        for (uint256 i; i < purchaseAmounts.length; ++i) {
-            fee = _calculateFee(purchaseAmounts[i]);
+        uint256 len = purchaseAmounts.length;
+        netAmountsToSpend = new uint256[](len);
+        
+        for (uint256 i; i < len; ++i) {
+            uint256 amount = purchaseAmounts[i];
+            uint256 fee = _calculateFee(amount);
             aggregatedFee += fee;
-            netAmountsToSpend[i] = purchaseAmounts[i] - fee;
-            totalAmountToSpend += netAmountsToSpend[i];
+
+            uint256 net = amount - fee;
+            netAmountsToSpend[i] = net;
+            totalAmountToSpend += net;
         }
-        return (aggregatedFee, netAmountsToSpend, totalAmountToSpend);
     }
 
     /**

@@ -26,6 +26,13 @@ interface IFeeHandler {
     event FeeHandler__PurchaseUpperBoundSet(uint256 indexed feePurchaseUpperBound);
     event FeeHandler__FeeCollectorAddress(address indexed feeCollector);
 
+    //////////////////////
+    // Custom errors /////
+    //////////////////////
+
+    error FeeHandler__MinFeeRateCannotBeHigherThanMax();
+    error FeeHandler__FeeLowerBoundCAnnotBeHigherThanUpperBound();
+
     ///////////////////////////////
     // External functions /////////
     ///////////////////////////////
@@ -34,10 +41,10 @@ interface IFeeHandler {
      * @dev Sets the parameters for the fee rate.
      * @param minFeeRate The minimum fee rate.
      * @param maxFeeRate The maximum fee rate.
-     * @param minAnnualAmount The minimum annual amount for fee calculations.
-     * @param maxAnnualAmount The maximum annual amount for fee calculations.
+     * @param feePurchaseLowerBound Purchase amount below which the maximum fee rate is applied.
+     * @param feePurchaseUpperBound Purchase amount above which the minimum fee rate is applied.
      */
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 minAnnualAmount, uint256 maxAnnualAmount)
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 feePurchaseLowerBound, uint256 feePurchaseUpperBound)
         external;
 
     /**
