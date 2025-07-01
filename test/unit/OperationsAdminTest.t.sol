@@ -61,8 +61,8 @@ contract OperationsAdminTest is DcaDappTest {
             IFeeHandler.FeeSettings({
                 minFeeRate: MIN_FEE_RATE,
                 maxFeeRate: MAX_FEE_RATE_TEST,
-                purchaseLowerBound: PURCHASE_LOWER_BOUND,
-                purchaseUpperBound: PURCHASE_UPPER_BOUND
+                purchaseLowerBound: FEE_PURCHASE_LOWER_BOUND,
+                purchaseUpperBound: FEE_PURCHASE_UPPER_BOUND
             })
         );
         vm.stopBroadcast();
