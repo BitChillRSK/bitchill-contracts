@@ -4,16 +4,12 @@ pragma solidity 0.8.19;
 import {PurchaseMoc} from "./PurchaseMoc.sol";
 import {PurchaseRbtc} from "./PurchaseRbtc.sol";
 import {SovrynErc20Handler} from "./SovrynErc20Handler.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title SovrynDocHandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
 contract SovrynDocHandlerMoc is SovrynErc20Handler, PurchaseMoc {
-    using SafeERC20 for IERC20;
-
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment

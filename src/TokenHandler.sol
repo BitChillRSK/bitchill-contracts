@@ -35,11 +35,6 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
     ) FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress) {
         i_stableToken = IERC20(tokenAddress);
         s_minPurchaseAmount = minPurchaseAmount;
-        s_feeCollector = feeCollector;
-        s_minFeeRate = feeSettings.minFeeRate;
-        s_maxFeeRate = feeSettings.maxFeeRate;
-        s_feePurchaseLowerBound = feeSettings.feePurchaseLowerBound;
-        s_feePurchaseUpperBound = feeSettings.feePurchaseUpperBound;
     }
 
     /*//////////////////////////////////////////////////////////////

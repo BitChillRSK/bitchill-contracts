@@ -4,16 +4,12 @@ pragma solidity 0.8.19;
 import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
 import {PurchaseMoc} from "src/PurchaseMoc.sol";
 import {PurchaseRbtc} from "src/PurchaseRbtc.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /**
  * @title TropykusDocHandlerMoc
  * @notice This contract handles swaps of DOC for rBTC directly redeeming the latter from the MoC contract
  */
 contract TropykusDocHandlerMoc is TropykusErc20Handler, PurchaseMoc {
-    using SafeERC20 for IERC20;
-
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
