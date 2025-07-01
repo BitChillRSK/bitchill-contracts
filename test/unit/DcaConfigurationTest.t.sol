@@ -19,14 +19,14 @@ contract DcaConfigurationTest is DcaDappTest {
     function testSetPurchaseAmount() external {
         vm.startPrank(USER);
         dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_SPEND);
-        assertEq(AMOUNT_TO_SPEND, dcaManager.getSchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
+        assertEq(AMOUNT_TO_SPEND, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
     function testSetPurchasePeriod() external {
         vm.startPrank(USER);
         dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
-        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getSchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
+        assertEq(MIN_PURCHASE_PERIOD, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();
     }
 
@@ -46,7 +46,7 @@ contract DcaConfigurationTest is DcaDappTest {
     }
 
     function testPurchasePeriodMustBeGreaterThanMin() external {
-        vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMin.selector);
+        vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMinimum.selector);
         vm.prank(USER);
         dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD - 1);
     }

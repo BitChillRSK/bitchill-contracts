@@ -122,29 +122,29 @@ contract StablecoinLendingTest is DcaDappTest {
         super.makeSeveralPurchasesWithSeveralSchedules();
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
-        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1);
+        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
 
         // @notice In this test we don't use assertEq because calculating the exact number on the right hand side would be too much hassle
         // However, we check that the lending tokens spent to redeem stablecoin to make the rBTC purchases is lower than the amount we would have
         // needed if the exchange rate were constant and greater than the amount necessary if all the redemptions had been made at the latest exchange rate (since as time passes fewer tokens are necessary to redeem each stablecoin)
-        assertLe(
+        assertLt(
             prevLendingTokenBalance - postLendingTokenBalance,
             NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / startingExchangeRate
         );
-        assertGe(
+        assertGt(
             prevLendingTokenBalance - postLendingTokenBalance, NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / exchangeRate
         );
 
         // @notice Similarly, here we check that the remaining lending token balance of the stablecoin Token Handler contract is lower
         // than it would have been if the redemptions had been made at the highest exchange rate but greater than
         // if the redemptions had been made at the starting exchange rate
-        assertLe(
+        assertLt(
             lendingToken.balanceOf(address(docHandler)),
             AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / exchangeRate
         );
-        assertGe(
+        assertGt(
             lendingToken.balanceOf(address(docHandler)),
             AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / startingExchangeRate
         );
