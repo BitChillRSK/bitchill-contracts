@@ -90,8 +90,6 @@ contract SovrynErc20HandlerTest is HandlerTestHarness {
         vm.prank(address(dcaManager));
         handler.depositToken(USER, DEPOSIT_AMOUNT);
         
-        uint256 initialLendingBalance = sovrynHandler.getUsersLendingTokenBalance(USER);
-        
         // Simulate interest accrual by time passage
         vm.warp(block.timestamp + 365 days); // 1 year for interest accrual
         
@@ -348,9 +346,9 @@ contract SovrynTestHandler is SovrynErc20Handler {
     
     // Implementation required by IPurchaseRbtc interface
     function buyRbtc(
-        address buyer,
-        bytes32 scheduleId,
-        uint256 purchaseAmount
+        address /* buyer */,
+        bytes32 /* scheduleId */,
+        uint256 /* purchaseAmount */
     ) external pure returns (uint256) {
         return 0; // Minimal implementation for testing
     }

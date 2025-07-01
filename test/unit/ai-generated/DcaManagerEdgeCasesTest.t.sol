@@ -197,8 +197,6 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX       // lendingProtocolIndex
         );
         
-        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), 0);
-        
         // This test would require a successful first purchase to set lastPurchaseTimestamp
         // Then test that immediate second purchase fails due to time period validation
         // However, this requires complex Uniswap mock setup that's already covered

@@ -31,3 +31,37 @@ fail_on_revert = true
 # optimizer = false
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+# Fork profile for running invariant tests against live networks
+[profile.fork]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    '@openzeppelin=lib/openzeppelin-contracts',
+    '@uniswap/v3-core=lib/v3-core',
+    '@uniswap/v3-periphery=lib/v3-periphery',
+    '@uniswap/swap-router-contracts=lib/swap-router-contracts',
+]
+
+solc_version = "0.8.19"
+evm_version = "london"
+
+# Fork-specific settings
+eth_rpc_url = "${RSK_MAINNET_RPC}"  # Set this environment variable
+fork_block_number = 6800000         # Pin to a stable recent block (adjust as needed)
+
+# Reduce runs for faster fork testing
+[profile.fork.fuzz]
+runs = 100
+
+[profile.fork.invariant]
+runs = 32              # Reduced from 64 for faster execution on fork
+depth = 256            # Reduced from 512 for faster execution
+fail_on_revert = true
+
+# Add compiler overrides for dependencies (same as default)
+[profile.fork.solc_overrides]
+"lib/swap-router-contracts/contracts/interfaces/IApproveAndCall.sol" = "0.7.6"
+"lib/v3-core/" = "0.7.6"
+"lib/v3-periphery/" = "0.7.6"
