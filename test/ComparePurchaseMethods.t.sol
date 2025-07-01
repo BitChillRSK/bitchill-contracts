@@ -33,7 +33,6 @@ contract ComparePurchaseMethods is Test {
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
     
-    uint256 constant MIN_PURCHASE_PERIOD = 1 days;
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant RBTC_TO_MINT_DOC = 1 ether;
 

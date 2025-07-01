@@ -58,7 +58,6 @@ contract DcaDappTest is Test {
     uint256 constant AMOUNT_TO_DEPOSIT = 2000 ether;
     uint256 constant AMOUNT_TO_SPEND = 200 ether;
 
-    uint256 constant MIN_PURCHASE_PERIOD = 1 days; // at most one purchase every day
     uint256 constant SCHEDULE_INDEX = 0;
     uint256 constant NUM_OF_SCHEDULES = 5;
     
