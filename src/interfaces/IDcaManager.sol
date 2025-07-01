@@ -343,7 +343,7 @@ interface IDcaManager {
      * @param lendingProtocolIndex the lending protocol index
      * @return the interest accrued by the user for the token and the lending protocol index
      */
-    function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
+    function getInterestAccrued(address user, address token, uint256 lendingProtocolIndex)
         external
         view
         returns (uint256);

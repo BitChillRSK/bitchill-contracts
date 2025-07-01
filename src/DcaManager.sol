@@ -39,11 +39,12 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
     /**
      * @notice validate the schedule index
+     * @param user the user address to validate the schedule for
      * @param token the token address
      * @param scheduleIndex the schedule index
      */
-    modifier validateIndex(address token, uint256 scheduleIndex) {
-        if (scheduleIndex >= s_dcaSchedules[msg.sender][token].length) {
+    modifier validateScheduleIndex(address user, address token, uint256 scheduleIndex) {
+        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
             revert DcaManager__InexistentScheduleIndex();
         }
         _;
@@ -84,7 +85,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         external
         override
         nonReentrant
-        validateIndex(token, scheduleIndex)
+        validateScheduleIndex(msg.sender, token, scheduleIndex)
     {
         _validateDeposit(token, depositAmount);
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
@@ -102,7 +103,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount)
         external
         override
-        validateIndex(token, scheduleIndex)
+        validateScheduleIndex(msg.sender, token, scheduleIndex)
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
@@ -119,7 +120,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod)
         external
         override
-        validateIndex(token, scheduleIndex)
+        validateScheduleIndex(msg.sender, token, scheduleIndex)
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         _validatePurchasePeriod(purchasePeriod);
@@ -185,7 +186,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
-    ) external override validateIndex(token, scheduleIndex) {
+    ) external override validateScheduleIndex(msg.sender, token, scheduleIndex) {
         DcaDetails memory dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
 
         if (purchasePeriod > 0) {
@@ -604,11 +605,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         public
         view
         override
+        validateScheduleIndex(user, token, scheduleIndex)
         returns (uint256)
     {
-        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
-            revert DcaManager__InexistentScheduleIndex();
-        }
         return s_dcaSchedules[user][token][scheduleIndex].tokenBalance;
     }
 
@@ -638,11 +637,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         public
         view
         override
+        validateScheduleIndex(user, token, scheduleIndex)
         returns (uint256)
     {
-        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
-            revert DcaManager__InexistentScheduleIndex();
-        }
         return s_dcaSchedules[user][token][scheduleIndex].purchaseAmount;
     }
 
@@ -672,11 +669,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         public
         view
         override
+        validateScheduleIndex(user, token, scheduleIndex)
         returns (uint256)
     {
-        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
-            revert DcaManager__InexistentScheduleIndex();
-        }
         return s_dcaSchedules[user][token][scheduleIndex].purchasePeriod;
     }
 
@@ -697,10 +692,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param scheduleIndex: the index of the schedule
      * @return the schedule id
      */
-    function getScheduleId(address user, address token, uint256 scheduleIndex) public view override returns (bytes32) {
-        if (scheduleIndex >= s_dcaSchedules[user][token].length) {
-            revert DcaManager__InexistentScheduleIndex();
-        }
+    function getScheduleId(address user, address token, uint256 scheduleIndex)
+        public
+        view
+        override
+        validateScheduleIndex(user, token, scheduleIndex)
+        returns (bytes32)
+    {
         return s_dcaSchedules[user][token][scheduleIndex].scheduleId;
     }
 
@@ -754,23 +752,23 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice get the interest accrued by a user for a token and lending protocol index (caller's schedule)
+     * @notice get the interest accrued by the caller with a given stablecoin in a given lending protocol
      * @param token: the token to get the interest for
      * @param lendingProtocolIndex: the lending protocol index to get the interest for
      * @return the interest accrued
      */
     function getMyInterestAccrued(address token, uint256 lendingProtocolIndex) external view override returns (uint256) {
-        return getInterestAccruedByUser(msg.sender, token, lendingProtocolIndex);
+        return getInterestAccrued(msg.sender, token, lendingProtocolIndex);
     }
 
     /**
-     * @notice get the interest accrued by a user for a token and lending protocol index
+     * @notice get the interest accrued by the caller with a given stablecoin in a given lending protocol
      * @param user: the user to get the interest for
      * @param token: the token to get the interest for
      * @param lendingProtocolIndex: the lending protocol index to get the interest for
      * @return the interest accrued
      */
-    function getInterestAccruedByUser(address user, address token, uint256 lendingProtocolIndex)
+    function getInterestAccrued(address user, address token, uint256 lendingProtocolIndex)
         public
         view
         override
