@@ -81,14 +81,14 @@ interface IFeeHandler {
     function getMaxFeeRate() external returns (uint256);
 
     /**
-     * @dev Gets the annual (periodic purchase * number of purchases in a year) amount below which the max fee rate is charged
+     * @dev Gets the purchase amount below which the maximum fee rate is applied
      */
-    function getMinAnnualAmount() external returns (uint256);
+    function getFeePurchaseLowerBound() external returns (uint256);
 
     /**
-     * @dev Gets the annual (periodic purchase * number of purchases in a year) amount above which the min fee rate is charged
+     * @dev Gets the purchase amount above which the minimum fee rate is applied
      */
-    function getMaxAnnualAmount() external returns (uint256);
+    function getFeePurchaseUpperBound() external returns (uint256);
 
     /**
      * @dev Gets the fee collector address
