@@ -28,8 +28,8 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
         s_maxFeeRate = feeSettings.maxFeeRate;
-        s_feePurchaseLowerBound = feeSettings.purchaseLowerBound;
-        s_feePurchaseUpperBound = feeSettings.purchaseUpperBound;
+        s_feePurchaseLowerBound = feeSettings.feePurchaseLowerBound;
+        s_feePurchaseUpperBound = feeSettings.feePurchaseUpperBound;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -40,18 +40,18 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @notice set the fee rate parameters
      * @param minFeeRate: the minimum fee rate
      * @param maxFeeRate: the maximum fee rate
-     * @param purchaseLowerBound: the purchase lower bound
-     * @param purchaseUpperBound: the purchase upper bound
+     * @param feePurchaseLowerBound: the purchase lower bound
+     * @param feePurchaseUpperBound: the purchase upper bound
      */
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 purchaseLowerBound, uint256 purchaseUpperBound)
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 feePurchaseLowerBound, uint256 feePurchaseUpperBound)
         external
         override
         onlyOwner
     {
         if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
         if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
-        if (s_feePurchaseLowerBound != purchaseLowerBound) setPurchaseLowerBound(purchaseLowerBound);
-        if (s_feePurchaseUpperBound != purchaseUpperBound) setPurchaseUpperBound(purchaseUpperBound);
+        if (s_feePurchaseLowerBound != feePurchaseLowerBound) setPurchaseLowerBound(feePurchaseLowerBound);
+        if (s_feePurchaseUpperBound != feePurchaseUpperBound) setPurchaseUpperBound(feePurchaseUpperBound);
     }
 
     /**
@@ -74,20 +74,20 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
 
     /**
      * @notice set the purchase lower bound
-     * @param purchaseLowerBound: the purchase lower bound
+     * @param feePurchaseLowerBound: the purchase lower bound
      */
-    function setPurchaseLowerBound(uint256 purchaseLowerBound) public override onlyOwner {
-        s_feePurchaseLowerBound = purchaseLowerBound;
-        emit FeeHandler__PurchaseLowerBoundSet(purchaseLowerBound);
+    function setPurchaseLowerBound(uint256 feePurchaseLowerBound) public override onlyOwner {
+        s_feePurchaseLowerBound = feePurchaseLowerBound;
+        emit FeeHandler__PurchaseLowerBoundSet(feePurchaseLowerBound);
     }
 
     /**
      * @notice set the purchase upper bound
-     * @param purchaseUpperBound: the purchase upper bound
+     * @param feePurchaseUpperBound: the purchase upper bound
      */
-    function setPurchaseUpperBound(uint256 purchaseUpperBound) public override onlyOwner {
-        s_feePurchaseUpperBound = purchaseUpperBound;
-        emit FeeHandler__PurchaseUpperBoundSet(purchaseUpperBound);
+    function setPurchaseUpperBound(uint256 feePurchaseUpperBound) public override onlyOwner {
+        s_feePurchaseUpperBound = feePurchaseUpperBound;
+        emit FeeHandler__PurchaseUpperBoundSet(feePurchaseUpperBound);
     }
 
     /**

@@ -13,8 +13,8 @@ interface IFeeHandler {
     struct FeeSettings {
         uint256 minFeeRate; // the lowest possible fee
         uint256 maxFeeRate; // the highest possible fee
-        uint256 purchaseLowerBound; // the purchase amount below which max fee is applied
-        uint256 purchaseUpperBound; // the purchase amount above which min fee is applied
+        uint256 feePurchaseLowerBound; // the purchase amount below which max fee is applied
+        uint256 feePurchaseUpperBound; // the purchase amount above which min fee is applied
     }
 
     //////////////////////
@@ -22,8 +22,8 @@ interface IFeeHandler {
     //////////////////////
     event FeeHandler__MinFeeRateSet(uint256 indexed minFeeRate);
     event FeeHandler__MaxFeeRateSet(uint256 indexed maxFeeRate);
-    event FeeHandler__PurchaseLowerBoundSet(uint256 indexed purchaseLowerBound);
-    event FeeHandler__PurchaseUpperBoundSet(uint256 indexed purchaseUpperBound);
+    event FeeHandler__PurchaseLowerBoundSet(uint256 indexed feePurchaseLowerBound);
+    event FeeHandler__PurchaseUpperBoundSet(uint256 indexed feePurchaseUpperBound);
     event FeeHandler__FeeCollectorAddress(address indexed feeCollector);
 
     ///////////////////////////////
@@ -54,15 +54,15 @@ interface IFeeHandler {
 
     /**
      * @dev Sets the purchase lower bound for fee calculations.
-     * @param purchaseLowerBound The purchase lower bound.
+     * @param feePurchaseLowerBound The purchase lower bound.
      */
-    function setPurchaseLowerBound(uint256 purchaseLowerBound) external;
+    function setPurchaseLowerBound(uint256 feePurchaseLowerBound) external;
 
     /**
      * @dev Sets the purchase upper bound for fee calculations.
-     * @param purchaseUpperBound The purchase upper bound.
+     * @param feePurchaseUpperBound The purchase upper bound.
      */
-    function setPurchaseUpperBound(uint256 purchaseUpperBound) external;
+    function setPurchaseUpperBound(uint256 feePurchaseUpperBound) external;
 
     /**
      * @dev Sets the address of the fee collector.
