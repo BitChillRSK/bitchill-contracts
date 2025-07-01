@@ -132,7 +132,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @return the maximum annual amount
      */
     function getMaxAnnualAmount() public view override returns (uint256) {
-        return s_purchaseUpperBound;
+        return s_purchaseLowerBound;
     }
 
     /**
