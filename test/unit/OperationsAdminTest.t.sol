@@ -60,7 +60,7 @@ contract OperationsAdminTest is DcaDappTest {
             address(mocProxy),
             IFeeHandler.FeeSettings({
                 minFeeRate: MIN_FEE_RATE,
-                maxFeeRate: MAX_FEE_RATE,
+                maxFeeRate: MAX_FEE_RATE_TEST,
                 purchaseLowerBound: PURCHASE_LOWER_BOUND,
                 purchaseUpperBound: PURCHASE_UPPER_BOUND
             })

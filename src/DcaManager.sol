@@ -31,8 +31,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
-    uint256 private s_minPurchasePeriod = 1 days; // Default to at most one purchase each day
-    uint256 private s_maxSchedulesPerToken = 10; // Default to a maximum of 10 schedules per token
+    uint256 private s_minPurchasePeriod; // Minimum time between purchases
+    uint256 private s_maxSchedulesPerToken; // Maximum number of schedules per stablecoin
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
@@ -65,9 +65,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     /**
      * @param operationsAdminAddress the address of the admin operations contract
+     * @param minPurchasePeriod the minimum time between purchases (in seconds)
+     * @param maxSchedulesPerToken the maximum number of schedules allowed per token
      */
-    constructor(address operationsAdminAddress) Ownable() {
+    constructor(address operationsAdminAddress, uint256 minPurchasePeriod, uint256 maxSchedulesPerToken) Ownable() {
         s_operationsAdmin = OperationsAdmin(operationsAdminAddress);
+        s_minPurchasePeriod = minPurchasePeriod;
+        s_maxSchedulesPerToken = maxSchedulesPerToken;
     }
 
     /**

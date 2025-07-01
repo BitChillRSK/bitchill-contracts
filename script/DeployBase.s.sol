@@ -81,4 +81,13 @@ contract DeployBase is Script {
         }
         revert("Invalid lending protocol");
     }
+
+    /**
+     * @notice Get the appropriate maximum fee rate based on deployment type
+     * @return maxFeeRate The maximum fee rate to use (production has flat 1% fee, test has variable 2% max fee)
+     */
+    function getMaxFeeRate() public view returns (uint256 maxFeeRate) {
+        bool isRealDeployment = vm.envOr("REAL_DEPLOYMENT", false);
+        return isRealDeployment ? MAX_FEE_RATE_PRODUCTION : MAX_FEE_RATE_TEST;
+    }
 }

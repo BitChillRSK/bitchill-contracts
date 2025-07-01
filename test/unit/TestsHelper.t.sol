@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import "../../script/Constants.sol";
+import "../Constants.sol";
 
 contract DummyERC165Contract {
     function supportsInterface(bytes4 interfaceID) external pure returns (bool) {
@@ -13,7 +13,7 @@ contract DummyERC165Contract {
 
 contract FeeCalculator {
     uint256 internal s_minFeeRate = MIN_FEE_RATE;
-    uint256 internal s_maxFeeRate = MAX_FEE_RATE;
+    uint256 internal s_maxFeeRate = MAX_FEE_RATE_TEST; // Use test fee rate for testing
     uint256 internal s_purchaseLowerBound = PURCHASE_LOWER_BOUND;
     uint256 internal s_purchaseUpperBound = PURCHASE_UPPER_BOUND;
 

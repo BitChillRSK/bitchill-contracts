@@ -4,10 +4,13 @@ pragma solidity 0.8.19;
 // Protocol configuration
 uint256 constant MIN_PURCHASE_AMOUNT = 25 ether; // at least 25 DOC on each purchase
 uint256 constant MIN_FEE_RATE = 100;
-uint256 constant MAX_FEE_RATE = 200; // CAMBIAR ESTO PARA EL DESPLIEGUE REAL!!!!
+uint256 constant MAX_FEE_RATE_TEST = 200; // 2% for testing - allows for better fee range testing
+uint256 constant MAX_FEE_RATE_PRODUCTION = 100; // 1% flat rate for production (same as MIN_FEE_RATE for flat fee)
 uint256 constant PURCHASE_LOWER_BOUND = 1000 ether; // 1000 DOC
 uint256 constant PURCHASE_UPPER_BOUND = 100_000 ether; // 100,000 DOC
 uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000;
+uint256 constant MIN_PURCHASE_PERIOD = 1 days; // Default to at most one purchase each day
+uint256 constant MAX_SCHEDULES_PER_TOKEN = 10; // Default to a maximum of 10 DCA schedules per token
 
 // Chain IDs
 uint256 constant ANVIL_CHAIN_ID = 31337;
@@ -45,5 +48,6 @@ uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 // Token holders on mainnet with significant balances (for fork testing)
 address constant DOC_HOLDER = 0x65d189e839aF28B78567bD7255f3f796495141bc; // Large DOC holder on RSK mainnet
 address constant USDRIF_HOLDER = 0xaC31A4bEedd7EC916B7A48a612230cb85c1aaf56; // Large USDRIF holder on RSK mainnet 
+// Token holders on testnet with significant balances (for fork testing)
 address constant DOC_HOLDER_TESTNET = 0x53Ec0aF115619c536480C95Dec4a065e27E6419F; // Large DOC holder on RSK testnet
 address constant USDRIF_HOLDER_TESTNET = 0xe38C86970543173D334b828485D8bc48d19Ff701; // Large USDRIF holder on RSK testnet

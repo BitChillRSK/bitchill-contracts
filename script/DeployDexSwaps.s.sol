@@ -33,7 +33,7 @@ contract DeployDexSwaps is DeployBase {
     function deployDocHandlerDex(DeployParams memory params) public returns (address) {
         IFeeHandler.FeeSettings memory feeSettings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
-            maxFeeRate: MAX_FEE_RATE,
+            maxFeeRate: getMaxFeeRate(),
             purchaseLowerBound: PURCHASE_LOWER_BOUND,
             purchaseUpperBound: PURCHASE_UPPER_BOUND
         });
@@ -99,7 +99,7 @@ contract DeployDexSwaps is DeployBase {
         vm.startBroadcast();
 
         OperationsAdmin operationsAdmin = new OperationsAdmin();
-        DcaManager dcaManager = new DcaManager(address(operationsAdmin));
+        DcaManager dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
         address feeCollector = getFeeCollector(environment);
         
         address docHandlerDexAddress;
