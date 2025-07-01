@@ -19,8 +19,8 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
 
     uint256 internal s_minFeeRate; // Minimum fee rate
     uint256 internal s_maxFeeRate; // Maximum fee rate
-    uint256 internal s_purchaseLowerBound; // Spending below lower bound gets the maximum fee rate
-    uint256 internal s_purchaseUpperBound; // Spending above upper bound gets the minimum fee rate
+    uint256 internal s_feePurchaseLowerBound; // Spending below lower bound gets the maximum fee rate
+    uint256 internal s_feePurchaseUpperBound; // Spending above upper bound gets the minimum fee rate
     address internal s_feeCollector; // Address to which the fees charged to the user will be sent
     uint256 constant FEE_PERCENTAGE_DIVISOR = 10_000; // feeRate will belong to [100, 200], so we need to divide by 10,000 (100 * 100)
 
@@ -28,8 +28,8 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         s_feeCollector = feeCollector;
         s_minFeeRate = feeSettings.minFeeRate;
         s_maxFeeRate = feeSettings.maxFeeRate;
-        s_purchaseLowerBound = feeSettings.purchaseLowerBound;
-        s_purchaseUpperBound = feeSettings.purchaseUpperBound;
+        s_feePurchaseLowerBound = feeSettings.feePurchaseLowerBound;
+        s_feePurchaseUpperBound = feeSettings.feePurchaseUpperBound;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -40,18 +40,18 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      * @notice set the fee rate parameters
      * @param minFeeRate: the minimum fee rate
      * @param maxFeeRate: the maximum fee rate
-     * @param purchaseLowerBound: the purchase lower bound
-     * @param purchaseUpperBound: the purchase upper bound
+     * @param feePurchaseLowerBound: the purchase lower bound
+     * @param feePurchaseUpperBound: the purchase upper bound
      */
-    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 purchaseLowerBound, uint256 purchaseUpperBound)
+    function setFeeRateParams(uint256 minFeeRate, uint256 maxFeeRate, uint256 feePurchaseLowerBound, uint256 feePurchaseUpperBound)
         external
         override
         onlyOwner
     {
         if (s_minFeeRate != minFeeRate) setMinFeeRate(minFeeRate);
         if (s_maxFeeRate != maxFeeRate) setMaxFeeRate(maxFeeRate);
-        if (s_purchaseLowerBound != purchaseLowerBound) setPurchaseLowerBound(purchaseLowerBound);
-        if (s_purchaseUpperBound != purchaseUpperBound) setPurchaseUpperBound(purchaseUpperBound);
+        if (s_feePurchaseLowerBound != feePurchaseLowerBound) setPurchaseLowerBound(feePurchaseLowerBound);
+        if (s_feePurchaseUpperBound != feePurchaseUpperBound) setPurchaseUpperBound(feePurchaseUpperBound);
     }
 
     /**
@@ -74,20 +74,20 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
 
     /**
      * @notice set the purchase lower bound
-     * @param purchaseLowerBound: the purchase lower bound
+     * @param feePurchaseLowerBound: the purchase lower bound
      */
-    function setPurchaseLowerBound(uint256 purchaseLowerBound) public override onlyOwner {
-        s_purchaseLowerBound = purchaseLowerBound;
-        emit FeeHandler__PurchaseLowerBoundSet(purchaseLowerBound);
+    function setPurchaseLowerBound(uint256 feePurchaseLowerBound) public override onlyOwner {
+        s_feePurchaseLowerBound = feePurchaseLowerBound;
+        emit FeeHandler__PurchaseLowerBoundSet(feePurchaseLowerBound);
     }
 
     /**
      * @notice set the purchase upper bound
-     * @param purchaseUpperBound: the purchase upper bound
+     * @param feePurchaseUpperBound: the purchase upper bound
      */
-    function setPurchaseUpperBound(uint256 purchaseUpperBound) public override onlyOwner {
-        s_purchaseUpperBound = purchaseUpperBound;
-        emit FeeHandler__PurchaseUpperBoundSet(purchaseUpperBound);
+    function setPurchaseUpperBound(uint256 feePurchaseUpperBound) public override onlyOwner {
+        s_feePurchaseUpperBound = feePurchaseUpperBound;
+        emit FeeHandler__PurchaseUpperBoundSet(feePurchaseUpperBound);
     }
 
     /**
@@ -120,19 +120,17 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
     }
 
     /**
-     * @notice get the minimum annual amount
-     * @return the minimum annual amount
+     * @return the purchase amount below which the maximum fee rate is applied
      */     
-    function getMinAnnualAmount() public view override returns (uint256) {
-        return s_purchaseLowerBound;
+    function getFeePurchaseLowerBound() public view override returns (uint256) {
+        return s_feePurchaseLowerBound;
     }
 
     /**
-     * @notice get the maximum annual amount
-     * @return the maximum annual amount
+     * @return the purchase amount above which the minimum fee rate is applied
      */
-    function getMaxAnnualAmount() public view override returns (uint256) {
-        return s_purchaseLowerBound;
+    function getFeePurchaseUpperBound() public view override returns (uint256) {
+        return s_feePurchaseUpperBound;
     }
 
     /**
@@ -160,15 +158,15 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
         
         uint256 feeRate;
         
-        if (purchaseAmount >= s_purchaseUpperBound) {
+        if (purchaseAmount >= s_feePurchaseUpperBound) {
             feeRate = s_minFeeRate;
-        } else if (purchaseAmount <= s_purchaseLowerBound) {
+        } else if (purchaseAmount <= s_feePurchaseLowerBound) {
             feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate based on purchase amount
             feeRate = s_maxFeeRate
-                - ((purchaseAmount - s_purchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_purchaseUpperBound - s_purchaseLowerBound);
+                - ((purchaseAmount - s_feePurchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
+                    / (s_feePurchaseUpperBound - s_feePurchaseLowerBound);
         }
         
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;

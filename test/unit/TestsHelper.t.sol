@@ -14,8 +14,8 @@ contract DummyERC165Contract {
 contract FeeCalculator {
     uint256 internal s_minFeeRate = MIN_FEE_RATE;
     uint256 internal s_maxFeeRate = MAX_FEE_RATE_TEST; // Use test fee rate for testing
-    uint256 internal s_purchaseLowerBound = PURCHASE_LOWER_BOUND;
-    uint256 internal s_purchaseUpperBound = PURCHASE_UPPER_BOUND;
+    uint256 internal s_feePurchaseLowerBound = FEE_PURCHASE_LOWER_BOUND;
+    uint256 internal s_feePurchaseUpperBound = FEE_PURCHASE_UPPER_BOUND;
 
     function calculateFee(uint256 purchaseAmount) external view returns (uint256) {
 
@@ -25,15 +25,15 @@ contract FeeCalculator {
 
         uint256 feeRate;
 
-        if (purchaseAmount >= s_purchaseLowerBound) {
+        if (purchaseAmount >= s_feePurchaseLowerBound) {
             feeRate = s_minFeeRate;
-        } else if (purchaseAmount <= s_purchaseLowerBound) {
+        } else if (purchaseAmount <= s_feePurchaseLowerBound) {
             feeRate = s_maxFeeRate;
         } else {
             // Calculate the linear fee rate
             feeRate = s_maxFeeRate
-                - ((purchaseAmount - s_purchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
-                    / (s_purchaseUpperBound - s_purchaseLowerBound);
+                - ((purchaseAmount - s_feePurchaseLowerBound) * (s_maxFeeRate - s_minFeeRate))
+                    / (s_feePurchaseUpperBound - s_feePurchaseLowerBound);
         }
         return purchaseAmount * feeRate / FEE_PERCENTAGE_DIVISOR;
     }

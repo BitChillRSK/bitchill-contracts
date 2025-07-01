@@ -35,8 +35,8 @@ contract StablecoinHandlerTest is DcaDappTest {
         IFeeHandler(address(docHandler)).setFeeRateParams(5, 5, 5, 5);
         assertEq(IFeeHandler(address(docHandler)).getMinFeeRate(), 5);
         assertEq(IFeeHandler(address(docHandler)).getMaxFeeRate(), 5);
-        assertEq(IFeeHandler(address(docHandler)).getMinAnnualAmount(), 5);
-        assertEq(IFeeHandler(address(docHandler)).getMaxAnnualAmount(), 5);
+        assertEq(IFeeHandler(address(docHandler)).getFeePurchaseLowerBound(), 5);
+        assertEq(IFeeHandler(address(docHandler)).getFeePurchaseUpperBound(), 5);
     }
 
     function testStablecoinHandlerSetFeeCollectorAddress() external {
