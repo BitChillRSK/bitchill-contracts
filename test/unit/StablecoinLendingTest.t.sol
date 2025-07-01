@@ -197,7 +197,7 @@ contract StablecoinLendingTest is DcaDappTest {
         updateExchangeRate(10 days);
 
         uint256 withdrawableInterest =
-            dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+            dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         uint256 userStablecoinBalanceBeforeInterestWithdrawal = stablecoin.balanceOf(USER);
         // assertGt(withdrawableInterest, 0);
         vm.prank(USER);
@@ -212,7 +212,7 @@ contract StablecoinLendingTest is DcaDappTest {
             withdrawableInterest,
             1 // Allow a maximum difference of 1e-18%
         );
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+        withdrawableInterest = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         if (withdrawableInterest == 1) withdrawableInterest--; // Handle Sovryn's precision loss
         assertEq(withdrawableInterest, 0);
     }
@@ -224,7 +224,7 @@ contract StablecoinLendingTest is DcaDappTest {
         updateExchangeRate(10 days);
 
         uint256 withdrawableInterestBeforeWithdrawal =
-            dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+            dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         uint256 userStablecoinBalanceBeforeInterestWithdrawal = stablecoin.balanceOf(USER);
         assertGt(withdrawableInterestBeforeWithdrawal, 0);
         bytes memory encodedRevert =
@@ -237,7 +237,7 @@ contract StablecoinLendingTest is DcaDappTest {
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         assertEq(userStablecoinBalanceAfterInterestWithdrawal, userStablecoinBalanceBeforeInterestWithdrawal);
         uint256 withdrawableInterestAfterWithdrawal =
-            dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+            dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         assertEq(withdrawableInterestBeforeWithdrawal, withdrawableInterestAfterWithdrawal);
     }
 
@@ -248,7 +248,7 @@ contract StablecoinLendingTest is DcaDappTest {
         updateExchangeRate(10 days);
 
         uint256 withdrawableInterest =
-            dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+            dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         uint256 userStablecoinBalanceBeforeInterestWithdrawal = stablecoin.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
 
@@ -262,7 +262,7 @@ contract StablecoinLendingTest is DcaDappTest {
             1 // Allow a maximum difference of 1e-18%
         );
 
-        withdrawableInterest = dcaManager.getInterestAccruedByUser(USER, address(stablecoin), s_lendingProtocolIndex);
+        withdrawableInterest = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
         if (withdrawableInterest == 1) withdrawableInterest = 0; // Handle edge case of 1 wei remaining
         assertEq(withdrawableInterest, 0);
     }

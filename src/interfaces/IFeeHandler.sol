@@ -26,11 +26,6 @@ interface IFeeHandler {
     event FeeHandler__PurchaseUpperBoundSet(uint256 indexed purchaseUpperBound);
     event FeeHandler__FeeCollectorAddress(address indexed feeCollector);
 
-    //////////////////////
-    // Errors ////////////
-    //////////////////////
-    // error FeeHandler__FeeTransferFailed(address feeCollector, address token, uint256 feeAmount);
-
     ///////////////////////////////
     // External functions /////////
     ///////////////////////////////
