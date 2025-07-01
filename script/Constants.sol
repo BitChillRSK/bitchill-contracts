@@ -48,5 +48,6 @@ uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 // Token holders on mainnet with significant balances (for fork testing)
 address constant DOC_HOLDER = 0x65d189e839aF28B78567bD7255f3f796495141bc; // Large DOC holder on RSK mainnet
 address constant USDRIF_HOLDER = 0xaC31A4bEedd7EC916B7A48a612230cb85c1aaf56; // Large USDRIF holder on RSK mainnet 
+// Token holders on testnet with significant balances (for fork testing)
 address constant DOC_HOLDER_TESTNET = 0x53Ec0aF115619c536480C95Dec4a065e27E6419F; // Large DOC holder on RSK testnet
 address constant USDRIF_HOLDER_TESTNET = 0xe38C86970543173D334b828485D8bc48d19Ff701; // Large USDRIF holder on RSK testnet
