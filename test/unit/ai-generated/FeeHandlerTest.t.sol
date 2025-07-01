@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {FeeHandlerHarness} from "../mocks/FeeHandlerHarness.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
+import {FeeHandlerHarness} from "../../mocks/FeeHandlerHarness.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
 
 contract FeeHandlerTest is Test {
     FeeHandlerHarness feeHandler;

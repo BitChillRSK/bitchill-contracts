@@ -2,18 +2,19 @@
 pragma solidity 0.8.19;
 
 import {HandlerTestHarness} from "./HandlerTestHarness.t.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
-import {IWRBTC} from "../../src/interfaces/IWRBTC.sol";
+import {ITokenHandler} from "../../../src/interfaces/ITokenHandler.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
+import {IPurchaseUniswap} from "../../../src/interfaces/IPurchaseUniswap.sol";
+import {IWRBTC} from "../../../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
-import {SovrynErc20HandlerDex} from "../../src/SovrynErc20HandlerDex.sol";
-import {MockIsusdToken} from "../mocks/MockIsusdToken.sol";
-import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
-import {MockMocOracle} from "../mocks/MockMocOracle.sol";
+import {ICoinPairPrice} from "../../../src/interfaces/ICoinPairPrice.sol";
+import {SovrynErc20HandlerDex} from "../../../src/SovrynErc20HandlerDex.sol";
+import {MockIsusdToken} from "../../mocks/MockIsusdToken.sol";
+import {MockWrbtcToken} from "../../mocks/MockWrbtcToken.sol";
+import {MockMocOracle} from "../../mocks/MockMocOracle.sol";
+import {MockSwapRouter02} from "../../mocks/MockSwapRouter02.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../script/Constants.sol";
+import "../../../script/Constants.sol";
 
 /**
  * @title SovrynErc20HandlerDexTest 
@@ -25,6 +26,7 @@ contract SovrynErc20HandlerDexTest is HandlerTestHarness {
     MockIsusdToken public iSusdToken;
     MockWrbtcToken public wrbtcToken;
     MockMocOracle public mocOracle;
+    MockSwapRouter02 public mockRouter;
     SovrynErc20HandlerDex public sovrynDexHandler;
     
     /*//////////////////////////////////////////////////////////////
@@ -45,7 +47,7 @@ contract SovrynErc20HandlerDexTest is HandlerTestHarness {
         
         IPurchaseUniswap.UniswapSettings memory uniswapSettings = IPurchaseUniswap.UniswapSettings({
             wrBtcToken: IWRBTC(address(wrbtcToken)),
-            swapRouter02: ISwapRouter02(address(0x777)), // Mock router address
+            swapRouter02: ISwapRouter02(address(mockRouter)),
             swapIntermediateTokens: intermediateTokens,
             swapPoolFeeRates: poolFeeRates,
             mocOracle: ICoinPairPrice(address(mocOracle))
@@ -87,13 +89,14 @@ contract SovrynErc20HandlerDexTest is HandlerTestHarness {
         iSusdToken = new MockIsusdToken(address(stablecoin));
         wrbtcToken = new MockWrbtcToken();
         mocOracle = new MockMocOracle();
+        mockRouter = new MockSwapRouter02(wrbtcToken, BTC_PRICE);
         
         // Note: MockIsusdToken has built-in token price logic
         // Setup oracle price (e.g., 1 Stablecoin = 0.00003 BTC) - will need oracle mock methods
         
         // Give tokens some initial balances
         stablecoin.mint(address(iSusdToken), 1000000 ether);
-        wrbtcToken.mint(address(0x777), 1000 ether); // Give router some WBTC
+        vm.deal(address(mockRouter), 1000 ether); // Give router some ETH for WRBTC deposits
     }
     
     /*//////////////////////////////////////////////////////////////
@@ -356,5 +359,99 @@ contract SovrynErc20HandlerDexTest is HandlerTestHarness {
         
         uint256 userBalanceAfter = stablecoin.balanceOf(USER);
         assertGe(userBalanceAfter, userBalanceBefore);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                           COVERAGE TESTS FOR OVERRIDDEN FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+    
+    /**
+     * @notice Test that specifically calls buyRbtc to trigger _redeemStablecoin override
+     * @dev This test ensures the SovrynErc20HandlerDex._redeemStablecoin override is covered
+     */
+    function test_sovrynDex_buyRbtcTriggersRedeemStablecoinOverride() public {
+        // Setup: User deposits tokens first
+        vm.prank(address(dcaManager));
+        handler.depositToken(USER, DEPOSIT_AMOUNT);
+        
+        // Verify initial state
+        uint256 initialLendingBalance = sovrynDexHandler.getUsersLendingTokenBalance(USER);
+        assertGt(initialLendingBalance, 0);
+        
+        uint256 purchaseAmount = 100 ether;
+        bytes32 mockScheduleId = keccak256("test_schedule");
+        
+        // Call buyRbtc which triggers _redeemStablecoin override
+        vm.prank(address(dcaManager));
+        sovrynDexHandler.buyRbtc(USER, mockScheduleId, purchaseAmount);
+        
+        // Verify the override was called - lending balance should be reduced
+        uint256 finalLendingBalance = sovrynDexHandler.getUsersLendingTokenBalance(USER);
+        assertLt(finalLendingBalance, initialLendingBalance);
+        
+        // Verify RBTC was accumulated
+        uint256 rbtcBalance = sovrynDexHandler.getAccumulatedRbtcBalance(USER);
+        assertGt(rbtcBalance, 0);
+    }
+    
+    /**
+     * @notice Test that specifically calls batchBuyRbtc to trigger _batchRedeemStablecoin override
+     * @dev This test ensures the SovrynErc20HandlerDex._batchRedeemStablecoin override is covered
+     */
+    function test_sovrynDex_batchBuyRbtcTriggersRedeemStablecoinOverride() public {
+        // Setup: Multiple users deposit tokens
+        address user1 = address(0x1001);
+        address user2 = address(0x1002);
+        uint256 depositAmount1 = 500 ether;
+        uint256 depositAmount2 = 300 ether;
+        
+        // Give users stablecoin balance and approve handler
+        stablecoin.mint(user1, depositAmount1);
+        stablecoin.mint(user2, depositAmount2);
+        
+        vm.prank(user1);
+        stablecoin.approve(address(handler), type(uint256).max);
+        vm.prank(user2);
+        stablecoin.approve(address(handler), type(uint256).max);
+        
+        vm.prank(address(dcaManager));
+        handler.depositToken(user1, depositAmount1);
+        vm.prank(address(dcaManager));
+        handler.depositToken(user2, depositAmount2);
+        
+        // Verify initial state
+        uint256 initialBalance1 = sovrynDexHandler.getUsersLendingTokenBalance(user1);
+        uint256 initialBalance2 = sovrynDexHandler.getUsersLendingTokenBalance(user2);
+        assertGt(initialBalance1, 0);
+        assertGt(initialBalance2, 0);
+        
+        // Prepare batch purchase data
+        address[] memory buyers = new address[](2);
+        buyers[0] = user1;
+        buyers[1] = user2;
+        
+        bytes32[] memory scheduleIds = new bytes32[](2);
+        scheduleIds[0] = keccak256("schedule1");
+        scheduleIds[1] = keccak256("schedule2");
+        
+        uint256[] memory purchaseAmounts = new uint256[](2);
+        purchaseAmounts[0] = 100 ether;
+        purchaseAmounts[1] = 80 ether;
+        
+        // Call batchBuyRbtc which triggers _batchRedeemStablecoin override
+        vm.prank(address(dcaManager));
+        sovrynDexHandler.batchBuyRbtc(buyers, scheduleIds, purchaseAmounts);
+        
+        // Verify the override was called - lending balances should be reduced
+        uint256 finalBalance1 = sovrynDexHandler.getUsersLendingTokenBalance(user1);
+        uint256 finalBalance2 = sovrynDexHandler.getUsersLendingTokenBalance(user2);
+        assertLt(finalBalance1, initialBalance1);
+        assertLt(finalBalance2, initialBalance2);
+        
+        // Verify RBTC was accumulated for both users
+        uint256 rbtcBalance1 = sovrynDexHandler.getAccumulatedRbtcBalance(user1);
+        uint256 rbtcBalance2 = sovrynDexHandler.getAccumulatedRbtcBalance(user2);
+        assertGt(rbtcBalance1, 0);
+        assertGt(rbtcBalance2, 0);
     }
 } 

@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {DcaDappTest} from "./DcaDappTest.t.sol";
-import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import {IOperationsAdmin} from "../../src/interfaces/IOperationsAdmin.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
-import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
-import {ITokenLending} from "../../src/interfaces/ITokenLending.sol";
-import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
+import {DcaDappTest} from "../DcaDappTest.t.sol";
+import {IDcaManager} from "../../../src/interfaces/IDcaManager.sol";
+import {IOperationsAdmin} from "../../../src/interfaces/IOperationsAdmin.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
+import {ITokenHandler} from "../../../src/interfaces/ITokenHandler.sol";
+import {IPurchaseRbtc} from "../../../src/interfaces/IPurchaseRbtc.sol";
+import {IPurchaseUniswap} from "../../../src/interfaces/IPurchaseUniswap.sol";
+import {ITokenLending} from "../../../src/interfaces/ITokenLending.sol";
+import {ICoinPairPrice} from "../../../src/interfaces/ICoinPairPrice.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {PurchaseUniswap} from "../../src/PurchaseUniswap.sol";
-import {TropykusErc20Handler} from "../../src/TropykusErc20Handler.sol";
-import {SovrynErc20Handler} from "../../src/SovrynErc20Handler.sol";
-import {TropykusErc20HandlerDex} from "../../src/TropykusErc20HandlerDex.sol";
-import {SovrynErc20HandlerDex} from "../../src/SovrynErc20HandlerDex.sol";
+import {PurchaseUniswap} from "../../../src/PurchaseUniswap.sol";
+import {TropykusErc20Handler} from "../../../src/TropykusErc20Handler.sol";
+import {SovrynErc20Handler} from "../../../src/SovrynErc20Handler.sol";
+import {TropykusErc20HandlerDex} from "../../../src/TropykusErc20HandlerDex.sol";
+import {SovrynErc20HandlerDex} from "../../../src/SovrynErc20HandlerDex.sol";
 import {console2} from "forge-std/console2.sol";
-import "../../script/Constants.sol";
+import "../../../script/Constants.sol";
 
 /**
  * @title GettersTest

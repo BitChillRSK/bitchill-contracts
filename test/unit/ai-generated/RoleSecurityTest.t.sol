@@ -2,21 +2,21 @@
 pragma solidity 0.8.19;
 
 import {Test, console2} from "forge-std/Test.sol";
-import {OperationsAdmin} from "../../src/OperationsAdmin.sol";
-import {DcaManager} from "../../src/DcaManager.sol";
-import {MockStablecoin} from "../mocks/MockStablecoin.sol";
-import {MockKdocToken} from "../mocks/MockKdocToken.sol";
-import {TropykusErc20HandlerDex} from "../../src/TropykusErc20HandlerDex.sol";
-import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
-import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
-import {MockMocOracle} from "../mocks/MockMocOracle.sol";
-import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
-import {IWRBTC} from "../../src/interfaces/IWRBTC.sol";
+import {OperationsAdmin} from "../../../src/OperationsAdmin.sol";
+import {DcaManager} from "../../../src/DcaManager.sol";
+import {MockStablecoin} from "../../mocks/MockStablecoin.sol";
+import {MockKdocToken} from "../../mocks/MockKdocToken.sol";
+import {TropykusErc20HandlerDex} from "../../../src/TropykusErc20HandlerDex.sol";
+import {IPurchaseUniswap} from "../../../src/interfaces/IPurchaseUniswap.sol";
+import {ICoinPairPrice} from "../../../src/interfaces/ICoinPairPrice.sol";
+import {MockMocOracle} from "../../mocks/MockMocOracle.sol";
+import {MockWrbtcToken} from "../../mocks/MockWrbtcToken.sol";
+import {IWRBTC} from "../../../src/interfaces/IWRBTC.sol";
 import {ISwapRouter02} from "@uniswap/swap-router-contracts/contracts/interfaces/ISwapRouter02.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import "../../script/Constants.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
+import {ITokenHandler} from "../../../src/interfaces/ITokenHandler.sol";
+import {IDcaManager} from "../../../src/interfaces/IDcaManager.sol";
+import "../../../script/Constants.sol";
 
 /**
  * @title RoleSecurityTest

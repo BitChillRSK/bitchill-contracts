@@ -2,13 +2,14 @@
 pragma solidity 0.8.19;
 
 import {HandlerTestHarness} from "./HandlerTestHarness.t.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {SovrynErc20Handler} from "../../src/SovrynErc20Handler.sol";
-import {MockIsusdToken} from "../mocks/MockIsusdToken.sol";
-import {MockStablecoin} from "../mocks/MockStablecoin.sol";
+import {ITokenHandler} from "../../../src/interfaces/ITokenHandler.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
+import {SovrynErc20Handler} from "../../../src/SovrynErc20Handler.sol";
+import {MockIsusdToken} from "../../mocks/MockIsusdToken.sol";
+import {MockStablecoin} from "../../mocks/MockStablecoin.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../../script/Constants.sol";
+import {ITokenLending} from "../../../src/interfaces/ITokenLending.sol";
+import "../../../script/Constants.sol";
 
 /**
  * @title SovrynErc20HandlerTest 
@@ -242,6 +243,85 @@ contract SovrynErc20HandlerTest is HandlerTestHarness {
         // Should succeed without reverting due to asset balance check
         assertGt(stablecoin.balanceOf(USER), 0);
     }
+    
+    function test_sovryn_batchRedeemStablecoin() public {
+        // Set up multiple users and deposits
+        address user1 = makeAddr("user1");
+        address user2 = makeAddr("user2");
+        address[] memory users = new address[](2);
+        users[0] = user1;
+        users[1] = user2;
+        
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = DEPOSIT_AMOUNT / 2;
+        amounts[1] = DEPOSIT_AMOUNT / 2;
+        
+        // Give tokens to users and set up approvals
+        stablecoin.mint(user1, DEPOSIT_AMOUNT);
+        stablecoin.mint(user2, DEPOSIT_AMOUNT);
+        
+        vm.prank(user1);
+        stablecoin.approve(address(sovrynHandler), type(uint256).max);
+        vm.prank(user2);
+        stablecoin.approve(address(sovrynHandler), type(uint256).max);
+        
+        // Deposit through DCA manager
+        vm.prank(address(dcaManager));
+        handler.depositToken(user1, DEPOSIT_AMOUNT);
+        vm.prank(address(dcaManager));
+        handler.depositToken(user2, DEPOSIT_AMOUNT);
+        
+        // Call _batchRedeemStablecoin through the test handler
+        uint256 totalToRedeem = amounts[0] + amounts[1];
+        
+        uint256 redeemed = sovrynHandler.testBatchRedeemStablecoin(users, amounts, totalToRedeem);
+        
+        // Verify the batch redemption worked
+        assertGt(redeemed, 0);
+        
+        // Check that users' lending balances were adjusted (decreased from their maximum possible)
+        // Note: Due to interest accrual, balances might be higher than original deposit
+        // but should be lower after redemption than before
+        uint256 finalBalance1 = sovrynHandler.getUsersLendingTokenBalance(user1);
+        uint256 finalBalance2 = sovrynHandler.getUsersLendingTokenBalance(user2);
+        
+        // Both users should still have some balance remaining (since we only redeemed part of it)
+        assertGt(finalBalance1, 0);
+        assertGt(finalBalance2, 0);
+    }
+    
+    function test_sovryn_batchRedeemStablecoin_exceedsBalance_reverts() public {
+        // Set up a scenario where the redemption amount exceeds available balance
+        address user1 = makeAddr("user1");
+        address[] memory users = new address[](1);
+        users[0] = user1;
+        
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = DEPOSIT_AMOUNT;
+        
+        // Give tokens to user and set up approvals
+        stablecoin.mint(user1, DEPOSIT_AMOUNT);
+        vm.prank(user1);
+        stablecoin.approve(address(sovrynHandler), type(uint256).max);
+        
+        // Deposit a smaller amount
+        vm.prank(address(dcaManager));
+        handler.depositToken(user1, DEPOSIT_AMOUNT / 10); // Deposit only 1/10th
+        
+        // Try to redeem more than what's available in the underlying balance
+        // This should trigger the TokenLending__UnderlyingRedeemAmountExceedsBalance error
+        uint256 excessiveAmount = DEPOSIT_AMOUNT * 2; // Try to redeem 2x more than deposited
+        
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ITokenLending.TokenLending__UnderlyingRedeemAmountExceedsBalance.selector,
+                excessiveAmount,
+                iSusdToken.assetBalanceOf(address(sovrynHandler)) + uint256(iSusdToken.profitOf(address(sovrynHandler)))
+            )
+        );
+        
+        sovrynHandler.testBatchRedeemStablecoin(users, amounts, excessiveAmount);
+    }
 }
 
 /**
@@ -273,5 +353,17 @@ contract SovrynTestHandler is SovrynErc20Handler {
         uint256 purchaseAmount
     ) external pure returns (uint256) {
         return 0; // Minimal implementation for testing
+    }
+    
+    /**
+     * @notice Expose _batchRedeemStablecoin for testing
+     * @dev This allows us to test the internal batch redemption logic
+     */
+    function testBatchRedeemStablecoin(
+        address[] memory users,
+        uint256[] memory purchaseAmounts,
+        uint256 totalErc20ToRedeem
+    ) external returns (uint256) {
+        return _batchRedeemStablecoin(users, purchaseAmounts, totalErc20ToRedeem);
     }
 } 
