@@ -206,10 +206,10 @@ contract GettersTest is DcaDappTest {
     }
 
     function test_operationsAdmin_getLendingProtocolIndex() public {
-        uint256 tropykusIndex = operationsAdmin.getLendingProtocolIndex("tropykus");
+        uint256 tropykusIndex = operationsAdmin.getLendingProtocolIndex(TROPYKUS_STRING);
         assertEq(tropykusIndex, 1);
 
-        uint256 sovrynIndex = operationsAdmin.getLendingProtocolIndex("sovryn");
+        uint256 sovrynIndex = operationsAdmin.getLendingProtocolIndex(SOVRYN_STRING);
         assertEq(sovrynIndex, 2);
 
         // Test non-existent protocol
@@ -219,10 +219,10 @@ contract GettersTest is DcaDappTest {
 
     function test_operationsAdmin_getLendingProtocolName() public {
         string memory tropykusName = operationsAdmin.getLendingProtocolName(1);
-        assertEq(tropykusName, "tropykus");
+        assertEq(tropykusName, TROPYKUS_STRING);
 
         string memory sovrynName = operationsAdmin.getLendingProtocolName(2);
-        assertEq(sovrynName, "sovryn");
+        assertEq(sovrynName, SOVRYN_STRING);
 
         // Test non-existent index
         string memory emptyName = operationsAdmin.getLendingProtocolName(999);
@@ -467,11 +467,11 @@ contract GettersTest is DcaDappTest {
         assertEq(dcaManager.getMaxSchedulesPerToken(), MAX_SCHEDULES_PER_TOKEN);
         
         // Test protocol mappings are bidirectional
-        assertEq(operationsAdmin.getLendingProtocolIndex("tropykus"), 1);
-        assertEq(operationsAdmin.getLendingProtocolName(1), "tropykus");
+        assertEq(operationsAdmin.getLendingProtocolIndex(TROPYKUS_STRING), 1);
+        assertEq(operationsAdmin.getLendingProtocolName(1), TROPYKUS_STRING);
         
-        assertEq(operationsAdmin.getLendingProtocolIndex("sovryn"), 2);
-        assertEq(operationsAdmin.getLendingProtocolName(2), "sovryn");
+        assertEq(operationsAdmin.getLendingProtocolIndex(SOVRYN_STRING), 2);
+        assertEq(operationsAdmin.getLendingProtocolName(2), SOVRYN_STRING);
 
         // Test fee bounds consistency
         uint256 lowerBound = IFeeHandler(address(docHandler)).getFeePurchaseLowerBound();

@@ -73,9 +73,9 @@ contract ComparePurchaseMethods is Test {
         
         // Set lending protocol index based on environment variable
         string memory lendingProtocol = vm.envString("LENDING_PROTOCOL");
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             lendingProtocolIndex = TROPYKUS_INDEX;
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING))) {
             lendingProtocolIndex = SOVRYN_INDEX;
         } else {
             revert("Lending protocol not allowed");

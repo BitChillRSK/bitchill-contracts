@@ -73,10 +73,10 @@ contract DeployBase is Script {
 
     function getProtocol() internal view returns (Protocol) {
         string memory lendingProtocol = vm.envString("LENDING_PROTOCOL");
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             return Protocol.TROPYKUS;
         }
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING))) {
             return Protocol.SOVRYN;
         }
         revert("Invalid lending protocol");

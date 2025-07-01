@@ -164,7 +164,7 @@ contract DcaDappTest is Test {
             return;
         }
         
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             s_lendingProtocolIndex = TROPYKUS_INDEX;
         } else if (isSovryn) {
             s_lendingProtocolIndex = SOVRYN_INDEX;
