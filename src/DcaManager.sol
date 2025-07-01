@@ -706,10 +706,19 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice get all users
      * @return the users
      */
-    function getUsers() external view override onlyOwner returns (address[] memory) {
+    function getUsers() external view override returns (address[] memory) {
         return s_users;
     }
 
+    /**
+     * @notice get a user at a specific index
+     * @param i: the index of the user
+     * @return the user
+     */
+    function getUserAtIndex(uint256 i) external view override returns (address) {
+        if (i >= s_users.length) revert DcaManager__UserIndexOutOfBounds(i);
+        return s_users[i];
+    }
     /**
      * @notice get the total number of users who ever made a deposit
      * @return the total number of users
