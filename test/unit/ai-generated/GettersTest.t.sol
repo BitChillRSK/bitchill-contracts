@@ -309,15 +309,14 @@ contract GettersTest is DcaDappTest {
     function test_purchaseUniswap_getters() public onlyDexSwaps {
         if (address(docHandler).code.length > 0) {
             try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent() returns (uint256 percent) {
-                assertGt(percent, 0);
-                assertLe(percent, 10000); // Should be reasonable percentage
+                assertEq(percent, DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT);
             } catch {
                 // Some handlers might not implement this interface
                 return;
             }
 
             try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck() returns (uint256 safetyCheck) {
-                assertGt(safetyCheck, 0);
+                assertEq(safetyCheck, DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK);
             } catch {
                 return;
             }
