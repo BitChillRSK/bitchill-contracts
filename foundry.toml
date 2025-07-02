@@ -49,7 +49,6 @@ evm_version = "london"
 
 # Fork-specific settings
 eth_rpc_url = "${RSK_MAINNET_RPC}"  # Set this environment variable
-fork_block_number = 6800000         # Pin to a stable recent block (adjust as needed)
 
 # Reduce runs for faster fork testing
 [profile.fork.fuzz]

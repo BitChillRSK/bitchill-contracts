@@ -289,7 +289,7 @@ contract InvariantTest is StdInvariant, Test {
     }
     
     /**
-     * @notice Handler contracts should never have excessive stablecoin tokens
+     * @notice Handler contracts should never hold any stablecoin tokens
      */
     function invariant_handlerStablecoinBalanceZero() public {
         uint256 handlerBalance = stablecoin.balanceOf(address(handler));
