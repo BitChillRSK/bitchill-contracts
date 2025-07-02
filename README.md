@@ -116,7 +116,7 @@ The current architecture balances extensibility with gas efficiency:
 2. Potential for future optimization
 3. Dependencies on external protocols
 
-### Audit and testing
+### Audit and Testing
 
 BitChill's smart-contracts have undergone a manual audit by **[Ivan Fitro](https://github.com/IvanFitro)**.  
 
