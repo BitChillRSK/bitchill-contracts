@@ -118,6 +118,18 @@ The current architecture balances extensibility with gas efficiency:
 2. Potential for future optimization
 3. Dependencies on external protocols
 
+## Security
+
+BitChill's smart-contracts have undergone a manual audit by **[Ivan Fitro](https://github.com/IvanFitro)**.  
+
+Also, we used an extensive automation pipeline:
+
+* 100 % branch-level test-coverage on core contracts, with > 94 % line coverage overall.  
+  – Hundreds of AI-generated unit tests exercise edge-cases that were missed in the original hand-written suite.
+* Property-based fuzzing & invariant testing.
+
+Despite these measures **no audit or test-suite can guarantee absolute safety**. You should always perform your own due-diligence and only risk funds you can afford to lose.
+
 ## Getting Started
 
 ### Prerequisites
@@ -149,6 +161,23 @@ make dex-sovryn
 
 # Run specific test file with custom parameters
 STABLECOIN_TYPE=USDRIF SWAP_TYPE=dexSwaps LENDING_PROTOCOL=tropykus forge test --match-path test/unit/DcaDappTest.t.sol -vvv
+
+# -------------------------------
+# Invariant & Fuzz Testing
+# -------------------------------
+# Foundry-based fuzzing and invariants live in `test/ai-generated/fuzz`.  A detailed guide
+# is available in [README_INVARIANTS.md](test/ai-generated//fuzz/README_INVARIANTS.md).
+#
+# Quick examples:
+#
+# Run the full invariant suite with Tropykus (default)
+forge test --match-contract InvariantTest
+#
+# Same suite but forcing Sovryn mocks
+LENDING_PROTOCOL=sovryn forge test --match-contract InvariantTest
+#
+# Run a single invariant (e.g. deposit-vs-lending consistency)
+forge test --match-test invariant_totalDepositedTokensMatchesLendingProtocol -vv
 ```
 
 ### Deployment

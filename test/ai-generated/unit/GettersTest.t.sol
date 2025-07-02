@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {DcaDappTest} from "../DcaDappTest.t.sol";
+import {DcaDappTest} from "../../unit/DcaDappTest.t.sol";
 import {IDcaManager} from "../../../src/interfaces/IDcaManager.sol";
 import {IOperationsAdmin} from "../../../src/interfaces/IOperationsAdmin.sol";
 import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
