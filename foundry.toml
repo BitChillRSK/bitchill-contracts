@@ -64,3 +64,7 @@ fail_on_revert = true
 "lib/swap-router-contracts/contracts/interfaces/IApproveAndCall.sol" = "0.7.6"
 "lib/v3-core/" = "0.7.6"
 "lib/v3-periphery/" = "0.7.6"
+
+[profile.deploy]
+via_ir = true            # Use the Yul IR pipeline – typically 5-15 % smaller bytecode
+optimizer_runs = 200     # Keep reasonable gas/size compromise
