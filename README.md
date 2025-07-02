@@ -99,8 +99,6 @@ The current architecture balances extensibility with gas efficiency:
 - Schedule existence verification
 - Balance checks before operations
 
-## Audit Information
-
 ### Contract Dependencies
 - Rootstock-compatible compiler version (v0.8.19)
 - OpenZeppelin Contracts v4.9.3
@@ -118,7 +116,7 @@ The current architecture balances extensibility with gas efficiency:
 2. Potential for future optimization
 3. Dependencies on external protocols
 
-## Security
+## Audit and testing
 
 BitChill's smart-contracts have undergone a manual audit by **[Ivan Fitro](https://github.com/IvanFitro)**.  
 
