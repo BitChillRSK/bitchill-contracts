@@ -208,6 +208,19 @@ forge script script/DeployMocSwaps.s.sol \
   --legacy
 ```
 
+### Compilation profile for deployment
+Before deploying on-chain, compile using the dedicated `deploy` profile that activates the Yul IR (via_IR) pipeline (see `foundry.toml`).
+
+```bash
+# One-off compilation
+FOUNDRY_PROFILE=deploy forge build
+
+# Or run any script / test under the deploy profile
+FOUNDRY_PROFILE=deploy forge script ...
+```
+
+The profile sets `via_ir = true` and `optimizer_runs = 200`, producing smaller, cheaper byte-code, under the 24,576-byte limit (as per EIP-170).
+
 ## Dependency Management
 
 This project uses Git submodules for dependency management. The following dependencies are included:
