@@ -24,9 +24,6 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
     mapping(bytes32 tokenProtocolHash => address tokenHandlerContract) private s_tokenHandler;
     mapping(string lowerCaseProtocolName => uint256 protocolIndex) private s_protocolIndexes;
     mapping(uint256 protocolIndex => string lowerCaseProtocolName) private s_protocolNames;
-    // No lending -> 0
-    // "tropykus" -> 1
-    // "sovryn" -> 2
 
     constructor() Ownable() {}
 

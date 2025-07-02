@@ -17,8 +17,8 @@ contract DexHelperConfig is Script {
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
     string stablecoinType;
     bool lendingProtocolIsTropykus =
-        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
-    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+        keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING));
+    bool lendingProtocolIsSovryn = keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING));
 
     struct NetworkConfig {
         // Stablecoin address
@@ -176,11 +176,11 @@ contract DexHelperConfig is Script {
         if (lendingProtocolIsTropykus) {
             MockKToken mockLendingToken = new MockKToken(mockStablecoinAddress);
             mockLendingTokenAddress = address(mockLendingToken);
-            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "tropykus");
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, TROPYKUS_STRING);
         } else if (lendingProtocolIsSovryn) {
             MockIsusdToken mockLendingToken = new MockIsusdToken(mockStablecoinAddress);
             mockLendingTokenAddress = address(mockLendingToken);
-            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "sovryn");
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, SOVRYN_STRING);
         } else {
             revert("Invalid lending protocol");
         }

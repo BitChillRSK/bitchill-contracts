@@ -11,14 +11,21 @@ import {console} from "forge-std/Test.sol";
 contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     IStablecoin immutable i_docToken;
     uint256 constant DECIMALS = 1e18;
-    uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // Each DOC token deposited mints 50 kDOC tokens, each kDOC token redeems 0.02 DOC tokens
+    uint256 constant STARTING_EXCHANGE_RATE = 2 * DECIMALS / 100; // 0.02 DOC per kDOC
     uint256 immutable i_deploymentTimestamp;
-    uint256 constant ANNUAL_INCREASE = 5; // The DOC tokens redeemed by each kDOC token increase by 5% annually (mocking behaviour)
+    uint256 constant ANNUAL_INCREASE = 5; // 5% APR (linear for simplicity)
     uint256 constant YEAR_IN_SECONDS = 31536000;
+
+    // Compound-style: keep the last stored exchange rate and the timestamp it was accrued
+    uint256 private s_exchangeRateStored;
+    uint256 private s_lastAccrualTimestamp;
 
     constructor(address docTokenAddress) ERC20("Tropykus kDOC", "kDOC") Ownable() ERC20Permit("Tropykus kDOC") {
         i_docToken = IStablecoin(docTokenAddress);
         i_deploymentTimestamp = block.timestamp;
+
+        s_exchangeRateStored = STARTING_EXCHANGE_RATE;
+        s_lastAccrualTimestamp = block.timestamp;
     }
 
     function mint(uint256 amount) public returns (uint256) {
@@ -45,37 +52,37 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
     }
 
     /**
-     * @dev Returns the stored exchange rate between DOC and kDOC.
-     * The exchange rate increases linearly over time at 5% per year.
+     * @notice Returns the last stored exchange rate (no state changes).
      */
     function exchangeRateStored() public view returns (uint256) {
-        uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
-        uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
-
-        // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
-        // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
-        uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
-
-        return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
+        return s_exchangeRateStored;
     }
 
     /**
-     * @dev Returns the current exchange rate between DOC and kDOC. (same mocking behaviour as exchangeRateStored())
-     * The exchange rate increases linearly over time at 5% per year.
+     * @dev Accrues interest linearly at 5% APR and updates the stored rate.
      */
-    function exchangeRateCurrent() public view returns (uint256) {
-        uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // Time elapsed since deployment in seconds
-        uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // Convert timeElapsed to years with 18 decimals
+    function exchangeRateCurrent() public returns (uint256) {
+        if (block.timestamp == s_lastAccrualTimestamp) {
+            // No time has passed since last accrual; return stored value
+            return s_exchangeRateStored;
+        }
 
-        // Calculate the rate increase: STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed
-        // Divide by 100 for the percentage and by DECIMALS (1e18) to adjust for the extra decimals on yearsElapsed
+        uint256 timeElapsed = block.timestamp - i_deploymentTimestamp; // seconds since deployment
+        uint256 yearsElapsed = (timeElapsed * DECIMALS) / YEAR_IN_SECONDS; // 18-dec fixed-point years
+
+        // Linear increase: STARTING_RATE + STARTING_RATE * APR% * yearsElapsed
         uint256 exchangeRateIncrease = (STARTING_EXCHANGE_RATE * ANNUAL_INCREASE * yearsElapsed) / (100 * DECIMALS);
+        uint256 newRate = STARTING_EXCHANGE_RATE + exchangeRateIncrease;
 
-        return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
+        // Persist
+        s_exchangeRateStored = newRate;
+        s_lastAccrualTimestamp = block.timestamp;
+
+        return newRate;
     }
 
     function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
-        uint256 underlyingAmount = balanceOf(user) * exchangeRateCurrent() / DECIMALS;
+        uint256 underlyingAmount = balanceOf(user) * exchangeRateStored() / DECIMALS;
         return (0, underlyingAmount, 0, 0);
     }
 }

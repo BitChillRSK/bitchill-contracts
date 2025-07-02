@@ -26,7 +26,7 @@ contract BaseDeploymentTest is Test {
     function setUp() public virtual {
         // Set up environment variables for deployment
         vm.setEnv("REAL_DEPLOYMENT", "false");
-        vm.setEnv("LENDING_PROTOCOL", "tropykus");
+        vm.setEnv("LENDING_PROTOCOL", TROPYKUS_STRING);
         
         // Deploy the core protocol
         DeployMocSwaps deployer = new DeployMocSwaps();
@@ -34,9 +34,9 @@ contract BaseDeploymentTest is Test {
         
         // Check which handler type was deployed based on the lending protocol
         string memory lendingProtocol = vm.envString("LENDING_PROTOCOL");
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             tropykusHandler = TropykusDocHandlerMoc(payable(docHandlerMocAddress));
-        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"))) {
+        } else if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING))) {
             sovrynHandler = SovrynDocHandlerMoc(payable(docHandlerMocAddress));
         }
 
@@ -45,7 +45,7 @@ contract BaseDeploymentTest is Test {
         operationsAdmin.setAdminRole(ADMIN);
         vm.prank(ADMIN);
         operationsAdmin.addOrUpdateLendingProtocol(
-            "tropykus",
+            TROPYKUS_STRING,
             TROPYKUS_INDEX
         );
     }
@@ -66,7 +66,7 @@ contract BaseDeploymentTest is Test {
         
         // Verify DcaManager reference in handler
         string memory lendingProtocol = vm.envString("LENDING_PROTOCOL");
-        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"))) {
+        if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             assertEq(tropykusHandler.i_dcaManager(), address(dcaManager), "TropykusHandler doesn't reference DcaManager");
             assertEq(TropykusDocHandlerMoc(payable(docHandlerMocAddress)).owner(), makeAddr(OWNER_STRING), "Handler owner not set correctly");
         } else {

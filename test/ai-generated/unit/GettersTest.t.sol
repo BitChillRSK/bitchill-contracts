@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {DcaDappTest} from "./DcaDappTest.t.sol";
-import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import {IOperationsAdmin} from "../../src/interfaces/IOperationsAdmin.sol";
-import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
-import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
-import {IPurchaseRbtc} from "../../src/interfaces/IPurchaseRbtc.sol";
-import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
-import {ITokenLending} from "../../src/interfaces/ITokenLending.sol";
-import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
+import {DcaDappTest} from "../../unit/DcaDappTest.t.sol";
+import {IDcaManager} from "../../../src/interfaces/IDcaManager.sol";
+import {IOperationsAdmin} from "../../../src/interfaces/IOperationsAdmin.sol";
+import {IFeeHandler} from "../../../src/interfaces/IFeeHandler.sol";
+import {ITokenHandler} from "../../../src/interfaces/ITokenHandler.sol";
+import {IPurchaseRbtc} from "../../../src/interfaces/IPurchaseRbtc.sol";
+import {IPurchaseUniswap} from "../../../src/interfaces/IPurchaseUniswap.sol";
+import {ITokenLending} from "../../../src/interfaces/ITokenLending.sol";
+import {ICoinPairPrice} from "../../../src/interfaces/ICoinPairPrice.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import {PurchaseUniswap} from "../../src/PurchaseUniswap.sol";
-import {TropykusErc20Handler} from "../../src/TropykusErc20Handler.sol";
-import {SovrynErc20Handler} from "../../src/SovrynErc20Handler.sol";
-import {TropykusErc20HandlerDex} from "../../src/TropykusErc20HandlerDex.sol";
-import {SovrynErc20HandlerDex} from "../../src/SovrynErc20HandlerDex.sol";
+import {PurchaseUniswap} from "../../../src/PurchaseUniswap.sol";
+import {TropykusErc20Handler} from "../../../src/TropykusErc20Handler.sol";
+import {SovrynErc20Handler} from "../../../src/SovrynErc20Handler.sol";
+import {TropykusErc20HandlerDex} from "../../../src/TropykusErc20HandlerDex.sol";
+import {SovrynErc20HandlerDex} from "../../../src/SovrynErc20HandlerDex.sol";
 import {console2} from "forge-std/console2.sol";
-import "../../script/Constants.sol";
+import "../../../script/Constants.sol";
 
 /**
  * @title GettersTest
@@ -206,10 +206,10 @@ contract GettersTest is DcaDappTest {
     }
 
     function test_operationsAdmin_getLendingProtocolIndex() public {
-        uint256 tropykusIndex = operationsAdmin.getLendingProtocolIndex("tropykus");
+        uint256 tropykusIndex = operationsAdmin.getLendingProtocolIndex(TROPYKUS_STRING);
         assertEq(tropykusIndex, 1);
 
-        uint256 sovrynIndex = operationsAdmin.getLendingProtocolIndex("sovryn");
+        uint256 sovrynIndex = operationsAdmin.getLendingProtocolIndex(SOVRYN_STRING);
         assertEq(sovrynIndex, 2);
 
         // Test non-existent protocol
@@ -219,10 +219,10 @@ contract GettersTest is DcaDappTest {
 
     function test_operationsAdmin_getLendingProtocolName() public {
         string memory tropykusName = operationsAdmin.getLendingProtocolName(1);
-        assertEq(tropykusName, "tropykus");
+        assertEq(tropykusName, TROPYKUS_STRING);
 
         string memory sovrynName = operationsAdmin.getLendingProtocolName(2);
-        assertEq(sovrynName, "sovryn");
+        assertEq(sovrynName, SOVRYN_STRING);
 
         // Test non-existent index
         string memory emptyName = operationsAdmin.getLendingProtocolName(999);
@@ -309,15 +309,14 @@ contract GettersTest is DcaDappTest {
     function test_purchaseUniswap_getters() public onlyDexSwaps {
         if (address(docHandler).code.length > 0) {
             try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent() returns (uint256 percent) {
-                assertGt(percent, 0);
-                assertLe(percent, 10000); // Should be reasonable percentage
+                assertEq(percent, DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT);
             } catch {
                 // Some handlers might not implement this interface
                 return;
             }
 
             try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck() returns (uint256 safetyCheck) {
-                assertGt(safetyCheck, 0);
+                assertEq(safetyCheck, DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK);
             } catch {
                 return;
             }
@@ -467,11 +466,11 @@ contract GettersTest is DcaDappTest {
         assertEq(dcaManager.getMaxSchedulesPerToken(), MAX_SCHEDULES_PER_TOKEN);
         
         // Test protocol mappings are bidirectional
-        assertEq(operationsAdmin.getLendingProtocolIndex("tropykus"), 1);
-        assertEq(operationsAdmin.getLendingProtocolName(1), "tropykus");
+        assertEq(operationsAdmin.getLendingProtocolIndex(TROPYKUS_STRING), 1);
+        assertEq(operationsAdmin.getLendingProtocolName(1), TROPYKUS_STRING);
         
-        assertEq(operationsAdmin.getLendingProtocolIndex("sovryn"), 2);
-        assertEq(operationsAdmin.getLendingProtocolName(2), "sovryn");
+        assertEq(operationsAdmin.getLendingProtocolIndex(SOVRYN_STRING), 2);
+        assertEq(operationsAdmin.getLendingProtocolName(2), SOVRYN_STRING);
 
         // Test fee bounds consistency
         uint256 lowerBound = IFeeHandler(address(docHandler)).getFeePurchaseLowerBound();

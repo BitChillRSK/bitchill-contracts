@@ -92,9 +92,9 @@ contract MocHelperConfig is Script {
         console.log("lendingProtocol:", lendingProtocol);
         
         bool lendingProtocolIsTropykus =
-            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
+            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING));
         bool lendingProtocolIsSovryn = 
-            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING));
         
         console.log("lendingProtocolIsTropykus:", lendingProtocolIsTropykus);
         console.log("lendingProtocolIsSovryn:", lendingProtocolIsSovryn);
@@ -122,12 +122,12 @@ contract MocHelperConfig is Script {
             MockKdocToken mockLendingToken = new MockKdocToken(mockDocTokenAddress);
             mockLendingTokenAddress = address(mockLendingToken);
             console.log("Created MockKdocToken at:", mockLendingTokenAddress);
-            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "tropykus");
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, TROPYKUS_STRING);
         } else if (lendingProtocolIsSovryn) {
             MockIsusdToken mockLendingToken = new MockIsusdToken(mockDocTokenAddress);
             mockLendingTokenAddress = address(mockLendingToken);
             console.log("Created MockIsusdToken at:", mockLendingTokenAddress);
-            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, "sovryn");
+            emit HelperConfig__CreatedMockLendingToken(mockLendingTokenAddress, SOVRYN_STRING);
         } else {
             revert("Invalid lending protocol");
         }
@@ -181,9 +181,9 @@ contract MocHelperConfig is Script {
         console.log("getLendingTokenAddress - Current stablecoin type:", currentStablecoinType);
         
         bool lendingProtocolIsTropykus =
-            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("tropykus"));
+            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING));
         bool lendingProtocolIsSovryn = 
-            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked("sovryn"));
+            keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(SOVRYN_STRING));
         bool isUSDRIF = keccak256(abi.encodePacked(currentStablecoinType)) == keccak256(abi.encodePacked("USDRIF"));
         
         if (lendingProtocolIsTropykus) {

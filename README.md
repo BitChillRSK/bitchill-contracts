@@ -99,8 +99,6 @@ The current architecture balances extensibility with gas efficiency:
 - Schedule existence verification
 - Balance checks before operations
 
-## Audit Information
-
 ### Contract Dependencies
 - Rootstock-compatible compiler version (v0.8.19)
 - OpenZeppelin Contracts v4.9.3
@@ -117,6 +115,18 @@ The current architecture balances extensibility with gas efficiency:
 1. Gas efficiency trade-offs for extensibility
 2. Potential for future optimization
 3. Dependencies on external protocols
+
+### Audit and Testing
+
+BitChill's smart-contracts have undergone a manual audit by **[Ivan Fitro](https://github.com/IvanFitro)**.  
+
+Also, we used an extensive automation pipeline:
+
+* 100 % branch-level test-coverage on core contracts, with > 94 % line coverage overall.  
+  – Hundreds of AI-generated unit tests exercise edge-cases that were missed in the original hand-written suite.
+* Property-based fuzzing & invariant testing.
+
+Despite these measures **no audit or test-suite can guarantee absolute safety**. You should always perform your own due-diligence and only risk funds you can afford to lose.
 
 ## Getting Started
 
@@ -149,6 +159,23 @@ make dex-sovryn
 
 # Run specific test file with custom parameters
 STABLECOIN_TYPE=USDRIF SWAP_TYPE=dexSwaps LENDING_PROTOCOL=tropykus forge test --match-path test/unit/DcaDappTest.t.sol -vvv
+
+# -------------------------------
+# Invariant & Fuzz Testing
+# -------------------------------
+# Foundry-based fuzzing and invariants live in `test/ai-generated/fuzz`.  A detailed guide
+# is available in [README_INVARIANTS.md](test/ai-generated//fuzz/README_INVARIANTS.md).
+#
+# Quick examples:
+#
+# Run the full invariant suite with Tropykus (default)
+forge test --match-contract InvariantTest
+#
+# Same suite but forcing Sovryn mocks
+LENDING_PROTOCOL=sovryn forge test --match-contract InvariantTest
+#
+# Run a single invariant (e.g. deposit-vs-lending consistency)
+forge test --match-test invariant_totalDepositedTokensMatchesLendingProtocol -vv
 ```
 
 ### Deployment
@@ -180,6 +207,19 @@ forge script script/DeployMocSwaps.s.sol \
   --verifier-url $BLOCKSCOUT_API_URL \
   --legacy
 ```
+
+### Compilation profile for deployment
+Before deploying on-chain, compile using the dedicated `deploy` profile that activates the Yul IR (via_IR) pipeline (see `foundry.toml`).
+
+```bash
+# One-off compilation
+FOUNDRY_PROFILE=deploy forge build
+
+# Or run any script / test under the deploy profile
+FOUNDRY_PROFILE=deploy forge script ...
+```
+
+The profile sets `via_ir = true` and `optimizer_runs = 200`, producing smaller, cheaper byte-code, under the 24,576-byte limit (as per EIP-170).
 
 ## Dependency Management
 

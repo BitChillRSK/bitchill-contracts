@@ -22,6 +22,9 @@ string constant TROPYKUS_STRING = "tropykus";
 uint256 constant TROPYKUS_INDEX = 1;
 string constant SOVRYN_STRING = "sovryn";
 uint256 constant SOVRYN_INDEX = 2;
+// No lending -> 0
+// "tropykus" -> 1
+// "sovryn" -> 2
 
 // Default configurations
 string constant DEFAULT_STABLECOIN = "DOC"; // Default stablecoin to use if not specified
