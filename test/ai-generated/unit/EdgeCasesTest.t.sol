@@ -78,7 +78,7 @@ contract EdgeCasesTest is Test {
                       PurchaseRbtc.withdrawStuckRbtc
     //////////////////////////////////////////////////////////////*/
     function test_withdrawStuckRbtc_rescues_to_backup_address() public {
-        (TropykusDocHandlerMoc handler, MockStablecoin doc,, MockMocProxy mocProxy) = _deployTropykusMocHandler(true);
+        (TropykusDocHandlerMoc handler, MockStablecoin doc,,) = _deployTropykusMocHandler(true);
         address RESCUE = address(0xBEEF);
         NonPayableReceiver stuck = new NonPayableReceiver();
 
@@ -171,7 +171,7 @@ contract EdgeCasesTest is Test {
     }
 
     function test_buyRbtc_reverts_on_outdated_oracle() public {
-        (TropykusErc20HandlerDex dex, MockStablecoin doc, MockKdocToken kdoc,, MockWrbtcToken wrbtc, MockMocOracle oracle) = _deployDexHandler();
+        (TropykusErc20HandlerDex dex, MockStablecoin doc,,,, MockMocOracle oracle) = _deployDexHandler();
         // Invalidate oracle price
         oracle.setInvalidPrice();
 
