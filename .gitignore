@@ -15,3 +15,6 @@ docs/
 
 .codegpt
 .cursorignore
+
+# Aderyn report
+report.md
