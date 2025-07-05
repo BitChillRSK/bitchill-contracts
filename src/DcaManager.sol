@@ -12,6 +12,7 @@ import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 /**
  * @title DCA Manager
  * @author BitChill team: Ynyesto
+ * @notice Entry point for the DCA dApp. Create and manage DCA schedules. 
  */
 contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     
