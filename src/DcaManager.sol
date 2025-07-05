@@ -11,9 +11,7 @@ import {IPurchaseRbtc} from "src/interfaces/IPurchaseRbtc.sol";
 
 /**
  * @title DCA Manager
- * @author BitChill team: Antonio María Rodríguez-Ynyesto Sánchez
- * @notice This contract will be used to save and edit the users' DCA strategies
- * @custom:unaudited This is an unaudited contract
+ * @author BitChill team: Ynyesto
  */
 contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     

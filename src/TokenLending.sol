@@ -26,8 +26,6 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 lendingTokenAmount)
     {
-        // lendingTokenAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
-        // lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
         lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate);
     }
 
@@ -42,9 +40,6 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 underlyingAmount)
     {
-        // underlyingAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
-        // Using OpenZeppelin's Math library for precise division rounding up
         underlyingAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
-        // underlyingAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals);
     }
 }
