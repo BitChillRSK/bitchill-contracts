@@ -91,7 +91,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         }
         // Attempt to purchase once more
         bytes memory encodedRevert = abi.encodeWithSelector(
-            IDcaManager.DcaManager__ScheduleBalanceNotEnoughForPurchase.selector, address(stablecoin), 0
+            IDcaManager.DcaManager__ScheduleBalanceNotEnoughForPurchase.selector, SCHEDULE_INDEX, scheduleId, address(stablecoin), 0
         );
         vm.expectRevert(encodedRevert);
         // vm.prank(OWNER);

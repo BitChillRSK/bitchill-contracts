@@ -65,7 +65,7 @@ interface IDcaManager {
     error DcaManager__InexistentScheduleIndex();
     error DcaManager__InexistentScheduleId();
     error DcaManager__ScheduleIdAndIndexMismatch();
-    error DcaManager__ScheduleBalanceNotEnoughForPurchase(address token, uint256 remainingBalance);
+    error DcaManager__ScheduleBalanceNotEnoughForPurchase(uint256 scheduleIndex, bytes32 scheduleId, address token, uint256 remainingBalance);
     error DcaManager__BatchPurchaseArraysLengthMismatch();
     error DcaManager__EmptyBatchPurchaseArrays();
     error DcaManager__MaxSchedulesPerTokenReached(address token);
