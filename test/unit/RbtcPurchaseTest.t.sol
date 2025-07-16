@@ -303,4 +303,130 @@ contract RbtcPurchaseTest is DcaDappTest {
         vm.prank(makeAddr("notUser"));
         IPurchaseRbtc(address(docHandler)).withdrawAccumulatedRbtc(USER);
     }
+
+    // New test: exhaust handler balance across multiple users and schedules without revert
+    function testDepleteHandlerBalanceDoesNotRevert() external {
+        // Prepare a second user
+        address SECOND_USER = makeAddr("SECOND_USER");
+
+        // Fund SECOND_USER with rBTC for gas
+        vm.deal(SECOND_USER, 10 ether);
+
+        // Give SECOND_USER enough stablecoin
+        uint256 secondUserInitialStable = USER_TOTAL_AMOUNT;
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            // Local tests – mint directly
+            stablecoin.mint(SECOND_USER, secondUserInitialStable);
+        } else {
+            // On forked chains we transfer from USER (who already owns tokens)
+            vm.startPrank(USER);
+            stablecoin.transfer(SECOND_USER, secondUserInitialStable);
+            vm.stopPrank();
+        }
+
+        // Define how many schedules each user will have
+        uint256 SCHEDULES_PER_USER = 3;
+
+        // USER already has 1 schedule from setUp → create 2 more so both users end up with 3 each
+        _createAdditionalSchedules(USER, SCHEDULES_PER_USER - 1);
+        // Create 3 schedules for SECOND_USER
+        _createAdditionalSchedules(SECOND_USER, SCHEDULES_PER_USER);
+
+        // Total number of schedules in batch operations
+        uint256 totalSchedules = SCHEDULES_PER_USER * 2;
+
+        // Each schedule can execute AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND purchases before running out of balance
+        uint256 purchasesPerSchedule = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
+
+        // Store initial interest accrued (should be 0 initially)
+        uint256 initialInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 initialInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have 0 interest initially
+        assertEq(initialInterestUser, 0, "USER should have 0 interest initially");
+        assertEq(initialInterestSecondUser, 0, "SECOND_USER should have 0 interest initially");
+
+        // Perform the required number of purchase rounds
+        for (uint256 round; round < purchasesPerSchedule; ++round) {
+            // Build batch arrays
+            address[] memory buyers = new address[](totalSchedules);
+            uint256[] memory scheduleIndexes = new uint256[](totalSchedules);
+            bytes32[] memory scheduleIds = new bytes32[](totalSchedules);
+            uint256[] memory purchaseAmounts = new uint256[](totalSchedules);
+
+            uint256 idx;
+            // Fill arrays for USER
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                buyers[idx] = USER;
+                scheduleIndexes[idx] = i;
+                purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                scheduleIds[idx] = dcaManager.getScheduleId(USER, address(stablecoin), i);
+                ++idx;
+            }
+            // Fill arrays for SECOND_USER
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                buyers[idx] = SECOND_USER;
+                scheduleIndexes[idx] = i;
+                purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                scheduleIds[idx] = dcaManager.getScheduleId(SECOND_USER, address(stablecoin), i);
+                ++idx;
+            }
+
+            // Execute batch purchase as SWAPPER
+            vm.prank(SWAPPER);
+            dcaManager.batchBuyRbtc(
+                buyers,
+                address(stablecoin),
+                scheduleIndexes,
+                scheduleIds,
+                purchaseAmounts,
+                s_lendingProtocolIndex
+            );
+
+            // Advance time and update exchange rate so future purchases are allowed and interest accrues
+            if (block.chainid == ANVIL_CHAIN_ID) {
+                updateExchangeRate(MIN_PURCHASE_PERIOD);
+            } else {
+                vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
+            }
+        }
+
+        // After time has passed and multiple purchase rounds, check that interest has accrued
+        uint256 finalInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 finalInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have accrued some interest during the test
+        assertGt(finalInterestUser, initialInterestUser, "USER should have accrued interest during the test");
+        assertGt(finalInterestSecondUser, initialInterestSecondUser, "SECOND_USER should have accrued interest during the test");
+        
+        // The interest should be positive (greater than 0) since time has passed
+        assertGt(finalInterestUser, 0, "USER should have positive interest after time passage");
+        assertGt(finalInterestSecondUser, 0, "SECOND_USER should have positive interest after time passage");
+
+        // After depletion all schedule balances should be zero
+        for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+            assertEq(dcaManager.getScheduleTokenBalance(USER, address(stablecoin), i), 0);
+            assertEq(dcaManager.getScheduleTokenBalance(SECOND_USER, address(stablecoin), i), 0);
+        }
+
+        // Handler must hold no DOC (stablecoin) after final purchase
+        assertEq(stablecoin.balanceOf(address(docHandler)), 0);
+    }
+
+    /// @dev helper to create additional schedules for a user
+    function _createAdditionalSchedules(address user, uint256 num) internal {
+        if (num == 0) return;
+        vm.startPrank(user);
+        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT * num);
+        for (uint256 i; i < num; ++i) {
+            dcaManager.createDcaSchedule(
+                address(stablecoin),
+                AMOUNT_TO_DEPOSIT,
+                AMOUNT_TO_SPEND,
+                MIN_PURCHASE_PERIOD,
+                s_lendingProtocolIndex
+            );
+        }
+        vm.stopPrank();
+    }
 }
