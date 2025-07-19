@@ -208,7 +208,9 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         virtual
         returns (uint256)
     {
-        (, uint256 underlyingAmount,,) = i_kToken.getSupplierSnapshotStored(address(this)); // esto devuelve la cantidad retirable por la dirección de nuestro contrato en la última actualización de mercado
+        (, uint256 underlyingAmount,,) = i_kToken.getSupplierSnapshotStored(address(this)); 
+        // @notice underlyingAmount is the amount of stablecoin that can be redeemed by this contract as of the latest market update
+        // this is just a safety check to avoid trying to redeem more than the contract has in deposit
         if (totalStablecoinToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalStablecoinToRedeem, underlyingAmount);
         }
@@ -222,9 +224,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
             emit TokenLending__UnderlyingRedeemedLendingTokenRepayed(users[i], purchaseAmounts[i], usersRepayedKtoken);
         }
         
-        // Store stablecoin balance before redemption
         uint256 stablecoinBalanceBefore = i_stableToken.balanceOf(address(this));
-        
         uint256 result = i_kToken.redeemUnderlying(totalStablecoinToRedeem);
         if (result == 0) {
             uint256 stablecoinBalanceAfter = i_stableToken.balanceOf(address(this));
