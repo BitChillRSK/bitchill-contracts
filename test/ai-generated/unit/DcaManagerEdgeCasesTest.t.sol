@@ -103,7 +103,8 @@ contract DcaManagerEdgeCasesTest is Test {
             FEE_COLLECTOR,
             feeSettings,
             9970,
-            9900
+            9900,
+            EXCHANGE_RATE_DECIMALS
         );
         
         vm.prank(ADMIN);

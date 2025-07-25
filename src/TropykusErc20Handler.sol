@@ -21,7 +21,6 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
     //////////////////////
     IkToken public immutable i_kToken;
     mapping(address user => uint256 balance) internal s_kTokenBalances;
-    uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
@@ -37,10 +36,11 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         address kTokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings
+        FeeSettings memory feeSettings,
+        uint256 exchangeRateDecimals
     )
         TokenHandler(dcaManagerAddress, stableTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
-        TokenLending(EXCHANGE_RATE_DECIMALS)
+        TokenLending(exchangeRateDecimals)
     {
         i_kToken = IkToken(kTokenAddress);
     }

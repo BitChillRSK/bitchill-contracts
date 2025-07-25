@@ -31,6 +31,7 @@ string constant DEFAULT_STABLECOIN = "DOC"; // Default stablecoin to use if not 
 uint256 constant DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT = 0.988 ether; // 98.8%
 uint256 constant DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK = 0.95 ether; // 95%
 uint256 constant MAX_SLIPPAGE_PERCENT = 1 ether - DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT; 
+uint256 constant EXCHANGE_RATE_DECIMALS = 1e18; // Valid for DOC and USDRIF in both Tropykus and Sovryn
 
 
 /*//////////////////////////////////////////////////////////////
@@ -46,7 +47,6 @@ string constant FEE_COLLECTOR_STRING = "feeCollector";
 
 // Test values
 uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
-uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 
 // Token holders on mainnet with significant balances (for fork testing)
 address constant DOC_HOLDER = 0x65d189e839aF28B78567bD7255f3f796495141bc; // Large DOC holder on RSK mainnet

@@ -29,7 +29,8 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
         address feeCollector,
         FeeSettings memory feeSettings,
         uint256 amountOutMinimumPercent,
-        uint256 amountOutMinimumSafetyCheck
+        uint256 amountOutMinimumSafetyCheck,
+        uint256 exchangeRateDecimals
     )
         TropykusErc20Handler(
             dcaManagerAddress,
@@ -37,7 +38,8 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
             kTokenAddress,
             minPurchaseAmount,
             feeCollector,
-            feeSettings
+            feeSettings,
+            exchangeRateDecimals
         )
         PurchaseUniswap(
             docTokenAddress, 

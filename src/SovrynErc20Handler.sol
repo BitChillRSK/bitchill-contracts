@@ -21,7 +21,6 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
     //////////////////////
     IiSusdToken public immutable i_iSusdToken;
     mapping(address user => uint256 balance) internal s_iSusdBalances;
-    uint256 constant EXCHANGE_RATE_DECIMALS = 1e18;
 
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
@@ -37,10 +36,11 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         address iSusdTokenAddress,
         uint256 minPurchaseAmount,
         address feeCollector,
-        FeeSettings memory feeSettings
+        FeeSettings memory feeSettings,
+        uint256 exchangeRateDecimals
     )
         TokenHandler(dcaManagerAddress, stableTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
-        TokenLending(EXCHANGE_RATE_DECIMALS)
+        TokenLending(exchangeRateDecimals)
     {
         i_iSusdToken = IiSusdToken(iSusdTokenAddress);
     }
