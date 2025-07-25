@@ -250,7 +250,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         }
 
         emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleId, tokenBalance);
-        _cleanupTokenIfNoBalance(msg.sender, token);
+        _cleanUpDepletedToken(msg.sender, token);
     }
 
     /**
@@ -503,7 +503,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         dcaSchedule.tokenBalance -= dcaSchedule.purchaseAmount;
         emit DcaManager__TokenBalanceUpdated(token, scheduleId, dcaSchedule.tokenBalance);
 
-        if (dcaSchedule.tokenBalance == 0) _cleanupTokenIfNoBalance(buyer, token);
+        if (dcaSchedule.tokenBalance == 0) _cleanUpDepletedToken(buyer, token);
 
         // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
         dcaSchedule.lastPurchaseTimestamp += lastPurchaseTimestamp == 0 ? block.timestamp : purchasePeriod; 
@@ -529,7 +529,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _handler(token, dcaSchedule.lendingProtocolIndex).withdrawToken(msg.sender, withdrawalAmount);
         uint256 newTokenBalance = dcaSchedule.tokenBalance;
         emit DcaManager__TokenBalanceUpdated(token, dcaSchedule.scheduleId, newTokenBalance);
-        if(newTokenBalance == 0) _cleanupTokenIfNoBalance(msg.sender, token);
+        if(newTokenBalance == 0) _cleanUpDepletedToken(msg.sender, token);
     }
 
     /**
@@ -564,7 +564,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     /**
      * @dev Helper to clean up s_tokenIsDeposited and s_usersDepositedTokens if user has no balance for a token across all schedules
      */
-    function _cleanupTokenIfNoBalance(address user, address token) private {
+    function _cleanUpDepletedToken(address user, address token) private {
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
         for (uint256 i = 0; i < dcaSchedules.length; ++i) {
             if (dcaSchedules[i].tokenBalance > 0) return;
