@@ -423,7 +423,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 purchaseAmount,
         uint256 tokenBalance,
         uint256 lendingProtocolIndex
-    ) internal {
+    ) private {
         if (purchaseAmount < _handler(token, lendingProtocolIndex).getMinPurchaseAmount()) {
             revert DcaManager__PurchaseAmountMustBeGreaterThanMinimum(token);
         }
@@ -439,7 +439,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice validate the purchase period
      * @param purchasePeriod the purchase period to validate
      */
-    function _validatePurchasePeriod(uint256 purchasePeriod) internal view {
+    function _validatePurchasePeriod(uint256 purchasePeriod) private view {
         if (purchasePeriod < s_minPurchasePeriod) revert DcaManager__PurchasePeriodMustBeGreaterThanMinimum();
     }
 
@@ -448,7 +448,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token to deposit
      * @param depositAmount: the amount to deposit
      */
-    function _validateDeposit(address token, uint256 depositAmount) internal {
+    function _validateDeposit(address token, uint256 depositAmount) private {
         if (depositAmount == 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
         if (!s_tokenIsDeposited[msg.sender][token]) {
             s_tokenIsDeposited[msg.sender][token] = true;
@@ -466,7 +466,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param lendingProtocolIndex: the lending protocol index
      * @return the token handler
      */
-    function _handler(address token, uint256 lendingProtocolIndex) internal view returns (ITokenHandler) {
+    function _handler(address token, uint256 lendingProtocolIndex) private view returns (ITokenHandler) {
         address tokenHandlerAddress = s_operationsAdmin.getTokenHandler(token, lendingProtocolIndex);
         if (tokenHandlerAddress == address(0)) revert DcaManager__TokenNotAccepted();
         return ITokenHandler(tokenHandlerAddress);
@@ -481,7 +481,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @return the purchase amount, purchase period, and lending protocol index
      */
     function _rBtcPurchaseChecksEffects(address buyer, address token, uint256 scheduleIndex, bytes32 scheduleId)
-        internal
+        private
         returns (uint256, uint256)
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[buyer][token][scheduleIndex];
@@ -518,7 +518,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param scheduleIndex: the index of the schedule
      * @param withdrawalAmount: the amount to withdraw
      */
-    function _withdrawToken(address token, uint256 scheduleIndex, uint256 withdrawalAmount) internal {
+    function _withdrawToken(address token, uint256 scheduleIndex, uint256 withdrawalAmount) private {
         if (withdrawalAmount == 0) revert DcaManager__WithdrawalAmountMustBeGreaterThanZero();
         uint256 tokenBalance = s_dcaSchedules[msg.sender][token][scheduleIndex].tokenBalance;
         if (withdrawalAmount > tokenBalance) {
@@ -537,7 +537,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token to withdraw interest from
      * @param lendingProtocolIndex: the lending protocol index
      */
-    function _withdrawInterest(address token, uint256 lendingProtocolIndex) internal {
+    function _withdrawInterest(address token, uint256 lendingProtocolIndex) private {
         _checkTokenYieldsInterest(token, lendingProtocolIndex);
         ITokenHandler tokenHandler = _handler(token, lendingProtocolIndex);
         DcaDetails[] memory dcaSchedules = s_dcaSchedules[msg.sender][token];
@@ -555,7 +555,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token to check
      * @param lendingProtocolIndex: the lending protocol index
      */
-    function _checkTokenYieldsInterest(address token, uint256 lendingProtocolIndex) internal view {
+    function _checkTokenYieldsInterest(address token, uint256 lendingProtocolIndex) private view {
         bytes32 protocolNameHash =
             keccak256(abi.encodePacked(s_operationsAdmin.getLendingProtocolName(lendingProtocolIndex)));
         if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
