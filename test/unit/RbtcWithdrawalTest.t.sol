@@ -32,7 +32,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
-        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
@@ -58,7 +60,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
-        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
 
@@ -79,7 +83,9 @@ contract RbtcWithdrawalTest is DcaDappTest {
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
-        dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
         assertEq(rbtcBalanceAfterWithdrawal, rbtcBalanceBeforeWithdrawal);
     }

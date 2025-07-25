@@ -203,7 +203,9 @@ contract StablecoinLendingTest is DcaDappTest {
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
-        dcaManager.withdrawAllAccumulatedInterest(address(stablecoin), lendingProtocolIndexes);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         console.log("userStablecoinBalanceAfterInterestWithdrawal:", userStablecoinBalanceAfterInterestWithdrawal);
         // assertEq(userStablecoinBalanceAfterInterestWithdrawal - userStablecoinBalanceBeforeInterestWithdrawal, withdrawableInterest);
@@ -233,7 +235,9 @@ contract StablecoinLendingTest is DcaDappTest {
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
         lendingProtocolIndexes[0] = 0; // Index different from 1 (tropykus) or 2 (sovryn) -> no interest is accrued
-        dcaManager.withdrawAllAccumulatedInterest(address(stablecoin), lendingProtocolIndexes);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         assertEq(userStablecoinBalanceAfterInterestWithdrawal, userStablecoinBalanceBeforeInterestWithdrawal);
         uint256 withdrawableInterestAfterWithdrawal =

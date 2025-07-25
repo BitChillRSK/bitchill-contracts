@@ -445,8 +445,9 @@ contract DcaManagerEdgeCasesTest is Test {
         uint256[] memory emptyProtocols = new uint256[](0);
         
         // Should not revert, just do nothing
-        vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(emptyProtocols);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, emptyProtocols);
     }
     
     function test_withdrawAllAccumulatedRbtc_invalidProtocol_reverts() public {
@@ -463,9 +464,11 @@ contract DcaManagerEdgeCasesTest is Test {
         uint256[] memory invalidProtocols = new uint256[](1);
         invalidProtocols[0] = 999; // Invalid protocol
         
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
         vm.expectRevert(IDcaManager.DcaManager__TokenNotAccepted.selector);
         vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(invalidProtocols);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, invalidProtocols);
     }
     
     /*//////////////////////////////////////////////////////////////

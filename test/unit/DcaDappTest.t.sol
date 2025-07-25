@@ -97,6 +97,7 @@ contract DcaDappTest is Test {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     );
+    event DcaManager__TokenDepositsDepletedAcrossAllSchedules(address indexed user, address indexed token);
 
     // TokenHandler
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);

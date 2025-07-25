@@ -454,7 +454,9 @@ contract Handler is Test {
         }
         
         vm.startPrank(user);
-        try dcaManager.withdrawAllAccumulatedRbtc(lendingProtocolIndexes) {
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        try dcaManager.withdrawAllAccumulatedRbtc(tokens, lendingProtocolIndexes) {
             // Success  
         } catch {
             // Ignore failures
@@ -513,7 +515,9 @@ contract Handler is Test {
         }
         
         vm.startPrank(user);
-        try dcaManager.withdrawAllAccumulatedInterest(address(stablecoin), lendingProtocolIndexes) {
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        try dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes) {
             // Success
         } catch {
             // Ignore failures

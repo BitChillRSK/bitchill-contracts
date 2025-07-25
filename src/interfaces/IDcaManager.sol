@@ -50,6 +50,7 @@ interface IDcaManager {
     event DcaManager__OperationsAdminUpdated(address indexed newOperationsAdmin);
     event DcaManager__MinPurchasePeriodModified(uint256 indexed newMinPurchasePeriod);
     event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed lastPurchaseTimestamp);
+    event DcaManager__TokenDepositsDepletedAcrossAllSchedules(address indexed user, address indexed token);
 
     //////////////////////
     // Errors ////////////
@@ -183,10 +184,10 @@ interface IDcaManager {
 
     /**
      * @notice Withdraw the token accumulated by a user as interest through all the DCA strategies using that token
-     * @param token The token address
+     * @param tokens Array of token addresses which the user has deposited
      * @param lendingProtocolIndexes Array of lending protocol indexes to withdraw interest from
      */
-    function withdrawAllAccumulatedInterest(address token, uint256[] calldata lendingProtocolIndexes) external;
+    function withdrawAllAccumulatedInterest(address[] calldata tokens, uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
@@ -211,9 +212,10 @@ interface IDcaManager {
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
+     * @param tokens Array of token addresses which the user has deposited
      * @param lendingProtocolIndexes Array of lending protocol indexes where the user has positions
      */
-    function withdrawAllAccumulatedRbtc(uint256[] calldata lendingProtocolIndexes) external;
+    function withdrawAllAccumulatedRbtc(address[] calldata tokens, uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @dev modifies the minimum period that can be set for purchases
@@ -324,6 +326,27 @@ interface IDcaManager {
      * @return the users deposited tokens
      */
     function getUsersDepositedTokens(address user) external view returns (address[] memory);
+
+    /**
+     * @notice get the tokens that the caller has deposited
+     * @return the tokens
+     */
+    function getMyDepositedTokens() external view returns (address[] memory);
+
+    /**
+     * @notice get the token deposited flag for a user
+     * @param user: the user to get the token deposited flag for
+     * @param token: the token to get the deposited flag for
+     * @return the deposited flag
+     */
+    function getIsTokenDepositedByUser(address user, address token) external view returns (bool);
+
+    /**
+     * @notice get the token deposited flag for the caller
+     * @param token: the token to get the deposited flag for
+     * @return the deposited flag
+     */
+    function getIsTokenDepositedByMe(address token) external view returns (bool);
 
     /**
      * @notice get the users that have ever deposited funds into BitChill
