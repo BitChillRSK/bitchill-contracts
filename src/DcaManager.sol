@@ -408,7 +408,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     }
 
     /*//////////////////////////////////////////////////////////////
-                            INTERNAL FUNCTIONS
+                            PRIVATE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
     /**
