@@ -39,13 +39,5 @@ contract StablecoinWithdrawalTest is DcaDappTest {
         vm.stopPrank();
     }
 
-    function testStateUpdatedWhenTokenDepositsDepletedByWithdrawal() external {
-        vm.startPrank(USER);
-        vm.expectEmit(true, true, true, true);
-        emit DcaManager__TokenDepositsDepletedAcrossAllSchedules(USER, address(stablecoin));
-        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_DEPOSIT);
-        assertEq(dcaManager.getMyDepositedTokens().length, 0);
-        assertEq(dcaManager.getIsTokenDepositedByMe(address(stablecoin)), false);
-        vm.stopPrank();
-    }
+
 } 

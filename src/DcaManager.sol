@@ -25,8 +25,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     /**
      * @notice Each user may create different schedules with one or more stablecoins
      */
-    mapping(address user => mapping(address stableCoin => bool isDeposited)) private s_tokenIsDeposited; // User to token deposited flag
-    mapping(address user => address[] depositedTokens) private s_usersDepositedTokens;
     mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
     address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
@@ -86,7 +84,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         nonReentrant
         validateScheduleIndex(msg.sender, token, scheduleIndex)
     {
-        _validateDeposit(token, depositAmount);
+        _validateDeposit(depositAmount);
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         dcaSchedule.tokenBalance += depositAmount;
         _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
@@ -143,7 +141,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 lendingProtocolIndex
     ) external override {
         _validatePurchasePeriod(purchasePeriod);
-        _validateDeposit(token, depositAmount);
+        _validateDeposit(depositAmount);
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
@@ -193,7 +191,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             dcaSchedule.purchasePeriod = purchasePeriod;
         }
         if (depositAmount > 0) {
-            _validateDeposit(token, depositAmount);
+            _validateDeposit(depositAmount);
             dcaSchedule.tokenBalance += depositAmount;
             _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
         }
@@ -250,7 +248,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         }
 
         emit DcaManager__DcaScheduleDeleted(msg.sender, token, scheduleId, tokenBalance);
-        _cleanUpDepletedToken(msg.sender, token);
     }
 
     /**
@@ -445,15 +442,10 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     /**
      * @notice deposit the full stablecoin amount for DCA on the contract
-     * @param token: the token to deposit
      * @param depositAmount: the amount to deposit
      */
-    function _validateDeposit(address token, uint256 depositAmount) private {
+    function _validateDeposit(uint256 depositAmount) private {
         if (depositAmount == 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
-        if (!s_tokenIsDeposited[msg.sender][token]) {
-            s_tokenIsDeposited[msg.sender][token] = true;
-            s_usersDepositedTokens[msg.sender].push(token);
-        }
         if (!s_userRegistered[msg.sender]) {
             s_userRegistered[msg.sender] = true;
             s_users.push(msg.sender);
@@ -503,8 +495,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         dcaSchedule.tokenBalance -= dcaSchedule.purchaseAmount;
         emit DcaManager__TokenBalanceUpdated(token, scheduleId, dcaSchedule.tokenBalance);
 
-        if (dcaSchedule.tokenBalance == 0) _cleanUpDepletedToken(buyer, token);
-
         // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
         dcaSchedule.lastPurchaseTimestamp += lastPurchaseTimestamp == 0 ? block.timestamp : purchasePeriod; 
         emit DcaManager__LastPurchaseTimestampUpdated(token, scheduleId, dcaSchedule.lastPurchaseTimestamp);
@@ -529,7 +519,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         _handler(token, dcaSchedule.lendingProtocolIndex).withdrawToken(msg.sender, withdrawalAmount);
         uint256 newTokenBalance = dcaSchedule.tokenBalance;
         emit DcaManager__TokenBalanceUpdated(token, dcaSchedule.scheduleId, newTokenBalance);
-        if(newTokenBalance == 0) _cleanUpDepletedToken(msg.sender, token);
     }
 
     /**
@@ -559,27 +548,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         bytes32 protocolNameHash =
             keccak256(abi.encodePacked(s_operationsAdmin.getLendingProtocolName(lendingProtocolIndex)));
         if (protocolNameHash == keccak256(abi.encodePacked(""))) revert DcaManager__TokenDoesNotYieldInterest(token);
-    }
-
-    /**
-     * @dev Helper to clean up s_tokenIsDeposited and s_usersDepositedTokens if user has no balance for a token across all schedules
-     */
-    function _cleanUpDepletedToken(address user, address token) private {
-        DcaDetails[] memory dcaSchedules = s_dcaSchedules[user][token];
-        for (uint256 i = 0; i < dcaSchedules.length; ++i) {
-            if (dcaSchedules[i].tokenBalance > 0) return;
-        }
-        s_tokenIsDeposited[user][token] = false;
-        // Remove token from s_usersDepositedTokens[user]
-        address[] storage tokens = s_usersDepositedTokens[user];
-        for (uint256 i = 0; i < tokens.length; ++i) {
-            if (tokens[i] == token) {
-                tokens[i] = tokens[tokens.length - 1];
-                tokens.pop();
-                break;
-            }
-        }
-        emit DcaManager__TokenDepositsDepletedAcrossAllSchedules(user, token);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -775,42 +743,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function getMaxSchedulesPerToken() external view override returns (uint256) {
         return s_maxSchedulesPerToken;
-    }
-
-    /**
-     * @notice get the tokens that a user has deposited
-     * @param user: the user to get the tokens for
-     * @return the tokens
-     */
-    function getUsersDepositedTokens(address user) external view override returns (address[] memory) {
-        return s_usersDepositedTokens[user];
-    }
-
-    /**
-     * @notice get the tokens that the caller has deposited
-     * @return the tokens
-     */
-    function getMyDepositedTokens() external view override returns (address[] memory) {
-        return s_usersDepositedTokens[msg.sender];
-    }
-
-    /**
-     * @notice get the token deposited flag for a user
-     * @param user: the user to get the token deposited flag for
-     * @param token: the token to get the deposited flag for
-     * @return the deposited flag
-     */
-    function getIsTokenDepositedByUser(address user, address token) external view override returns (bool) {
-        return s_tokenIsDeposited[user][token];
-    }
-
-    /**
-     * @notice get the token deposited flag for the caller
-     * @param token: the token to get the deposited flag for
-     * @return the deposited flag
-     */
-    function getIsTokenDepositedByMe(address token) external view override returns (bool) {
-        return s_tokenIsDeposited[msg.sender][token];
     }
 
     /**

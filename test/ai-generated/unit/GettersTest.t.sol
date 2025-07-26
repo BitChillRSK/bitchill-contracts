@@ -140,12 +140,6 @@ contract GettersTest is DcaDappTest {
         assertEq(maxSchedules, MAX_SCHEDULES_PER_TOKEN);
     }
 
-    function test_dcaManager_getUsersDepositedTokens() public {
-        address[] memory tokens = dcaManager.getUsersDepositedTokens(USER);
-        assertEq(tokens.length, 1);
-        assertEq(tokens[0], address(stablecoin));
-    }
-
     function test_dcaManager_getMyInterestAccrued_whenSupported() public {
         // Only test if the lending protocol supports interest
         if (s_lendingProtocolIndex > 0) {
@@ -394,9 +388,6 @@ contract GettersTest is DcaDappTest {
         IDcaManager.DcaDetails[] memory schedules = dcaManager.getDcaSchedules(address(0), address(stablecoin));
         assertEq(schedules.length, 0);
 
-        address[] memory tokens = dcaManager.getUsersDepositedTokens(address(0));
-        assertEq(tokens.length, 0);
-
         uint256 balance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(address(0));
         assertEq(balance, 0);
     }
@@ -435,9 +426,6 @@ contract GettersTest is DcaDappTest {
         
         // Test empty arrays for new users
         address newUser = makeAddr("newUser");
-        address[] memory emptyTokens = dcaManager.getUsersDepositedTokens(newUser);
-        assertEq(emptyTokens.length, 0);
-        
         IDcaManager.DcaDetails[] memory emptySchedules = dcaManager.getDcaSchedules(newUser, address(stablecoin));
         assertEq(emptySchedules.length, 0);
     }

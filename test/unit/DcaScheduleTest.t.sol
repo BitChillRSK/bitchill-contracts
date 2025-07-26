@@ -222,15 +222,4 @@ contract DcaScheduleTest is DcaDappTest {
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
     }
 
-    function testStateUpdatedWhenTokenDepositsDepletedByScheduleDeletion() external {
-        vm.startPrank(USER);
-        bytes32 scheduleId = dcaManager.getMyDcaSchedules(address(stablecoin))[0].scheduleId;
-        vm.expectEmit(true, true, false, false);
-        emit DcaManager__TokenDepositsDepletedAcrossAllSchedules(USER, address(stablecoin));
-        dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
-        assertEq(dcaManager.getMyDcaSchedules(address(stablecoin)).length, 0);
-        assertEq(dcaManager.getMyDepositedTokens().length, 0);
-        assertEq(dcaManager.getIsTokenDepositedByMe(address(stablecoin)), false);
-        vm.stopPrank();
-    }
 }

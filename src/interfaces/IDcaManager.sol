@@ -50,7 +50,6 @@ interface IDcaManager {
     event DcaManager__OperationsAdminUpdated(address indexed newOperationsAdmin);
     event DcaManager__MinPurchasePeriodModified(uint256 indexed newMinPurchasePeriod);
     event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed lastPurchaseTimestamp);
-    event DcaManager__TokenDepositsDepletedAcrossAllSchedules(address indexed user, address indexed token);
 
     //////////////////////
     // Errors ////////////
@@ -319,34 +318,6 @@ interface IDcaManager {
      * @return the admin operations contract's address
      */
     function getOperationsAdminAddress() external view returns (address);
-
-    /**
-     * @notice get the users deposited tokens
-     * @param user the user address
-     * @return the users deposited tokens
-     */
-    function getUsersDepositedTokens(address user) external view returns (address[] memory);
-
-    /**
-     * @notice get the tokens that the caller has deposited
-     * @return the tokens
-     */
-    function getMyDepositedTokens() external view returns (address[] memory);
-
-    /**
-     * @notice get the token deposited flag for a user
-     * @param user: the user to get the token deposited flag for
-     * @param token: the token to get the deposited flag for
-     * @return the deposited flag
-     */
-    function getIsTokenDepositedByUser(address user, address token) external view returns (bool);
-
-    /**
-     * @notice get the token deposited flag for the caller
-     * @param token: the token to get the deposited flag for
-     * @return the deposited flag
-     */
-    function getIsTokenDepositedByMe(address token) external view returns (bool);
 
     /**
      * @notice get the users that have ever deposited funds into BitChill

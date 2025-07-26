@@ -255,23 +255,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, 0);
     }
-
-    function testStateUpdatedWhenTokenDepositsDepletedByPurchase() external {
-        uint256 numOfPurchases = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
-        bytes32 scheduleId = keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
-        for (uint256 i; i < numOfPurchases; ++i) {
-            if(i == numOfPurchases - 1) {
-                vm.expectEmit(true, true, true, true);
-                emit DcaManager__TokenDepositsDepletedAcrossAllSchedules(USER, address(stablecoin));
-            } 
-            vm.prank(SWAPPER);
-            dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
-            vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
-        }
-        assertEq(dcaManager.getUsersDepositedTokens(USER).length, 0);
-        assertEq(dcaManager.getIsTokenDepositedByUser(USER, address(stablecoin)), false);
-    }
-
+    
     function testRescueRbtcFromStuckContract() external {
         // First do a purchase to accumulate some rBTC on the handler contract
         super.makeSinglePurchase();
