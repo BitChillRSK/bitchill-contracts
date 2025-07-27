@@ -8,6 +8,10 @@ import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 
 contract ModifiersTest is DcaDappTest {
+    // Events
+    event DcaManager__OperationsAdminUpdated(address indexed newOperationsAdmin);
+    event DcaManager__MinPurchasePeriodModified(uint256 indexed newMinPurchasePeriod);
+    
     function setUp() public override {
         super.setUp();
     }
@@ -23,6 +27,8 @@ contract ModifiersTest is DcaDappTest {
         address operationsAdminAfter = dcaManager.getOperationsAdminAddress();
         assertEq(operationsAdminBefore, operationsAdminAfter);
         vm.prank(OWNER); // Owner can
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__OperationsAdminUpdated(address(dcaManager));
         dcaManager.setOperationsAdmin(address(dcaManager));
         operationsAdminAfter = dcaManager.getOperationsAdminAddress();
         assertEq(operationsAdminAfter, address(dcaManager));
@@ -37,6 +43,8 @@ contract ModifiersTest is DcaDappTest {
         uint256 minPurchasePeriodAfter = dcaManager.getMinPurchasePeriod();
         assertEq(minPurchasePeriodBefore, minPurchasePeriodAfter);
         vm.prank(OWNER); // Owner can
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__MinPurchasePeriodModified(newMinPurchasePeriod);
         dcaManager.modifyMinPurchasePeriod(newMinPurchasePeriod);
         minPurchasePeriodAfter = dcaManager.getMinPurchasePeriod();
         assertEq(minPurchasePeriodAfter, newMinPurchasePeriod);

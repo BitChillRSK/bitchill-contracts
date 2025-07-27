@@ -14,6 +14,12 @@ contract FeeHandlerTest is Test {
     uint256 constant LOWER_BOUND = 100 ether; // below this gets max fee
     uint256 constant UPPER_BOUND = 1000 ether; // above this gets min fee
 
+    // Events
+    event FeeHandler__MinFeeRateSet(uint256 indexed minFeeRate);
+    event FeeHandler__MaxFeeRateSet(uint256 indexed maxFeeRate);
+    event FeeHandler__PurchaseLowerBoundSet(uint256 indexed feePurchaseLowerBound);
+    event FeeHandler__PurchaseUpperBoundSet(uint256 indexed feePurchaseUpperBound);
+
     function setUp() public {
         IFeeHandler.FeeSettings memory settings = IFeeHandler.FeeSettings({
             minFeeRate: MIN_FEE_RATE,
@@ -88,24 +94,32 @@ contract FeeHandlerTest is Test {
 
     function test_setMinFeeRate_success() public {
         uint256 newMin = 130;
+        vm.expectEmit(true, true, true, true);
+        emit FeeHandler__MinFeeRateSet(newMin);
         feeHandler.setMinFeeRate(newMin);
         assertEq(feeHandler.getMinFeeRate(), newMin, "Min fee rate not set");
     }
 
     function test_setMaxFeeRate_success() public {
         uint256 newMax = 300;
+        vm.expectEmit(true, true, true, true);
+        emit FeeHandler__MaxFeeRateSet(newMax);
         feeHandler.setMaxFeeRate(newMax);
         assertEq(feeHandler.getMaxFeeRate(), newMax, "Max fee rate not set");
     }
 
     function test_setPurchaseLowerBound_success() public {
         uint256 newLower = 250 ether;
+        vm.expectEmit(true, true, true, true);
+        emit FeeHandler__PurchaseLowerBoundSet(newLower);
         feeHandler.setPurchaseLowerBound(newLower);
         assertEq(feeHandler.getFeePurchaseLowerBound(), newLower, "Lower bound not set");
     }
 
     function test_setPurchaseUpperBound_success() public {
         uint256 newUpper = 2000 ether;
+        vm.expectEmit(true, true, true, true);
+        emit FeeHandler__PurchaseUpperBoundSet(newUpper);
         feeHandler.setPurchaseUpperBound(newUpper);
         assertEq(feeHandler.getFeePurchaseUpperBound(), newUpper, "Upper bound not set");
     }

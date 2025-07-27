@@ -78,6 +78,7 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
      */
     function setSwapperRole(address swapper) external onlyRole(ADMIN_ROLE) {
         _grantRole(SWAPPER_ROLE, swapper);
+        emit OperationsAdmin__SwapperRoleGranted(swapper);
     }
 
     /**
@@ -86,6 +87,7 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
      */
     function revokeSwapperRole(address swapper) external onlyRole(ADMIN_ROLE) {
         _revokeRole(SWAPPER_ROLE, swapper);
+        emit OperationsAdmin__SwapperRoleRevoked(swapper);
     }
 
     /**
@@ -94,6 +96,7 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
      */
     function setAdminRole(address admin) external onlyOwner {
         _grantRole(ADMIN_ROLE, admin);
+        emit OperationsAdmin__AdminRoleGranted(admin);
     }
 
     /**
@@ -102,6 +105,7 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
      */
     function revokeAdminRole(address admin) external onlyOwner {
         _revokeRole(ADMIN_ROLE, admin);
+        emit OperationsAdmin__AdminRoleRevoked(admin);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -145,7 +149,7 @@ contract OperationsAdmin is IOperationsAdmin, Ownable, AccessControl {
      * @param lendingProtocolIndex The index of the lending protocol (empty string if token will not be lent)
      * @return The address of the TokenHandler. If address(0) is returned, the tuple token-protocol is not correct
      */
-    function getTokenHandler(address token, uint256 lendingProtocolIndex) public view returns (address) {
+    function getTokenHandler(address token, uint256 lendingProtocolIndex) external view returns (address) {
         bytes32 key = _encodeKey(token, lendingProtocolIndex);
         return s_tokenHandler[key];
     }

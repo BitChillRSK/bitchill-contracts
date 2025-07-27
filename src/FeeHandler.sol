@@ -100,7 +100,7 @@ abstract contract FeeHandler is IFeeHandler, Ownable {
      */
     function setFeeCollectorAddress(address feeCollector) external override onlyOwner {
         s_feeCollector = feeCollector;
-        emit FeeHandler__FeeCollectorAddress(feeCollector);
+        emit FeeHandler__FeeCollectorAddressSet(feeCollector);
     }
 
     /*//////////////////////////////////////////////////////////////

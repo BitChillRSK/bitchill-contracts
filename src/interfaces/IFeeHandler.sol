@@ -24,7 +24,7 @@ interface IFeeHandler {
     event FeeHandler__MaxFeeRateSet(uint256 indexed maxFeeRate);
     event FeeHandler__PurchaseLowerBoundSet(uint256 indexed feePurchaseLowerBound);
     event FeeHandler__PurchaseUpperBoundSet(uint256 indexed feePurchaseUpperBound);
-    event FeeHandler__FeeCollectorAddress(address indexed feeCollector);
+    event FeeHandler__FeeCollectorAddressSet(address indexed feeCollector);
 
     //////////////////////
     // Custom errors /////

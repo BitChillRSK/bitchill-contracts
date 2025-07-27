@@ -12,15 +12,12 @@ interface ITokenLending is ITokenHandler {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
 
-    event TokenLending__SuccessfulUnderlyingRedemption(
-        address indexed user, uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed
+    event TokenLending__UnderlyingRedeemed(
+        address indexed user, uint256 indexed underlyingAmountRedeemed, uint256 indexed lendingTokenAmountRepayed
     );
-    event TokenLending__SuccessfulBatchUnderlyingRedemption(uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed);
-    event TokenLending__UnderlyingRedeemedLendingTokenRepayed(
-        address indexed user, uint256 underlyingRedeemed, uint256 indexed lendingTokenRepayed
-    );
-    event TokenLending__SuccessfulInterestWithdrawal(
-        address indexed user, uint256 indexed underlyingRedeemed, uint256 indexed lendingTokenRepayed
+    event TokenLending__UnderlyingRedeemedBatch(uint256 indexed underlyingAmountRedeemed, uint256 indexed lendingTokenAmountRepayed);
+    event TokenLending__InterestWithdrawn(
+        address indexed user, address indexed token, uint256 indexed underlyingAmountRedeemed
     );
     event TokenLending__WithdrawalAmountAdjusted(
         address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount

@@ -26,8 +26,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice Each user may create different schedules with one or more stablecoins
      */
     mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
-    mapping(address user => bool registered) s_userRegistered; // Mapping to check if a user has (or ever had) an open DCA position
-    address[] private s_users; // Users that have deposited stablecoins in the DCA dApp
     uint256 private s_minPurchasePeriod; // Minimum time between purchases
     uint256 private s_maxSchedulesPerToken; // Maximum number of schedules per stablecoin
 
@@ -171,6 +169,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
 
     /**
      * @notice deposit the full stablecoin amount for DCA on the contract, set the period and the amount for purchases
+     * @notice if the purchase or deposit amounts, or the purchase period are set to 0, they don't get updated
      * @param token: the token address of stablecoin to deposit
      * @param scheduleIndex: the index of the schedule to create or update
      * @param depositAmount: the amount of stablecoin to add to the existing schedule (final token balance for the schedule is the previous balance + depositAmount)
@@ -444,12 +443,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @notice deposit the full stablecoin amount for DCA on the contract
      * @param depositAmount: the amount to deposit
      */
-    function _validateDeposit(uint256 depositAmount) private {
+    function _validateDeposit(uint256 depositAmount) private pure {
         if (depositAmount == 0) revert DcaManager__DepositAmountMustBeGreaterThanZero();
-        if (!s_userRegistered[msg.sender]) {
-            s_userRegistered[msg.sender] = true;
-            s_users.push(msg.sender);
-        }
     }
 
     /**
@@ -694,31 +689,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         returns (bytes32)
     {
         return s_dcaSchedules[user][token][scheduleIndex].scheduleId;
-    }
-
-    /**
-     * @notice get all users
-     * @return the users
-     */
-    function getUsers() external view override returns (address[] memory) {
-        return s_users;
-    }
-
-    /**
-     * @notice get a user at a specific index
-     * @param i: the index of the user
-     * @return the user
-     */
-    function getUserAtIndex(uint256 i) external view override returns (address) {
-        if (i >= s_users.length) revert DcaManager__UserIndexOutOfBounds(i);
-        return s_users[i];
-    }
-    /**
-     * @notice get the total number of users who ever made a deposit
-     * @return the total number of users
-     */
-    function getAllTimeUserCount() external view override returns (uint256) {
-        return s_users.length;
     }
 
     /**

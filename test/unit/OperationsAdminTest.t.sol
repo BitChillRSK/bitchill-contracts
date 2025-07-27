@@ -11,6 +11,12 @@ import {IOperationsAdmin} from "../../src/interfaces/IOperationsAdmin.sol";
 import "./TestsHelper.t.sol";
 
 contract OperationsAdminTest is DcaDappTest {
+    // Events
+    event OperationsAdmin__AdminRoleGranted(address indexed admin);
+    event OperationsAdmin__SwapperRoleGranted(address indexed swapper);
+    event OperationsAdmin__AdminRoleRevoked(address indexed admin);
+    event OperationsAdmin__SwapperRoleRevoked(address indexed swapper);
+    
     function setUp() public override {
         super.setUp();
     }
@@ -80,20 +86,28 @@ contract OperationsAdminTest is DcaDappTest {
 
     function testSetRoles() external {
         vm.prank(OWNER);
+        vm.expectEmit(true, true, true, true);
+        emit OperationsAdmin__AdminRoleGranted(address(1));
         operationsAdmin.setAdminRole(address(1));
         assert(operationsAdmin.hasRole(operationsAdmin.ADMIN_ROLE(), address(1)));
         vm.prank(ADMIN);
+        vm.expectEmit(true, true, true, true);
+        emit OperationsAdmin__SwapperRoleGranted(address(2));
         operationsAdmin.setSwapperRole(address(2));
         assert(operationsAdmin.hasRole(operationsAdmin.SWAPPER_ROLE(), address(2)));
     }
 
     function testRevokeAdminRole() external {
+        vm.expectEmit(true, true, true, true);
+        emit OperationsAdmin__AdminRoleRevoked(ADMIN);
         vm.prank(OWNER);
         operationsAdmin.revokeAdminRole(ADMIN);
         assertFalse(operationsAdmin.hasRole(operationsAdmin.ADMIN_ROLE(), ADMIN));
     }
 
     function testRevokeSwapperRole() external {
+        vm.expectEmit(true, true, true, true);
+        emit OperationsAdmin__SwapperRoleRevoked(SWAPPER);
         vm.prank(ADMIN);
         operationsAdmin.revokeSwapperRole(SWAPPER);
         assertFalse(operationsAdmin.hasRole(operationsAdmin.SWAPPER_ROLE(), address(2)));

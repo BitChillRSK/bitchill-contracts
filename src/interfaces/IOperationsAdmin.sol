@@ -14,6 +14,10 @@ interface IOperationsAdmin {
         address indexed token, uint256 indexed lendingProtocolIndex, address indexed newHandler
     );
     event OperationsAdmin__LendingProtocolAdded(uint256 indexed index, string indexed name);
+    event OperationsAdmin__AdminRoleGranted(address indexed admin);
+    event OperationsAdmin__AdminRoleRevoked(address indexed admin);
+    event OperationsAdmin__SwapperRoleGranted(address indexed swapper);
+    event OperationsAdmin__SwapperRoleRevoked(address indexed swapper);
 
     //////////////////////
     // Errors ////////////

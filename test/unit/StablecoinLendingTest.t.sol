@@ -16,6 +16,9 @@ import "../../script/Constants.sol";
 contract StablecoinLendingTest is DcaDappTest {
     uint256 constant KDOC_STARTING_EXCHANGE_RATE = 2e16;
 
+    // Events
+    event TokenLending__InterestWithdrawn(address indexed user, address indexed token, uint256 indexed amount);
+
     function setUp() public override {
         super.setUp();
     }
@@ -205,6 +208,8 @@ contract StablecoinLendingTest is DcaDappTest {
         lendingProtocolIndexes[0] = s_lendingProtocolIndex;
         address[] memory tokens = new address[](1);
         tokens[0] = address(stablecoin);
+        vm.expectEmit(true, true, false, false);
+        emit TokenLending__InterestWithdrawn(USER, address(stablecoin), withdrawableInterest);
         dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         console.log("userStablecoinBalanceAfterInterestWithdrawal:", userStablecoinBalanceAfterInterestWithdrawal);

@@ -175,13 +175,12 @@ contract InvariantTest is StdInvariant, Test {
      * @notice The sum of all users' deposited tokens should match the total tokens in the lending protocol
      */
     function invariant_totalDepositedTokensMatchesLendingProtocol() public {
-        address[] memory users = dcaManager.getUsers();
         uint256 totalUserDeposits = 0;
         uint256 totalLendingBalances = 0;
         
         // Sum all user deposits across all schedules AND their lending balances
-        for (uint256 i = 0; i < users.length; i++) {
-            address user = users[i];
+        for (uint256 i = 0; i < s_users.length; i++) {
+            address user = s_users[i];
             
             // Get user's lending token balance
             uint256 userLendingBalance = ITokenLending(address(handler)).getUsersLendingTokenBalance(user);
@@ -255,10 +254,8 @@ contract InvariantTest is StdInvariant, Test {
      * @notice User balances should never be negative or exceed reasonable bounds
      */
     function invariant_userBalancesReasonable() public {
-        address[] memory users = dcaManager.getUsers();
-        
-        for (uint256 i = 0; i < users.length; i++) {
-            address user = users[i];
+        for (uint256 i = 0; i < s_users.length; i++) {
+            address user = s_users[i];
             
             // Query balances (not capped anymore, but useful for logging)
             stablecoin.balanceOf(user);
@@ -310,10 +307,8 @@ contract InvariantTest is StdInvariant, Test {
      * @notice Interest should never decrease for users
      */
     function invariant_interestOnlyIncreases() public {
-        address[] memory users = dcaManager.getUsers();
-        
-        for (uint256 i = 0; i < users.length; i++) {
-            address user = users[i];
+        for (uint256 i = 0; i < s_users.length; i++) {
+            address user = s_users[i];
             
             try dcaManager.getDcaSchedules(user, address(stablecoin)) returns (IDcaManager.DcaDetails[] memory schedules) {
                 if (schedules.length > 0) {

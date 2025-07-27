@@ -11,6 +11,10 @@ import {IFeeHandler} from "../../src/interfaces/IFeeHandler.sol";
 import "../../script/Constants.sol";
 
 contract StablecoinHandlerTest is DcaDappTest {
+    // Events
+    event TokenHandler__MinPurchaseAmountModified(uint256 indexed newMinPurchaseAmount);
+    event FeeHandler__FeeCollectorAddressSet(address indexed feeCollector);
+    
     function setUp() public override {
         super.setUp();
     }
@@ -25,6 +29,8 @@ contract StablecoinHandlerTest is DcaDappTest {
 
     function testStablecoinHandlerModifyMinPurchaseAmount() external {
         vm.prank(OWNER);
+        vm.expectEmit(true, true, true, true);
+        emit TokenHandler__MinPurchaseAmountModified(1000);
         docHandler.modifyMinPurchaseAmount(1000);
         uint256 newPurchaseAmount = docHandler.getMinPurchaseAmount();
         assertEq(newPurchaseAmount, 1000);
@@ -42,6 +48,8 @@ contract StablecoinHandlerTest is DcaDappTest {
     function testStablecoinHandlerSetFeeCollectorAddress() external {
         address newFeeCollector = makeAddr("newFeeCollector");
         vm.prank(OWNER);
+        vm.expectEmit(true, true, true, true);
+        emit FeeHandler__FeeCollectorAddressSet(newFeeCollector);
         IFeeHandler(address(docHandler)).setFeeCollectorAddress(newFeeCollector);
         assertEq(IFeeHandler(address(docHandler)).getFeeCollectorAddress(), newFeeCollector);
     }

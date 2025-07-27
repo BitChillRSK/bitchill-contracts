@@ -97,10 +97,16 @@ contract DcaDappTest is Test {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     );
+    event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed timestamp);
 
     // TokenHandler
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
+    
+    // TokenLending
+    event TokenLending__UnderlyingRedeemed(
+        address indexed user, uint256 indexed underlyingAmountRedeemed, uint256 indexed lendingTokenAmountRepayed
+    );
 
     // IPurchaseRbtc
     event PurchaseRbtc__RbtcBought(
@@ -126,6 +132,7 @@ contract DcaDappTest is Test {
     event TokenLending__WithdrawalAmountAdjusted(
         address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
     );
+    event TokenLending__UnderlyingRedeemedBatch(uint256 indexed underlyingAmountRedeemed, uint256 indexed lendingTokenAmountRepayed);
 
     modifier onlyDexSwaps() {
         if (!isDexSwaps) {
@@ -421,6 +428,11 @@ contract DcaDappTest is Test {
         uint256 fee = feeCalculator.calculateFee(AMOUNT_TO_SPEND);
         uint256 netPurchaseAmount = AMOUNT_TO_SPEND - fee;
 
+        vm.expectEmit(true, true, true, true);
+        uint256 lastPurchaseTimestamp = dcaDetails[SCHEDULE_INDEX].lastPurchaseTimestamp == 0 ? block.timestamp : dcaDetails[SCHEDULE_INDEX].lastPurchaseTimestamp + dcaDetails[SCHEDULE_INDEX].purchasePeriod;
+        emit DcaManager__LastPurchaseTimestampUpdated(address(stablecoin), dcaDetails[SCHEDULE_INDEX].scheduleId, lastPurchaseTimestamp);
+        vm.expectEmit(true, false, false, false);
+        emit TokenLending__UnderlyingRedeemed(USER, 0, 0);
         if (block.chainid == ANVIL_CHAIN_ID && isMocSwaps) {
             vm.expectEmit(true, true, true, true);
         } else {
@@ -528,7 +540,7 @@ contract DcaDappTest is Test {
         bytes32[] memory scheduleIds = new bytes32[](NUM_OF_SCHEDULES);
 
         uint256 totalNetPurchaseAmount;
-
+        uint256 totalFee;
         // Create the arrays for the batch purchase (in production, this is done in the back end)
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
@@ -537,7 +549,7 @@ contract DcaDappTest is Test {
             vm.stopPrank();
             uint256 fee = feeCalculator.calculateFee(schedulePurchaseAmount);
             totalNetPurchaseAmount += schedulePurchaseAmount - fee;
-
+            totalFee += fee;
             users[i] = USER; // Same user for has 5 schedules due for a purchase in this scenario
             scheduleIndexes[i] = i;
             vm.startPrank(OWNER);
@@ -546,13 +558,15 @@ contract DcaDappTest is Test {
             scheduleIds[i] = dcaManager.getDcaSchedules(users[0], address(stablecoin))[i].scheduleId;
             vm.stopPrank();
         }
+        vm.expectEmit(true, false, false, false);
+        emit TokenLending__UnderlyingRedeemedBatch(totalNetPurchaseAmount + totalFee, 0);
+
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             vm.expectEmit(false, false, false, false);
             emit PurchaseRbtc__RbtcBought(USER, address(stablecoin), 0, scheduleIds[i], 0); // Never mind the actual values on this test
         }
 
         vm.expectEmit(true, false, false, false); // the amount of rBTC purchased won't match exactly neither the amount of stablecoin spent in the case of Sovryn due to rounding errors
-
         if (isMocSwaps) {
             emit PurchaseRbtc__SuccessfulRbtcBatchPurchase(
                 address(stablecoin), totalNetPurchaseAmount / s_btcPrice, totalNetPurchaseAmount

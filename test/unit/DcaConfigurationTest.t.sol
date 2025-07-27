@@ -9,6 +9,11 @@ import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import "../../script/Constants.sol";
 
 contract DcaConfigurationTest is DcaDappTest {
+    // Events
+    event DcaManager__PurchaseAmountSet(address indexed user, bytes32 indexed scheduleId, uint256 indexed purchaseAmount);
+    event DcaManager__PurchasePeriodSet(address indexed user, bytes32 indexed scheduleId, uint256 indexed purchasePeriod);
+    event DcaManager__MaxSchedulesPerTokenModified(uint256 indexed maxSchedulesPerToken);
+
     function setUp() public override {
         super.setUp();
     }
@@ -18,6 +23,8 @@ contract DcaConfigurationTest is DcaDappTest {
     ///////////////////////////////
     function testSetPurchaseAmount() external {
         vm.startPrank(USER);
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__PurchaseAmountSet(USER, dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX), AMOUNT_TO_SPEND);
         dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_SPEND);
         assertEq(AMOUNT_TO_SPEND, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();
@@ -25,9 +32,19 @@ contract DcaConfigurationTest is DcaDappTest {
 
     function testSetPurchasePeriod() external {
         vm.startPrank(USER);
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__PurchasePeriodSet(USER, dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX), MIN_PURCHASE_PERIOD);
         dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
         assertEq(MIN_PURCHASE_PERIOD, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();
+    }
+
+    function testModifyMaxSchedulesPerToken() external {
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__MaxSchedulesPerTokenModified(MAX_SCHEDULES_PER_TOKEN);
+        vm.startPrank(OWNER);
+        dcaManager.modifyMaxSchedulesPerToken(MAX_SCHEDULES_PER_TOKEN);
+        assertEq(MAX_SCHEDULES_PER_TOKEN, dcaManager.getMaxSchedulesPerToken());
     }
 
     function testPurchaseAmountCannotBeMoreThanHalfBalance() external {

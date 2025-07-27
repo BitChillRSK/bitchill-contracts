@@ -71,7 +71,6 @@ interface IDcaManager {
     error DcaManager__MaxSchedulesPerTokenReached(address token);
     error DcaManager__TokenDoesNotYieldInterest(address token);
     error DcaManager__UnauthorizedSwapper(address sender);
-    error DcaManager__UserIndexOutOfBounds(uint256 index);
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -318,25 +317,6 @@ interface IDcaManager {
      * @return the admin operations contract's address
      */
     function getOperationsAdminAddress() external view returns (address);
-
-    /**
-     * @notice get the users that have ever deposited funds into BitChill
-     * @return the users' addresses
-     */
-    function getUsers() external view returns (address[] memory);
-
-    /**
-     * @notice get a user at a specific index of the users array
-     * @param i the index to query
-     * @return the user address at index i
-     */
-    function getUserAtIndex(uint256 i) external view returns (address);
-
-    /**
-     * @notice get the number of users that have ever deposited funds into BitChill
-     * @return the number of users
-     */
-    function getAllTimeUserCount() external view returns (uint256);
 
     /**
      * @notice get the interest accrued by a user for a token and a lending protocol index
