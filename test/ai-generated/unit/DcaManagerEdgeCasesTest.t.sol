@@ -451,7 +451,7 @@ contract DcaManagerEdgeCasesTest is Test {
         dcaManager.withdrawAllAccumulatedRbtc(tokens, emptyProtocols);
     }
     
-    function test_withdrawAllAccumulatedRbtc_invalidProtocol_reverts() public {
+    function test_withdrawAllAccumulatedRbtc_invalidProtocol_skips() public {
         // First create a DCA schedule so user has deposited tokens
         vm.prank(USER);
         dcaManager.createDcaSchedule(
@@ -467,9 +467,26 @@ contract DcaManagerEdgeCasesTest is Test {
         
         address[] memory tokens = new address[](1);
         tokens[0] = address(stablecoin);
-        vm.expectRevert(IDcaManager.DcaManager__TokenNotAccepted.selector);
+        // Should not revert, just skip invalid combinations
         vm.prank(USER);
         dcaManager.withdrawAllAccumulatedRbtc(tokens, invalidProtocols);
+    }
+
+    function test_withdrawAllAccumulatedRbtcAndInterest_mixedValidInvalidCombinations() public {      
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        
+        uint256[] memory protocols = new uint256[](3);
+        protocols[0] = TROPYKUS_INDEX;
+        protocols[1] = SOVRYN_INDEX;
+        protocols[2] = 0;
+        // Unit tests are only run on one protocol at a time, so this array is valid for testing
+
+        
+        // Should not revert, should skip stablecoin + Sovryn combination
+        vm.prank(USER);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, protocols);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, protocols);
     }
     
     /*//////////////////////////////////////////////////////////////

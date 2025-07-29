@@ -54,7 +54,7 @@ interface IDcaManager {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error DcaManager__TokenNotAccepted();
+    error DcaManager__TokenNotAccepted(address token, uint256 lendingProtocolIndex);
     error DcaManager__DepositAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);

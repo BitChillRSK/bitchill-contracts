@@ -238,11 +238,7 @@ contract StablecoinLendingTest is DcaDappTest {
             abi.encodeWithSelector(IDcaManager.DcaManager__TokenDoesNotYieldInterest.selector, address(stablecoin));
         vm.expectRevert(encodedRevert);
         vm.prank(USER);
-        uint256[] memory lendingProtocolIndexes = new uint256[](1);
-        lendingProtocolIndexes[0] = 0; // Index different from 1 (tropykus) or 2 (sovryn) -> no interest is accrued
-        address[] memory tokens = new address[](1);
-        tokens[0] = address(stablecoin);
-        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+        dcaManager.withdrawTokenAndInterest(address(stablecoin), 0, MIN_PURCHASE_AMOUNT, 0);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         assertEq(userStablecoinBalanceAfterInterestWithdrawal, userStablecoinBalanceBeforeInterestWithdrawal);
         uint256 withdrawableInterestAfterWithdrawal =

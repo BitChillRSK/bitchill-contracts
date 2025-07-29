@@ -335,7 +335,9 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     function withdrawAllAccumulatedRbtc(address[] calldata tokens, uint256[] calldata lendingProtocolIndexes) external override nonReentrant {
         for (uint256 i; i < tokens.length; ++i) {
             for (uint256 j; j < lendingProtocolIndexes.length; ++j) {
-                IPurchaseRbtc handler = IPurchaseRbtc(address(_handler(tokens[i], lendingProtocolIndexes[j])));
+                address tokenHandlerAddress = s_operationsAdmin.getTokenHandler(tokens[i], lendingProtocolIndexes[j]);
+                if (tokenHandlerAddress == address(0)) continue;
+                IPurchaseRbtc handler = IPurchaseRbtc(tokenHandlerAddress);
                 if (handler.getAccumulatedRbtcBalance(msg.sender) == 0) continue;
                 handler.withdrawAccumulatedRbtc(msg.sender);
             }
@@ -371,6 +373,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     {
         for (uint256 i; i < tokens.length; ++i) {
             for (uint256 j; j < lendingProtocolIndexes.length; ++j) {
+                address tokenHandlerAddress = s_operationsAdmin.getTokenHandler(tokens[i], lendingProtocolIndexes[j]);
+                if (tokenHandlerAddress == address(0)) continue;
                 _withdrawInterest(tokens[i], lendingProtocolIndexes[j]);
             }
         }
@@ -455,7 +459,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function _handler(address token, uint256 lendingProtocolIndex) private view returns (ITokenHandler) {
         address tokenHandlerAddress = s_operationsAdmin.getTokenHandler(token, lendingProtocolIndex);
-        if (tokenHandlerAddress == address(0)) revert DcaManager__TokenNotAccepted();
+        if (tokenHandlerAddress == address(0)) revert DcaManager__TokenNotAccepted(token, lendingProtocolIndex);
         return ITokenHandler(tokenHandlerAddress);
     }
 
