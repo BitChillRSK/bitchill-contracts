@@ -138,9 +138,9 @@ contract DcaManagerEdgeCasesTest is Test {
         // Try to delete with wrong ID
         bytes32 wrongId = keccak256("wrong_id");
         
-        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleId.selector);
+        vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
         vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(stablecoin), wrongId);
+        dcaManager.deleteDcaSchedule(address(stablecoin), 0, wrongId);
     }
     
     function test_deleteDcaSchedule_reverts_wrongIndex() public {
@@ -155,9 +155,9 @@ contract DcaManagerEdgeCasesTest is Test {
         );
         
         // Try to delete with wrong index (index that doesn't exist)
-        vm.expectRevert(); // Should revert due to array bounds check
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector); // Should revert due to array bounds check
         vm.prank(USER);
-        dcaManager.deleteDcaSchedule(address(stablecoin), keccak256("wrong_id"));
+        dcaManager.deleteDcaSchedule(address(stablecoin), 999, keccak256("dummy_id"));
     }
     
     function test_deleteDcaSchedule_reverts_notOwner() public {
@@ -175,9 +175,9 @@ contract DcaManagerEdgeCasesTest is Test {
         
         // Try to delete as different user
         address otherUser = address(0x9999);
-        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleId.selector);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
         vm.prank(otherUser);
-        dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
+        dcaManager.deleteDcaSchedule(address(stablecoin), 0, scheduleId);
     }
     
     /*//////////////////////////////////////////////////////////////
@@ -250,14 +250,16 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX
         );
         
-        // Try to withdraw more than balance
+        // Get the schedule ID after creation
+        vm.prank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), 0);
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.withdrawToken(address(stablecoin), 0, 600 ether); // More than deposited
+        dcaManager.withdrawToken(address(stablecoin), 0, scheduleId, 600 ether); // More than deposited
     }
     
     function test_withdrawToken_reverts_zeroAmount() public {
-        // Create schedule
+        // Create a schedule first
         vm.prank(USER);
         dcaManager.createDcaSchedule(
             address(stablecoin),
@@ -267,9 +269,12 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX
         );
         
+        // Get the schedule ID after creation
+        vm.prank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), 0);
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.withdrawToken(address(stablecoin), 0, 0);
+        dcaManager.withdrawToken(address(stablecoin), 0, scheduleId, 0);
     }
     
     /*//////////////////////////////////////////////////////////////
@@ -401,7 +406,7 @@ contract DcaManagerEdgeCasesTest is Test {
     //////////////////////////////////////////////////////////////*/
     
     function test_setPurchaseAmount_reverts_zeroAmount() public {
-        // Create schedule first
+        // Create a schedule first
         vm.prank(USER);
         dcaManager.createDcaSchedule(
             address(stablecoin),
@@ -411,19 +416,23 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX
         );
         
+        // Get the schedule ID after creation
+        vm.prank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), 0);
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.setPurchaseAmount(address(stablecoin), 0, 0);
+        dcaManager.setPurchaseAmount(address(stablecoin), 0, scheduleId, 0);
     }
     
     function test_setPurchaseAmount_reverts_invalidScheduleIndex() public {
+        bytes32 fakeScheduleId = keccak256("fake");
         vm.expectRevert(); // Should revert due to array bounds
         vm.prank(USER);
-        dcaManager.setPurchaseAmount(address(stablecoin), 999, 100 ether);
+        dcaManager.setPurchaseAmount(address(stablecoin), 999, fakeScheduleId, 100 ether);
     }
     
     function test_setPurchasePeriod_reverts_invalidPeriod() public {
-        // Create schedule first
+        // Create a schedule first
         vm.prank(USER);
         dcaManager.createDcaSchedule(
             address(stablecoin),
@@ -433,9 +442,12 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX
         );
         
+        // Get the schedule ID after creation
+        vm.prank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), 0);
         vm.expectRevert(IDcaManager.DcaManager__PurchasePeriodMustBeGreaterThanMinimum.selector);
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(stablecoin), 0, MIN_PURCHASE_PERIOD - 1);
+        dcaManager.setPurchasePeriod(address(stablecoin), 0, scheduleId, MIN_PURCHASE_PERIOD - 1);
     }
     
     /*//////////////////////////////////////////////////////////////
@@ -494,7 +506,7 @@ contract DcaManagerEdgeCasesTest is Test {
     //////////////////////////////////////////////////////////////*/
     
     function test_depositToken_reverts_zeroAmount() public {
-        // Create schedule first
+        // Create a schedule first
         vm.prank(USER);
         dcaManager.createDcaSchedule(
             address(stablecoin),
@@ -504,15 +516,19 @@ contract DcaManagerEdgeCasesTest is Test {
             TROPYKUS_INDEX
         );
         
+        // Get the schedule ID after creation
+        vm.prank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), 0);
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.depositToken(address(stablecoin), 0, 0);
+        dcaManager.depositToken(address(stablecoin), 0, scheduleId, 0);
     }
     
     function test_depositToken_reverts_invalidScheduleIndex() public {
+        bytes32 fakeScheduleId = keccak256("fake");
         vm.expectRevert(); // Should revert due to array bounds
         vm.prank(USER);
-        dcaManager.depositToken(address(stablecoin), 999, 100 ether);
+        dcaManager.depositToken(address(stablecoin), 999, fakeScheduleId, 100 ether);
     }
     
     /*//////////////////////////////////////////////////////////////
@@ -522,18 +538,19 @@ contract DcaManagerEdgeCasesTest is Test {
     function testFuzz_invalidScheduleOperations(uint256 invalidIndex) public {
         vm.assume(invalidIndex > 0 && invalidIndex < type(uint256).max);
         
+        bytes32 fakeScheduleId = keccak256("fake");
         // All operations with invalid index should revert
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.depositToken(address(stablecoin), invalidIndex, 100 ether);
+        dcaManager.depositToken(address(stablecoin), invalidIndex, fakeScheduleId, 100 ether);
         
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.setPurchaseAmount(address(stablecoin), invalidIndex, 100 ether);
+        dcaManager.setPurchaseAmount(address(stablecoin), invalidIndex, fakeScheduleId, 100 ether);
         
         vm.expectRevert();
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(stablecoin), invalidIndex, MIN_PURCHASE_PERIOD);
+        dcaManager.setPurchasePeriod(address(stablecoin), invalidIndex, fakeScheduleId, MIN_PURCHASE_PERIOD);
     }
     
     function testFuzz_invalidAmounts(uint256 seed) public {

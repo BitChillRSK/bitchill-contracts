@@ -30,7 +30,7 @@ contract StablecoinLendingTest is DcaDappTest {
         // Check initial balances
         uint256 ltStablecoinBalanceBeforeDeposit = stablecoin.balanceOf(address(lendingToken));
         
-        super.depositDoc();
+        super.depositStablecoin();
         
         // Check if stablecoin has been transferred from the handler to the lending token
         uint256 ltStablecoinBalanceAfterDeposit = stablecoin.balanceOf(address(lendingToken));
@@ -44,7 +44,7 @@ contract StablecoinLendingTest is DcaDappTest {
 
     function testStablecoinDepositIncreasesLendingTokenBalance() external {
         uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
-        super.depositDoc();
+        super.depositStablecoin();
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
         uint256 exchangeRate = s_lendingProtocolIndex == TROPYKUS_INDEX 
@@ -63,7 +63,7 @@ contract StablecoinLendingTest is DcaDappTest {
 
     function testStablecoinWithdrawalBurnsLendingToken() external {
         uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
-        super.withdrawDoc();
+        super.withdrawStablecoin();
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
@@ -236,9 +236,10 @@ contract StablecoinLendingTest is DcaDappTest {
         assertGt(withdrawableInterestBeforeWithdrawal, 0);
         bytes memory encodedRevert =
             abi.encodeWithSelector(IDcaManager.DcaManager__TokenDoesNotYieldInterest.selector, address(stablecoin));
+        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), 0);
         vm.expectRevert(encodedRevert);
         vm.prank(USER);
-        dcaManager.withdrawTokenAndInterest(address(stablecoin), 0, MIN_PURCHASE_AMOUNT, 0);
+        dcaManager.withdrawTokenAndInterest(address(stablecoin), 0, scheduleId, MIN_PURCHASE_AMOUNT, 0);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         assertEq(userStablecoinBalanceAfterInterestWithdrawal, userStablecoinBalanceBeforeInterestWithdrawal);
         uint256 withdrawableInterestAfterWithdrawal =
@@ -257,8 +258,9 @@ contract StablecoinLendingTest is DcaDappTest {
         uint256 userStablecoinBalanceBeforeInterestWithdrawal = stablecoin.balanceOf(USER);
         assertGt(withdrawableInterest, 0);
 
+        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), 0);
         vm.prank(USER);
-        dcaManager.withdrawTokenAndInterest(address(stablecoin), 0, AMOUNT_TO_SPEND, s_lendingProtocolIndex);
+        dcaManager.withdrawTokenAndInterest(address(stablecoin), 0, scheduleId, AMOUNT_TO_SPEND, s_lendingProtocolIndex);
 
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
         assertApproxEqRel(

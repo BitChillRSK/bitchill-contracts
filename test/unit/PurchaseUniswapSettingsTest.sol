@@ -182,7 +182,8 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Setup: First perform the necessary setup for the test
         vm.startPrank(USER);
         stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
-        dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_SPEND);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
+        dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_SPEND);
         vm.stopPrank();
         
         // Create a mock oracle that returns invalid prices
@@ -193,10 +194,6 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         vm.prank(OWNER);
         IPurchaseUniswap(address(docHandler)).updateMocOracle(address(invalidOracle));
         
-        // Get the schedule ID
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, address(stablecoin), block.timestamp, SCHEDULE_INDEX)
-        );
         
         // Try to make a purchase, which should revert due to invalid price
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__OutdatedPrice.selector);

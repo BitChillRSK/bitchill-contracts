@@ -354,7 +354,7 @@ contract DcaDappTest is Test {
                       UNIT TESTS COMMON FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    function depositDoc() internal returns (uint256, uint256) {
+    function depositStablecoin() internal returns (uint256, uint256) {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
@@ -365,17 +365,18 @@ contract DcaDappTest is Test {
         emit TokenHandler__TokenDeposited(address(stablecoin), USER, AMOUNT_TO_DEPOSIT);
         vm.expectEmit(true, true, true, false);
         emit DcaManager__TokenBalanceUpdated(address(stablecoin), scheduleId, 2 * AMOUNT_TO_DEPOSIT); // 2 *, since a previous deposit is made in the setup
-        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_DEPOSIT);
+        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_DEPOSIT);
         uint256 userBalanceAfterDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         vm.stopPrank();
         return (userBalanceAfterDeposit, userBalanceBeforeDeposit);
     }
 
-    function withdrawDoc() internal {
+    function withdrawStablecoin() internal {
         vm.startPrank(USER);
         vm.expectEmit(true, true, false, false); // Amounts may not match to the last wei, so third parameter is false
         emit TokenHandler__TokenWithdrawn(address(stablecoin), USER, AMOUNT_TO_DEPOSIT);
-        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_DEPOSIT);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_DEPOSIT);
         uint256 remainingAmount = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
         assertEq(remainingAmount, 0);
         vm.stopPrank();
@@ -390,7 +391,7 @@ contract DcaDappTest is Test {
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
         );
-        dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
+        dcaManager.deleteDcaSchedule(address(stablecoin), 0, scheduleId);
         for (uint256 i = 0; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = SCHEDULE_INDEX + i;
             uint256 purchasePeriod = MIN_PURCHASE_PERIOD + i * 5 days;

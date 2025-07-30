@@ -16,18 +16,20 @@ contract StablecoinWithdrawalTest is DcaDappTest {
     /// Stablecoin Withdrawal tests ///
     ////////////////////////////////////
     function testStablecoinWithdrawal() external {
-        super.withdrawDoc();
+        super.withdrawStablecoin();
     }
 
     function testCannotWithdrawZeroStablecoin() external {
         vm.startPrank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         vm.expectRevert(IDcaManager.DcaManager__WithdrawalAmountMustBeGreaterThanZero.selector);
-        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, 0);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, 0);
         vm.stopPrank();
     }
 
     function testTokenWithdrawalRevertsIfAmountExceedsBalance() external {
         vm.startPrank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         bytes memory encodedRevert = abi.encodeWithSelector(
             IDcaManager.DcaManager__WithdrawalAmountExceedsBalance.selector,
             address(stablecoin),
@@ -35,7 +37,23 @@ contract StablecoinWithdrawalTest is DcaDappTest {
             AMOUNT_TO_DEPOSIT
         );
         vm.expectRevert(encodedRevert);
-        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, USER_TOTAL_AMOUNT);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, USER_TOTAL_AMOUNT);
+        vm.stopPrank();
+    }
+
+    function testCannotWithdrawFromInexistentSchedule() external {
+        vm.startPrank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
+        dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX + 1, scheduleId, AMOUNT_TO_DEPOSIT);
+        vm.stopPrank();
+    }
+
+    function testCannotWithdrawIfScheduleIdAndIndexMismatch() external {
+        vm.startPrank(USER);
+        bytes32 wrongScheduleId = keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, uint256(999)));
+        vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
+        dcaManager.withdrawToken(address(stablecoin), 0, wrongScheduleId, AMOUNT_TO_DEPOSIT);
         vm.stopPrank();
     }
 
