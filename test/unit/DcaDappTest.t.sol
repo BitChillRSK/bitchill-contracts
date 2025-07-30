@@ -94,8 +94,8 @@ contract DcaDappTest is Test {
         address indexed token,
         bytes32 indexed scheduleId,
         uint256 updatedTokenBalance,
-        uint256 purchaseAmount,
-        uint256 purchasePeriod
+        uint256 updatedPurchaseAmount,
+        uint256 updatedPurchasePeriod
     );
     event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed timestamp);
 

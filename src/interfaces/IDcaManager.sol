@@ -42,8 +42,8 @@ interface IDcaManager {
         address indexed token,
         bytes32 indexed scheduleId,
         uint256 updatedTokenBalance,
-        uint256 purchaseAmount,
-        uint256 purchasePeriod
+        uint256 updatedPurchaseAmount,
+        uint256 updatedPurchasePeriod
     );
     event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
     event DcaManager__MaxSchedulesPerTokenModified(uint256 indexed newMaxSchedulesPerToken);
