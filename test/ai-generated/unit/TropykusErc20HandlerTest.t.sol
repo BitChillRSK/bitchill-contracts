@@ -221,7 +221,8 @@ contract TropykusTestHandler is TropykusErc20Handler {
         kTokenAddress,
         minPurchaseAmount,
         feeCollector,
-        feeSettings
+        feeSettings,
+        EXCHANGE_RATE_DECIMALS
     ) {}
     
     // Implementation required by IPurchaseRbtc interface

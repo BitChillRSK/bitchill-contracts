@@ -41,9 +41,9 @@ interface IDcaManager {
         address indexed user,
         address indexed token,
         bytes32 indexed scheduleId,
-        uint256 depositAmount,
-        uint256 purchaseAmount,
-        uint256 purchasePeriod
+        uint256 updatedTokenBalance,
+        uint256 updatedPurchaseAmount,
+        uint256 updatedPurchasePeriod
     );
     event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
     event DcaManager__MaxSchedulesPerTokenModified(uint256 indexed newMaxSchedulesPerToken);
@@ -54,7 +54,7 @@ interface IDcaManager {
     //////////////////////
     // Errors ////////////
     //////////////////////
-    error DcaManager__TokenNotAccepted();
+    error DcaManager__TokenNotAccepted(address token, uint256 lendingProtocolIndex);
     error DcaManager__DepositAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
@@ -71,7 +71,6 @@ interface IDcaManager {
     error DcaManager__MaxSchedulesPerTokenReached(address token);
     error DcaManager__TokenDoesNotYieldInterest(address token);
     error DcaManager__UnauthorizedSwapper(address sender);
-    error DcaManager__UserIndexOutOfBounds(uint256 index);
 
     /*//////////////////////////////////////////////////////////////
                                FUNCTIONS
@@ -183,10 +182,10 @@ interface IDcaManager {
 
     /**
      * @notice Withdraw the token accumulated by a user as interest through all the DCA strategies using that token
-     * @param token The token address
+     * @param tokens Array of token addresses which the user has deposited
      * @param lendingProtocolIndexes Array of lending protocol indexes to withdraw interest from
      */
-    function withdrawAllAccumulatedInterest(address token, uint256[] calldata lendingProtocolIndexes) external;
+    function withdrawAllAccumulatedInterest(address[] calldata tokens, uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
@@ -211,9 +210,10 @@ interface IDcaManager {
 
     /**
      * @notice Withdraw all of the rBTC accumulated by a user through their various DCA strategies
+     * @param tokens Array of token addresses which the user has deposited
      * @param lendingProtocolIndexes Array of lending protocol indexes where the user has positions
      */
-    function withdrawAllAccumulatedRbtc(uint256[] calldata lendingProtocolIndexes) external;
+    function withdrawAllAccumulatedRbtc(address[] calldata tokens, uint256[] calldata lendingProtocolIndexes) external;
 
     /**
      * @dev modifies the minimum period that can be set for purchases
@@ -317,32 +317,6 @@ interface IDcaManager {
      * @return the admin operations contract's address
      */
     function getOperationsAdminAddress() external view returns (address);
-
-    /**
-     * @notice get the users deposited tokens
-     * @param user the user address
-     * @return the users deposited tokens
-     */
-    function getUsersDepositedTokens(address user) external view returns (address[] memory);
-
-    /**
-     * @notice get the users that have ever deposited funds into BitChill
-     * @return the users' addresses
-     */
-    function getUsers() external view returns (address[] memory);
-
-    /**
-     * @notice get a user at a specific index of the users array
-     * @param i the index to query
-     * @return the user address at index i
-     */
-    function getUserAtIndex(uint256 i) external view returns (address);
-
-    /**
-     * @notice get the number of users that have ever deposited funds into BitChill
-     * @return the number of users
-     */
-    function getAllTimeUserCount() external view returns (uint256);
 
     /**
      * @notice get the interest accrued by a user for a token and a lending protocol index

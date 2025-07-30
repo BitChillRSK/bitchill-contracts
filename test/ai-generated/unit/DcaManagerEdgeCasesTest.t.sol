@@ -103,7 +103,8 @@ contract DcaManagerEdgeCasesTest is Test {
             FEE_COLLECTOR,
             feeSettings,
             9970,
-            9900
+            9900,
+            EXCHANGE_RATE_DECIMALS
         );
         
         vm.prank(ADMIN);
@@ -445,11 +446,12 @@ contract DcaManagerEdgeCasesTest is Test {
         uint256[] memory emptyProtocols = new uint256[](0);
         
         // Should not revert, just do nothing
-        vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(emptyProtocols);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, emptyProtocols);
     }
     
-    function test_withdrawAllAccumulatedRbtc_invalidProtocol_reverts() public {
+    function test_withdrawAllAccumulatedRbtc_invalidProtocol_skips() public {
         // First create a DCA schedule so user has deposited tokens
         vm.prank(USER);
         dcaManager.createDcaSchedule(
@@ -463,9 +465,28 @@ contract DcaManagerEdgeCasesTest is Test {
         uint256[] memory invalidProtocols = new uint256[](1);
         invalidProtocols[0] = 999; // Invalid protocol
         
-        vm.expectRevert(IDcaManager.DcaManager__TokenNotAccepted.selector);
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        // Should not revert, just skip invalid combinations
         vm.prank(USER);
-        dcaManager.withdrawAllAccumulatedRbtc(invalidProtocols);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, invalidProtocols);
+    }
+
+    function test_withdrawAllAccumulatedRbtcAndInterest_mixedValidInvalidCombinations() public {      
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        
+        uint256[] memory protocols = new uint256[](3);
+        protocols[0] = TROPYKUS_INDEX;
+        protocols[1] = SOVRYN_INDEX;
+        protocols[2] = 0;
+        // Unit tests are only run on one protocol at a time, so this array is valid for testing
+
+        
+        // Should not revert, should skip stablecoin + Sovryn combination
+        vm.prank(USER);
+        dcaManager.withdrawAllAccumulatedRbtc(tokens, protocols);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, protocols);
     }
     
     /*//////////////////////////////////////////////////////////////

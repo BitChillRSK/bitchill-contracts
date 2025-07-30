@@ -255,7 +255,7 @@ contract RbtcPurchaseTest is DcaDappTest {
         // The user's balance is also equal (since we're batching the purchases of 5 schedules but only one user)
         assertEq(userAccumulatedRbtcPost - userAccumulatedRbtcPrev, 0);
     }
-
+    
     function testRescueRbtcFromStuckContract() external {
         // First do a purchase to accumulate some rBTC on the handler contract
         super.makeSinglePurchase();

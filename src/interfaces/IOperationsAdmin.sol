@@ -14,6 +14,10 @@ interface IOperationsAdmin {
         address indexed token, uint256 indexed lendingProtocolIndex, address indexed newHandler
     );
     event OperationsAdmin__LendingProtocolAdded(uint256 indexed index, string indexed name);
+    event OperationsAdmin__AdminRoleGranted(address indexed admin);
+    event OperationsAdmin__AdminRoleRevoked(address indexed admin);
+    event OperationsAdmin__SwapperRoleGranted(address indexed swapper);
+    event OperationsAdmin__SwapperRoleRevoked(address indexed swapper);
 
     //////////////////////
     // Errors ////////////
@@ -62,12 +66,12 @@ interface IOperationsAdmin {
      * @param index The index to be assigned to it
      * @notice The index cannot be zero, since all elements in a mapping map to 0 by default
      */
-    function addOrUpdateLendingProtocol(string memory lowerCaseName, uint256 index) external;
+    function addOrUpdateLendingProtocol(string calldata lowerCaseName, uint256 index) external;
 
     /**
      * @dev Retrieves the index of the lending protocol
      * @param lowerCaseName The name of the lending protocol in lower case
      * @return The address index of the lending protocol
      */
-    function getLendingProtocolIndex(string memory lowerCaseName) external returns (uint256);
+    function getLendingProtocolIndex(string calldata lowerCaseName) external returns (uint256);
 }

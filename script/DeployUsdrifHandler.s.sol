@@ -90,7 +90,8 @@ contract DeployUsdrifHandler is DeployBase {
             params.feeCollector,
             params.feeSettings,
             params.amountOutMinimumPercent,
-            params.amountOutMinimumSafetyCheck
+            params.amountOutMinimumSafetyCheck,
+            EXCHANGE_RATE_DECIMALS
         );
         
         console.log("USDRIF handler deployed at:", address(usdrifHandler));

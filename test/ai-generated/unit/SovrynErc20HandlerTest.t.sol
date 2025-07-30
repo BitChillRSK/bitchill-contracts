@@ -341,7 +341,8 @@ contract SovrynTestHandler is SovrynErc20Handler {
         iSusdTokenAddress,
         minPurchaseAmount,
         feeCollector,
-        feeSettings
+        feeSettings,
+        EXCHANGE_RATE_DECIMALS
     ) {}
     
     // Implementation required by IPurchaseRbtc interface

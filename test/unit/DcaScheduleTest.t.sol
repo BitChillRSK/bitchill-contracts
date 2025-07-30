@@ -9,6 +9,9 @@ import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
 import "../../script/Constants.sol";
 
 contract DcaScheduleTest is DcaDappTest {
+    // Events
+    event DcaManager__DcaScheduleDeleted(address user, address token, bytes32 scheduleId, uint256 refundedAmount);
+    
     function setUp() public override {
         super.setUp();
     }
@@ -76,7 +79,7 @@ contract DcaScheduleTest is DcaDappTest {
         );
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleUpdated(
-            USER, address(stablecoin), scheduleId, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
+            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT + extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
         );
         dcaManager.updateDcaSchedule(
             address(stablecoin), SCHEDULE_INDEX, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
@@ -106,6 +109,8 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId is", vm.toString(scheduleId));
         console.log("scheduleId2 is", vm.toString(scheduleId2));
         // Delete one
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__DcaScheduleDeleted(USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT * 2);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
         // Check that there are two (the one created in setUp() and the second one created in this test)
         assertEq(dcaManager.getMyDcaSchedules(address(stablecoin)).length, 2);
@@ -134,8 +139,12 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId 2 is", vm.toString(scheduleId2));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(stablecoin))[2].scheduleId));
         // Delete one
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__DcaScheduleDeleted(USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT * 2);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
         // Delete the second one passing the same index, since the first one was already deleted
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__DcaScheduleDeleted(USER, address(stablecoin), scheduleId2, AMOUNT_TO_DEPOSIT * 3);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId2);
         // Check only the schedule created in setUp() remains
         assertEq(dcaManager.getMyDcaSchedules(address(stablecoin)).length, 1);
@@ -179,8 +188,12 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("scheduleId 2 is", vm.toString(scheduleId2));
         console.log(vm.toString(dcaManager.getMyDcaSchedules(address(stablecoin))[2].scheduleId));
         // Delete one
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__DcaScheduleDeleted(USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT * 2);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
         // Deleting the second one fails, because when the first one was deleted, the second one was moved to its index
+        vm.expectEmit(true, true, true, true);
+        emit DcaManager__DcaScheduleDeleted(USER, address(stablecoin), scheduleId2, AMOUNT_TO_DEPOSIT * 3);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId2);
         vm.stopPrank();
     }
@@ -221,4 +234,5 @@ contract DcaScheduleTest is DcaDappTest {
         vm.prank(USER);
         dcaManager.deleteDcaSchedule(address(stablecoin), scheduleId);
     }
+
 }

@@ -99,32 +99,6 @@ contract GettersTest is DcaDappTest {
         assertNotEq(scheduleId, bytes32(0));
     }
 
-    function test_dcaManager_getUsers() public {
-        // Anyone should be able to call now
-        address[] memory users = dcaManager.getUsers();
-        assertEq(users.length, 1);
-        assertEq(users[0], USER);
-
-        vm.prank(makeAddr("randomUser"));
-        address[] memory usersByRandom = dcaManager.getUsers();
-        assertEq(usersByRandom.length, 1);
-        assertEq(usersByRandom[0], USER);
-    }
-
-    function test_dcaManager_getUserAtIndex() public {
-        address user0 = dcaManager.getUserAtIndex(0);
-        assertEq(user0, USER);
-
-        // Out of bounds should revert
-        vm.expectRevert();
-        dcaManager.getUserAtIndex(5);
-    }
-
-    function test_dcaManager_getAllTimeUserCount() public {
-        uint256 count = dcaManager.getAllTimeUserCount();
-        assertEq(count, 1);
-    }
-
     function test_dcaManager_getOperationsAdminAddress() public {
         address adminAddress = dcaManager.getOperationsAdminAddress();
         assertEq(adminAddress, address(operationsAdmin));
@@ -138,12 +112,6 @@ contract GettersTest is DcaDappTest {
     function test_dcaManager_getMaxSchedulesPerToken() public {
         uint256 maxSchedules = dcaManager.getMaxSchedulesPerToken();
         assertEq(maxSchedules, MAX_SCHEDULES_PER_TOKEN);
-    }
-
-    function test_dcaManager_getUsersDepositedTokens() public {
-        address[] memory tokens = dcaManager.getUsersDepositedTokens(USER);
-        assertEq(tokens.length, 1);
-        assertEq(tokens[0], address(stablecoin));
     }
 
     function test_dcaManager_getMyInterestAccrued_whenSupported() public {
@@ -394,9 +362,6 @@ contract GettersTest is DcaDappTest {
         IDcaManager.DcaDetails[] memory schedules = dcaManager.getDcaSchedules(address(0), address(stablecoin));
         assertEq(schedules.length, 0);
 
-        address[] memory tokens = dcaManager.getUsersDepositedTokens(address(0));
-        assertEq(tokens.length, 0);
-
         uint256 balance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(address(0));
         assertEq(balance, 0);
     }
@@ -428,16 +393,12 @@ contract GettersTest is DcaDappTest {
 
     function test_getters_returnTypesAndDefaults() public {
         // Test that getters return appropriate default values for empty states
-        assertEq(dcaManager.getAllTimeUserCount(), 1); // We have one user from setup
         assertEq(dcaManager.getMinPurchasePeriod(), MIN_PURCHASE_PERIOD);
         assertEq(dcaManager.getMaxSchedulesPerToken(), MAX_SCHEDULES_PER_TOKEN);
         assertNotEq(dcaManager.getOperationsAdminAddress(), address(0));
         
         // Test empty arrays for new users
         address newUser = makeAddr("newUser");
-        address[] memory emptyTokens = dcaManager.getUsersDepositedTokens(newUser);
-        assertEq(emptyTokens.length, 0);
-        
         IDcaManager.DcaDetails[] memory emptySchedules = dcaManager.getDcaSchedules(newUser, address(stablecoin));
         assertEq(emptySchedules.length, 0);
     }
@@ -445,19 +406,11 @@ contract GettersTest is DcaDappTest {
     function test_getters_accessControl() public {
         // Test that view functions don't have access control restrictions
         vm.prank(makeAddr("randomUser"));
-        assertEq(dcaManager.getAllTimeUserCount(), 1);
-        
-        vm.prank(makeAddr("randomUser"));
         assertNotEq(dcaManager.getOperationsAdminAddress(), address(0));
         
         vm.prank(makeAddr("randomUser"));
         uint256 minPeriod = dcaManager.getMinPurchasePeriod();
         assertEq(minPeriod, MIN_PURCHASE_PERIOD);
-        
-        // getUsers() should be callable by anyone now
-        vm.prank(makeAddr("randomUser"));
-        address[] memory users = dcaManager.getUsers();
-        assertEq(users.length, 1);
     }
 
     function test_getters_stateConsistency() public {
@@ -521,7 +474,7 @@ contract GettersTest is DcaDappTest {
     function test_getters_gasEfficiency() public {
         // Test that getters are gas efficient
         uint256 gasBefore = gasleft();
-        dcaManager.getAllTimeUserCount();
+        dcaManager.getMinPurchasePeriod(); // Use a different getter
         uint256 gasAfter = gasleft();
         assertLt(gasBefore - gasAfter, 10000); // Should be very cheap
         

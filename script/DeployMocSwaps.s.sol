@@ -43,7 +43,8 @@ contract DeployMocSwaps is DeployBase {
                     MIN_PURCHASE_AMOUNT, 
                     params.feeCollector, 
                     params.mocProxy, 
-                    feeSettings
+                    feeSettings,
+                    EXCHANGE_RATE_DECIMALS
                 )
             );
         } else {
@@ -55,7 +56,8 @@ contract DeployMocSwaps is DeployBase {
                     MIN_PURCHASE_AMOUNT, 
                     params.feeCollector, 
                     params.mocProxy, 
-                    feeSettings
+                    feeSettings,
+                    EXCHANGE_RATE_DECIMALS
                 )
             );
         }

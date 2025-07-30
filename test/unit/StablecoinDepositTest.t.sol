@@ -18,6 +18,7 @@ contract StablecoinDepositTest is DcaDappTest {
     function testStablecoinDeposit() external {
         (uint256 userBalanceAfterDeposit, uint256 userBalanceBeforeDeposit) = super.depositDoc();
         assertEq(AMOUNT_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+        assertEq(dcaManager.getDcaSchedules(USER, address(stablecoin)).length, 1);
     }
 
     function testCannotDepositZeroStablecoin() external {

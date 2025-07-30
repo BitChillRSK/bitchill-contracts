@@ -38,4 +38,6 @@ contract StablecoinWithdrawalTest is DcaDappTest {
         dcaManager.withdrawToken(address(stablecoin), SCHEDULE_INDEX, USER_TOTAL_AMOUNT);
         vm.stopPrank();
     }
+
+
 } 
