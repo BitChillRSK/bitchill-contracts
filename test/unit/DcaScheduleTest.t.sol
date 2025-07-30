@@ -79,7 +79,7 @@ contract DcaScheduleTest is DcaDappTest {
         );
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleUpdated(
-            USER, address(stablecoin), scheduleId, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
+            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT + extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
         );
         dcaManager.updateDcaSchedule(
             address(stablecoin), SCHEDULE_INDEX, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod

@@ -93,7 +93,7 @@ contract DcaDappTest is Test {
         address indexed user,
         address indexed token,
         bytes32 indexed scheduleId,
-        uint256 depositAmount,
+        uint256 updatedTokenBalance,
         uint256 purchaseAmount,
         uint256 purchasePeriod
     );

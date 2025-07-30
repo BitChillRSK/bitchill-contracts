@@ -140,15 +140,17 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     ) external override {
         _validatePurchasePeriod(purchasePeriod);
         _validateDeposit(depositAmount);
+        _validatePurchaseAmount(token, purchaseAmount, depositAmount, lendingProtocolIndex);
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
-        if (schedules.length == s_maxSchedulesPerToken) {
+        uint256 numOfSchedules = schedules.length;
+        if (numOfSchedules == s_maxSchedulesPerToken) {
             revert DcaManager__MaxSchedulesPerTokenReached(token);
         }
 
         bytes32 scheduleId =
-            keccak256(abi.encodePacked(msg.sender, token, block.timestamp, schedules.length));
+            keccak256(abi.encodePacked(msg.sender, token, block.timestamp, numOfSchedules));
 
         DcaDetails memory dcaSchedule = DcaDetails(
             depositAmount,
@@ -158,8 +160,6 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             scheduleId,
             lendingProtocolIndex
         );
-
-        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
 
         schedules.push(dcaSchedule);
         emit DcaManager__DcaScheduleCreated(
@@ -183,14 +183,14 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         uint256 purchaseAmount,
         uint256 purchasePeriod
     ) external override validateScheduleIndex(msg.sender, token, scheduleIndex) {
-        DcaDetails memory dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
+        DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
+        DcaDetails memory dcaSchedule = schedules[scheduleIndex];
 
         if (purchasePeriod > 0) {
             _validatePurchasePeriod(purchasePeriod);
             dcaSchedule.purchasePeriod = purchasePeriod;
         }
         if (depositAmount > 0) {
-            _validateDeposit(depositAmount);
             dcaSchedule.tokenBalance += depositAmount;
             _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
         }
@@ -199,10 +199,15 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             dcaSchedule.purchaseAmount = purchaseAmount;
         }
 
-        s_dcaSchedules[msg.sender][token][scheduleIndex] = dcaSchedule;
+        schedules[scheduleIndex] = dcaSchedule;
 
         emit DcaManager__DcaScheduleUpdated(
-            msg.sender, token, dcaSchedule.scheduleId, depositAmount, purchaseAmount, purchasePeriod
+            msg.sender,
+            token,
+            dcaSchedule.scheduleId,
+            dcaSchedule.tokenBalance,
+            dcaSchedule.purchaseAmount,
+            dcaSchedule.purchasePeriod
         );
     }
 
