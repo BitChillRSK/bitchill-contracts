@@ -26,14 +26,26 @@ contract RbtcPurchaseTest is DcaDappTest {
         super.makeSinglePurchase();
     }
 
+    function testCannotBuyIfScheduleIdAndIndexMismatch() external {
+        bytes32 wrongScheduleId = keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, uint256(999)));
+        vm.expectRevert(IDcaManager.DcaManager__ScheduleIdAndIndexMismatch.selector);
+        vm.prank(SWAPPER);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, wrongScheduleId);
+    }
+
+    function testCannotBuyIfInexistentSchedule() external {
+        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), SCHEDULE_INDEX);
+        vm.expectRevert(IDcaManager.DcaManager__InexistentScheduleIndex.selector);
+        vm.prank(SWAPPER);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX + 1, scheduleId);
+    }
+
     function testCannotBuyIfPeriodNotElapsed() external {
         vm.startPrank(USER);
         stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
-        dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_SPEND);
-        dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
-        bytes32 scheduleId = keccak256(
-            abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
-        );
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
+        dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_SPEND);
+        dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, scheduleId, MIN_PURCHASE_PERIOD);
         vm.stopPrank();
         vm.prank(SWAPPER);
         dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId); // first purchase
@@ -52,11 +64,9 @@ contract RbtcPurchaseTest is DcaDappTest {
         uint256 fee = feeCalculator.calculateFee(AMOUNT_TO_SPEND);
         uint256 netPurchaseAmount = AMOUNT_TO_SPEND - fee;
 
-        bytes32 scheduleId =
-            keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
-
+        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), SCHEDULE_INDEX);
         vm.prank(USER);
-        dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, MIN_PURCHASE_PERIOD);
+        dcaManager.setPurchasePeriod(address(stablecoin), SCHEDULE_INDEX, scheduleId, MIN_PURCHASE_PERIOD);
         for (uint256 i; i < numOfPurchases; ++i) {
             vm.prank(SWAPPER);
             dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);

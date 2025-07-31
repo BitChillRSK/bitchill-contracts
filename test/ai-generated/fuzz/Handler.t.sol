@@ -163,7 +163,8 @@ contract Handler is Test {
         
         stablecoin.approve(address(tokenHandler), depositAmount);
         
-        try dcaManager.depositToken(address(stablecoin), scheduleIndex, depositAmount) {
+        bytes32 scheduleId = dcaManager.getScheduleId(user, address(stablecoin), scheduleIndex);
+        try dcaManager.depositToken(address(stablecoin), scheduleIndex, scheduleId, depositAmount) {
             // Success
         } catch {
             // Ignore failures
@@ -196,7 +197,8 @@ contract Handler is Test {
 
         withdrawalAmount = bound(withdrawalAmount, 1, currentBalance);
         
-        try dcaManager.withdrawToken(address(stablecoin), scheduleIndex, withdrawalAmount) {
+        bytes32 scheduleId = dcaManager.getScheduleId(user, address(stablecoin), scheduleIndex);
+        try dcaManager.withdrawToken(address(stablecoin), scheduleIndex, scheduleId, withdrawalAmount) {
             // Success
         } catch {
             // Ignore failures
@@ -264,9 +266,11 @@ contract Handler is Test {
             stablecoin.approve(address(tokenHandler), depositAmount);
         }
         
+        bytes32 scheduleId = dcaManager.getScheduleId(user, address(stablecoin), scheduleIndex);
         try dcaManager.updateDcaSchedule(
             address(stablecoin),
             scheduleIndex,
+            scheduleId,
             depositAmount,
             purchaseAmount,
             purchasePeriod
@@ -295,7 +299,7 @@ contract Handler is Test {
 
         scheduleIndex = bound(scheduleIndex, 0, schedules.length - 1);
         
-        try dcaManager.deleteDcaSchedule(address(stablecoin), schedules[scheduleIndex].scheduleId) {
+        try dcaManager.deleteDcaSchedule(address(stablecoin), scheduleIndex, schedules[scheduleIndex].scheduleId) {
             // Success
         } catch {
             // Ignore failures
@@ -487,9 +491,11 @@ contract Handler is Test {
         
         withdrawalAmount = bound(withdrawalAmount, 1, currentBalance);
         
+        bytes32 scheduleId = dcaManager.getScheduleId(user, address(stablecoin), scheduleIndex);
         try dcaManager.withdrawTokenAndInterest(
             address(stablecoin),
             scheduleIndex,
+            scheduleId,
             withdrawalAmount,
             lendingProtocolIndex
         ) {

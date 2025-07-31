@@ -16,7 +16,7 @@ contract StablecoinDepositTest is DcaDappTest {
     /// Stablecoin deposit tests ///
     /////////////////////////////////
     function testStablecoinDeposit() external {
-        (uint256 userBalanceAfterDeposit, uint256 userBalanceBeforeDeposit) = super.depositDoc();
+        (uint256 userBalanceAfterDeposit, uint256 userBalanceBeforeDeposit) = super.depositStablecoin();
         assertEq(AMOUNT_TO_DEPOSIT, userBalanceAfterDeposit - userBalanceBeforeDeposit);
         assertEq(dcaManager.getDcaSchedules(USER, address(stablecoin)).length, 1);
     }
@@ -24,15 +24,17 @@ contract StablecoinDepositTest is DcaDappTest {
     function testCannotDepositZeroStablecoin() external {
         vm.startPrank(USER);
         stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         vm.expectRevert(IDcaManager.DcaManager__DepositAmountMustBeGreaterThanZero.selector);
-        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, 0);
+        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, 0);
         vm.stopPrank();
     }
 
     function testDepositRevertsIfStablecoinNotApproved() external {
         vm.startPrank(USER);
+        bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         vm.expectRevert();
-        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, AMOUNT_TO_DEPOSIT);
+        dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_DEPOSIT);
         vm.stopPrank();
     }
 } 

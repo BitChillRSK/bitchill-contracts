@@ -63,7 +63,6 @@ interface IDcaManager {
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
     error DcaManager__InexistentScheduleIndex();
-    error DcaManager__InexistentScheduleId();
     error DcaManager__ScheduleIdAndIndexMismatch();
     error DcaManager__ScheduleBalanceNotEnoughForPurchase(uint256 scheduleIndex, bytes32 scheduleId, address token, uint256 remainingBalance);
     error DcaManager__BatchPurchaseArraysLengthMismatch();
@@ -80,17 +79,19 @@ interface IDcaManager {
      * @notice Deposit a specified amount of a stablecoin into the contract for DCA operations.
      * @param token The token address of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param depositAmount The amount of the stablecoin to deposit.
      */
-    function depositToken(address token, uint256 scheduleIndex, uint256 depositAmount) external;
+    function depositToken(address token, uint256 scheduleIndex, bytes32 scheduleId, uint256 depositAmount) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract.
      * @param token The token address of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param withdrawalAmount The amount of the stablecoin to withdraw.
      */
-    function withdrawToken(address token, uint256 scheduleIndex, uint256 withdrawalAmount) external;
+    function withdrawToken(address token, uint256 scheduleIndex, bytes32 scheduleId, uint256 withdrawalAmount) external;
 
     /**
      * @notice Create a new DCA schedule depositing a specified amount of a stablecoin into the contract.
@@ -112,6 +113,7 @@ interface IDcaManager {
      * @notice Update an existing DCA schedule.
      * @param token The token address of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param depositAmount The amount of the stablecoin to deposit.
      * @param purchaseAmount The amount of to spend periodically in buying rBTC
      * @param purchasePeriod The period for recurrent purchases
@@ -119,6 +121,7 @@ interface IDcaManager {
     function updateDcaSchedule(
         address token,
         uint256 scheduleIndex,
+        bytes32 scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
         uint256 purchasePeriod
@@ -127,25 +130,28 @@ interface IDcaManager {
     /**
      * @dev function to delete a DCA schedule: cancels DCA and retrieves the funds
      * @param token the token used for DCA in the schedule to be deleted
-     * @param scheduleId the unique identifier of the schedule to be deleted
+     * @param scheduleIndex the index of the schedule to delete
+     * @param scheduleId the unique identifier of the schedule to be deleted for validation
      */
-    function deleteDcaSchedule(address token, bytes32 scheduleId) external;
+    function deleteDcaSchedule(address token, uint256 scheduleIndex, bytes32 scheduleId) external;
 
     /**
-     * @notice Withdraw a specified amount of a stablecoin from the contract.
-     * @param token The token address of the stablecoin to deposit.
+     * @notice Set the purchase amount for a DCA schedule.
+     * @param token The token address of the stablecoin.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param purchaseAmount The amount of to spend periodically in buying rBTC
      */
-    function setPurchaseAmount(address token, uint256 scheduleIndex, uint256 purchaseAmount) external;
+    function setPurchaseAmount(address token, uint256 scheduleIndex, bytes32 scheduleId, uint256 purchaseAmount) external;
 
     /**
-     * @notice Withdraw a specified amount of a stablecoin from the contract.
-     * @param token The token address of the stablecoin to deposit.
+     * @notice Set the purchase period for a DCA schedule.
+     * @param token The token address of the stablecoin.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param purchasePeriod The period for recurrent purchases
      */
-    function setPurchasePeriod(address token, uint256 scheduleIndex, uint256 purchasePeriod) external;
+    function setPurchasePeriod(address token, uint256 scheduleIndex, bytes32 scheduleId, uint256 purchasePeriod) external;
 
     /**
      * @notice Withdraw a specified amount of a stablecoin from the contract.
@@ -191,12 +197,14 @@ interface IDcaManager {
      * @notice Withdraw a specified amount of a stablecoin from the contract as well as all the yield generated with it across all DCA schedules
      * @param token The token address of the stablecoin to deposit.
      * @param scheduleIndex The index of the DCA schedule
+     * @param scheduleId The schedule id for validation
      * @param withdrawalAmount The amount of the stablecoin to withdraw.
      * @param lendingProtocolIndex: the lending protocol index
      */
     function withdrawTokenAndInterest(
         address token,
         uint256 scheduleIndex,
+        bytes32 scheduleId,
         uint256 withdrawalAmount,
         uint256 lendingProtocolIndex
     ) external;
