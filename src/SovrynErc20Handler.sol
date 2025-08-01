@@ -39,7 +39,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         FeeSettings memory feeSettings,
         uint256 exchangeRateDecimals
     )
-        TokenHandler(dcaManagerAddress, stableTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
+        TokenHandler(dcaManagerAddress, stableTokenAddress, feeCollector, feeSettings)
         TokenLending(exchangeRateDecimals)
     {
         i_iSusdToken = IiSusdToken(iSusdTokenAddress);

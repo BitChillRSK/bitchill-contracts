@@ -566,7 +566,7 @@ contract Handler is Test {
     }
     
     /**
-     * @notice Test modifying minimum purchase amount on token handlers (owner-only)
+     * @notice Test modifying minimum purchase amount on DCA manager (owner-only)
      */
     function modifyMinPurchaseAmount(
         uint256 newMinPurchaseAmount,
@@ -576,8 +576,15 @@ contract Handler is Test {
         lendingProtocolIndex = bound(lendingProtocolIndex, 1, 2);
         
         vm.startPrank(OWNER);
-        try tokenHandler.modifyMinPurchaseAmount(newMinPurchaseAmount) {
-            // Success - this tests the non-lending handler
+        try dcaManager.modifyDefaultMinPurchaseAmount(newMinPurchaseAmount) {
+            // Success - this tests the default minimum purchase amount
+        } catch {
+            // Ignore failures
+        }
+        
+        // Test setting custom amount for specific token
+        try dcaManager.setTokenMinPurchaseAmount(address(stablecoin), newMinPurchaseAmount) {
+            // Success - this tests setting custom amount per token
         } catch {
             // Ignore failures
         }

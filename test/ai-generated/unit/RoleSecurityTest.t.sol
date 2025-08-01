@@ -57,7 +57,7 @@ contract RoleSecurityTest is Test {
         operationsAdmin = new OperationsAdmin();
         
         vm.prank(OWNER);
-        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         
         stablecoin = new MockStablecoin(address(this));
         kToken = new MockKdocToken(address(stablecoin));

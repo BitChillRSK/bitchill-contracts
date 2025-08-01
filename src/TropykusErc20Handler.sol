@@ -39,7 +39,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         FeeSettings memory feeSettings,
         uint256 exchangeRateDecimals
     )
-        TokenHandler(dcaManagerAddress, stableTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
+        TokenHandler(dcaManagerAddress, stableTokenAddress, feeCollector, feeSettings)
         TokenLending(exchangeRateDecimals)
     {
         i_kToken = IkToken(kTokenAddress);

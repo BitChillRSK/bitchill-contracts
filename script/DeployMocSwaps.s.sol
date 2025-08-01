@@ -113,7 +113,7 @@ contract DeployMocSwaps is DeployBase {
         vm.startBroadcast();
 
         OperationsAdmin operationsAdmin = new OperationsAdmin();
-        DcaManager dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        DcaManager dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         address feeCollector = getFeeCollector(environment);
         address docHandlerMocAddress;
 

@@ -98,7 +98,7 @@ abstract contract HandlerTestHarness is Test {
         operationsAdmin = new OperationsAdmin();
         
         vm.prank(OWNER);
-        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         
         stablecoin = new MockStablecoin(address(this));
         
@@ -151,9 +151,9 @@ abstract contract HandlerTestHarness is Test {
     
     function test_handler_deployment() public {
         assertNotEq(address(handler), address(0));
-        assertEq(handler.getMinPurchaseAmount(), MIN_PURCHASE_AMOUNT);
         // Note: i_stableToken is immutable but may not be publicly accessible
         // We can verify it works through deposit/withdraw functionality instead
+        // Minimum purchase amount is now handled by DcaManager, not individual handlers
     }
     
     function test_handler_depositToken_success() public {
@@ -399,19 +399,30 @@ abstract contract HandlerTestHarness is Test {
         }
     }
     
-    function test_handler_modifyMinPurchaseAmount() public {
+    function test_dcaManager_modifyMinPurchaseAmount() public {
         uint256 newAmount = 500 ether;
         
         vm.prank(OWNER);
-        handler.modifyMinPurchaseAmount(newAmount);
+        dcaManager.modifyDefaultMinPurchaseAmount(newAmount);
         
-        assertEq(handler.getMinPurchaseAmount(), newAmount);
+        assertEq(dcaManager.getDefaultMinPurchaseAmount(), newAmount);
     }
     
-    function test_handler_modifyMinPurchaseAmount_reverts_notOwner() public {
+    function test_dcaManager_setTokenMinPurchaseAmount() public {
+        uint256 newAmount = 500 ether;
+        
+        vm.prank(OWNER);
+        dcaManager.setTokenMinPurchaseAmount(address(stablecoin), newAmount);
+        
+        (uint256 returnedAmount, bool isCustom) = dcaManager.getTokenMinPurchaseAmount(address(stablecoin));
+        assertEq(returnedAmount, newAmount);
+        assertTrue(isCustom);
+    }
+    
+    function test_dcaManager_modifyMinPurchaseAmount_reverts_notOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
-        handler.modifyMinPurchaseAmount(500 ether);
+        dcaManager.modifyDefaultMinPurchaseAmount(500 ether);
     }
     
     /*//////////////////////////////////////////////////////////////

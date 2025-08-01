@@ -50,6 +50,8 @@ interface IDcaManager {
     event DcaManager__OperationsAdminUpdated(address indexed newOperationsAdmin);
     event DcaManager__MinPurchasePeriodModified(uint256 indexed newMinPurchasePeriod);
     event DcaManager__LastPurchaseTimestampUpdated(address indexed token, bytes32 indexed scheduleId, uint256 indexed lastPurchaseTimestamp);
+    event DcaManager__DefaultMinPurchaseAmountModified(uint256 indexed newDefaultMinPurchaseAmount);
+    event DcaManager__TokenMinPurchaseAmountSet(address indexed token, uint256 indexed minPurchaseAmount);
 
     //////////////////////
     // Errors ////////////
@@ -58,7 +60,7 @@ interface IDcaManager {
     error DcaManager__DepositAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountMustBeGreaterThanZero();
     error DcaManager__WithdrawalAmountExceedsBalance(address token, uint256 amount, uint256 balance);
-    error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token);
+    error DcaManager__PurchaseAmountMustBeGreaterThanMinimum(address token, uint256 minPurchaseAmount);
     error DcaManager__PurchasePeriodMustBeGreaterThanMinimum();
     error DcaManager__PurchaseAmountMustBeLowerThanHalfOfBalance();
     error DcaManager__CannotBuyIfPurchasePeriodHasNotElapsed(uint256 timeRemaining);
@@ -233,6 +235,16 @@ interface IDcaManager {
      */
     function modifyMaxSchedulesPerToken(uint256 maxSchedulesPerToken) external;
 
+    /**
+     * @dev modifies the default minimum purchase amount for all tokens
+     */
+    function modifyDefaultMinPurchaseAmount(uint256 defaultMinPurchaseAmount) external;
+
+    /**
+     * @dev sets a custom minimum purchase amount for a specific token
+     */
+    function setTokenMinPurchaseAmount(address token, uint256 minPurchaseAmount) external;
+
     //////////////////////
     // Getter functions //
     //////////////////////
@@ -355,4 +367,14 @@ interface IDcaManager {
      * @dev returns the maximum number of schedules per token
      */
     function getMaxSchedulesPerToken() external view returns (uint256);
+
+    /**
+     * @dev returns the default minimum purchase amount for all tokens
+     */
+    function getDefaultMinPurchaseAmount() external view returns (uint256);
+
+    /**
+     * @dev returns the minimum purchase amount for a specific token (0 if not set)
+     */
+    function getTokenMinPurchaseAmount(address token) external view returns (uint256 minPurchaseAmount, bool customMinAmountSet);
 }
