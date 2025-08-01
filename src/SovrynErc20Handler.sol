@@ -26,7 +26,6 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param stableTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
      * @param iSusdTokenAddress the address of Sovryn' iSusd token contract
-     * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
      */
@@ -34,12 +33,11 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         address dcaManagerAddress,
         address stableTokenAddress,
         address iSusdTokenAddress,
-        uint256 minPurchaseAmount,
         address feeCollector,
         FeeSettings memory feeSettings,
         uint256 exchangeRateDecimals
     )
-        TokenHandler(dcaManagerAddress, stableTokenAddress, minPurchaseAmount, feeCollector, feeSettings)
+        TokenHandler(dcaManagerAddress, stableTokenAddress, feeCollector, feeSettings)
         TokenLending(exchangeRateDecimals)
     {
         i_iSusdToken = IiSusdToken(iSusdTokenAddress);

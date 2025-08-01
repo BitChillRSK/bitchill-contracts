@@ -72,7 +72,7 @@ contract DeployMocAndUniswap is DeployBase {
         vm.startBroadcast();
         // Deploy admin operations and DCA manager
         adOpsMoc = new OperationsAdmin();
-        dcaManMoc = new DcaManager(address(adOpsMoc), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        dcaManMoc = new DcaManager(address(adOpsMoc), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         
         // Get fee collector address
         address feeCollector = getFeeCollector(environment);
@@ -142,7 +142,7 @@ contract DeployMocAndUniswap is DeployBase {
         vm.startBroadcast();
         // Deploy admin operations and DCA manager
         adOpsUni = new OperationsAdmin();
-        dcaManUni = new DcaManager(address(adOpsUni), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        dcaManUni = new DcaManager(address(adOpsUni), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         
         // Get fee collector address
         address feeCollector = getFeeCollector(environment);

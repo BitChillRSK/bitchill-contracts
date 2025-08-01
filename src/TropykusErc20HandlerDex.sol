@@ -36,7 +36,6 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
             dcaManagerAddress,
             docTokenAddress,
             kTokenAddress,
-            minPurchaseAmount,
             feeCollector,
             feeSettings,
             exchangeRateDecimals

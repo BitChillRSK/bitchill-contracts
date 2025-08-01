@@ -219,7 +219,6 @@ contract TropykusTestHandler is TropykusErc20Handler {
         dcaManagerAddress,
         stableTokenAddress, 
         kTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS

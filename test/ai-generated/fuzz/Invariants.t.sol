@@ -86,7 +86,7 @@ contract InvariantTest is StdInvariant, Test {
         operationsAdmin = new OperationsAdmin();
         
         vm.prank(OWNER);
-        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN);
+        dcaManager = new DcaManager(address(operationsAdmin), MIN_PURCHASE_PERIOD, MAX_SCHEDULES_PER_TOKEN, MIN_PURCHASE_AMOUNT);
         
         stablecoin = new MockStablecoin(address(this));
         
@@ -351,7 +351,6 @@ contract TropykusHandlerWrapper is TropykusErc20Handler {
         dcaManagerAddress,
         stableTokenAddress,
         kTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS
@@ -487,7 +486,6 @@ contract SovrynHandlerWrapper is SovrynErc20Handler {
         dcaManagerAddress,
         stableTokenAddress,
         iSusdTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS

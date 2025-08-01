@@ -36,7 +36,6 @@ contract SovrynErc20HandlerDex is SovrynErc20Handler, PurchaseUniswap {
             dcaManagerAddress,
             stableTokenAddress,
             iSusdTokenAddress,
-            minPurchaseAmount,
             feeCollector,
             feeSettings,
             exchangeRateDecimals

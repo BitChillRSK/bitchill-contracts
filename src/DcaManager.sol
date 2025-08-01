@@ -28,6 +28,8 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     mapping(address user => mapping(address tokenDeposited => DcaDetails[] usersDcaSchedules)) private s_dcaSchedules;
     uint256 private s_minPurchasePeriod; // Minimum time between purchases
     uint256 private s_maxSchedulesPerToken; // Maximum number of schedules per stablecoin
+    uint256 private s_defaultMinPurchaseAmount; // Default minimum purchase amount for all tokens
+    mapping(address token => uint256) private s_tokenMinPurchaseAmounts; // Custom minimum purchase amounts per token
 
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
@@ -63,11 +65,13 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param operationsAdminAddress the address of the admin operations contract
      * @param minPurchasePeriod the minimum time between purchases (in seconds)
      * @param maxSchedulesPerToken the maximum number of schedules allowed per token
+     * @param defaultMinPurchaseAmount the default minimum purchase amount for all tokens
      */
-    constructor(address operationsAdminAddress, uint256 minPurchasePeriod, uint256 maxSchedulesPerToken) Ownable() {
+    constructor(address operationsAdminAddress, uint256 minPurchasePeriod, uint256 maxSchedulesPerToken, uint256 defaultMinPurchaseAmount) Ownable() {
         s_operationsAdmin = OperationsAdmin(operationsAdminAddress);
         s_minPurchasePeriod = minPurchasePeriod;
         s_maxSchedulesPerToken = maxSchedulesPerToken;
+        s_defaultMinPurchaseAmount = defaultMinPurchaseAmount;
     }
 
     /**
@@ -106,7 +110,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         _validateScheduleId(scheduleId, dcaSchedule.scheduleId);
-        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
+        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
         dcaSchedule.purchaseAmount = purchaseAmount;
         emit DcaManager__PurchaseAmountSet(msg.sender, scheduleId, purchaseAmount);
     }
@@ -147,7 +151,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     ) external override {
         _validatePurchasePeriod(purchasePeriod);
         _validateDeposit(depositAmount);
-        _validatePurchaseAmount(token, purchaseAmount, depositAmount, lendingProtocolIndex);
+        _validatePurchaseAmount(token, purchaseAmount, depositAmount);
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
@@ -205,7 +209,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
         }
         if (purchaseAmount > 0) {
-            _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
+            _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
             dcaSchedule.purchaseAmount = purchaseAmount;
         }
 
@@ -414,6 +418,25 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         emit DcaManager__MaxSchedulesPerTokenModified(maxSchedulesPerToken);
     }
 
+    /**
+     * @notice modify the default minimum purchase amount for all tokens
+     * @param defaultMinPurchaseAmount: the new default minimum purchase amount
+     */
+    function modifyDefaultMinPurchaseAmount(uint256 defaultMinPurchaseAmount) external override onlyOwner {
+        s_defaultMinPurchaseAmount = defaultMinPurchaseAmount;
+        emit DcaManager__DefaultMinPurchaseAmountModified(defaultMinPurchaseAmount);
+    }
+
+    /**
+     * @notice set a custom minimum purchase amount for a specific token
+     * @param token: the token address
+     * @param minPurchaseAmount: the custom minimum purchase amount for this token
+     */
+    function setTokenMinPurchaseAmount(address token, uint256 minPurchaseAmount) external override onlyOwner {
+        s_tokenMinPurchaseAmounts[token] = minPurchaseAmount;
+        emit DcaManager__TokenMinPurchaseAmountSet(token, minPurchaseAmount);
+    }
+
     /*//////////////////////////////////////////////////////////////
                             PRIVATE FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -432,16 +455,19 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token spent on DCA
      * @param purchaseAmount: the purchase amount to validate
      * @param tokenBalance: the current balance of the token in that DCA schedule
-     * @param lendingProtocolIndex: the index of the lending protocol
      */
     function _validatePurchaseAmount(
         address token,
         uint256 purchaseAmount,
-        uint256 tokenBalance,
-        uint256 lendingProtocolIndex
-    ) private {
-        if (purchaseAmount < _handler(token, lendingProtocolIndex).getMinPurchaseAmount()) {
-            revert DcaManager__PurchaseAmountMustBeGreaterThanMinimum(token);
+        uint256 tokenBalance
+    ) private view {
+        uint256 minPurchaseAmount = s_tokenMinPurchaseAmounts[token];
+        if (minPurchaseAmount == 0) {
+            minPurchaseAmount = s_defaultMinPurchaseAmount;
+        }
+        
+        if (purchaseAmount < minPurchaseAmount) {
+            revert DcaManager__PurchaseAmountMustBeGreaterThanMinimum(token, minPurchaseAmount);
         }
         /**
          * @notice Purchase amount must be at least twice the balance of the token in the contract to allow at least two DCA purchases
@@ -743,6 +769,26 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      */
     function getMaxSchedulesPerToken() external view override returns (uint256) {
         return s_maxSchedulesPerToken;
+    }
+
+    /**
+     * @notice get the default minimum purchase amount for all tokens
+     * @return the default minimum purchase amount
+     */
+    function getDefaultMinPurchaseAmount() external view override returns (uint256) {
+        return s_defaultMinPurchaseAmount;
+    }
+
+    /**
+     * @notice get the minimum purchase amount for a specific token
+     * @param token: the token address
+     * @return minPurchaseAmount the minimum purchase amount for this token
+     * @return customMinAmountSet whether a custom amount is set (false means using default)
+     */
+    function getTokenMinPurchaseAmount(address token) external view override returns (uint256 minPurchaseAmount, bool customMinAmountSet) {
+        uint256 customAmount = s_tokenMinPurchaseAmounts[token];
+        customMinAmountSet = customAmount != 0;
+        minPurchaseAmount = customMinAmountSet ? customAmount : s_defaultMinPurchaseAmount;
     }
 
     /**

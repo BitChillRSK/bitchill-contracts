@@ -16,25 +16,21 @@ import {DcaManagerAccessControl} from "./DcaManagerAccessControl.sol";
 abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, DcaManagerAccessControl {
     using SafeERC20 for IERC20;
 
-    uint256 internal s_minPurchaseAmount; // The minimum amount of this token for periodic purchases
     IERC20 public immutable i_stableToken; // The stablecoin token to be deposited
 
     /**
      * @param dcaManagerAddress: the address of the DCA manager
      * @param tokenAddress: the address of the token to be deposited
-     * @param minPurchaseAmount: the minimum amount of the token to be deposited
      * @param feeCollector: the address of the fee collector
      * @param feeSettings: the fee settings
      */
     constructor(
         address dcaManagerAddress,
         address tokenAddress,
-        uint256 minPurchaseAmount,
         address feeCollector,
         FeeSettings memory feeSettings
     ) FeeHandler(feeCollector, feeSettings) DcaManagerAccessControl(dcaManagerAddress) {
         i_stableToken = IERC20(tokenAddress);
-        s_minPurchaseAmount = minPurchaseAmount;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -71,26 +67,5 @@ abstract contract TokenHandler is ITokenHandler, ERC165, Ownable, FeeHandler, Dc
      */
     function supportsInterface(bytes4 interfaceID) public view virtual override returns (bool) {
         return interfaceID == type(ITokenHandler).interfaceId || super.supportsInterface(interfaceID);
-    }
-
-    /**
-     * @notice modify the minimum purchase amount
-     * @param minPurchaseAmount: the new minimum purchase amount
-     */
-    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external override onlyOwner {
-        s_minPurchaseAmount = minPurchaseAmount;
-        emit TokenHandler__MinPurchaseAmountModified(minPurchaseAmount);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                                GETTERS
-    //////////////////////////////////////////////////////////////*/
-
-    /**
-     * @notice get the minimum purchase amount
-     * @return the minimum purchase amount
-     */
-    function getMinPurchaseAmount() external view returns (uint256) {
-        return s_minPurchaseAmount;
     }
 }

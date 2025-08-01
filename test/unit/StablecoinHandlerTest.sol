@@ -27,15 +27,6 @@ contract StablecoinHandlerTest is DcaDappTest {
         assertEq(IERC165(address(docHandler)).supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
-    function testStablecoinHandlerModifyMinPurchaseAmount() external {
-        vm.prank(OWNER);
-        vm.expectEmit(true, true, true, true);
-        emit TokenHandler__MinPurchaseAmountModified(1000);
-        docHandler.modifyMinPurchaseAmount(1000);
-        uint256 newPurchaseAmount = docHandler.getMinPurchaseAmount();
-        assertEq(newPurchaseAmount, 1000);
-    }
-
     function testStablecoinHandlerSetFeeRateParams() external {
         vm.prank(OWNER);
         IFeeHandler(address(docHandler)).setFeeRateParams(5, 5, 5, 5);

@@ -12,7 +12,6 @@ interface ITokenHandler {
     //////////////////////
     event TokenHandler__TokenDeposited(address indexed token, address indexed user, uint256 indexed amount);
     event TokenHandler__TokenWithdrawn(address indexed token, address indexed user, uint256 indexed amount);
-    event TokenHandler__MinPurchaseAmountModified(uint256 indexed newMinPurchaseAmount);
 
     ///////////////////////////////
     // External functions /////////
@@ -31,15 +30,4 @@ interface ITokenHandler {
      * @param user The user making the withdrawal.
      */
     function withdrawToken(address user, uint256 amount) external;
-
-    /**
-     * @dev modifies the minimum amount of the token that can be spent in each purchase
-     */
-    function modifyMinPurchaseAmount(uint256 minPurchaseAmount) external;
-
-    /**
-     * @dev Returns the minimum amount of the token that can be spent in each purchase.
-     * @return The minimum purchase amount in token units.
-     */
-    function getMinPurchaseAmount() external returns (uint256);
 }
