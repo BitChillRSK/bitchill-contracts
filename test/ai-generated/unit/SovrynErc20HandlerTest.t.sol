@@ -339,7 +339,6 @@ contract SovrynTestHandler is SovrynErc20Handler {
         dcaManagerAddress,
         stableTokenAddress, 
         iSusdTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS

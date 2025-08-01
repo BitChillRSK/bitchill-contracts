@@ -32,7 +32,6 @@ contract TropykusDocHandlerMoc is TropykusErc20Handler, PurchaseMoc {
             dcaManagerAddress,
             docTokenAddress,
             kDocTokenAddress,
-            minPurchaseAmount,
             feeCollector,
             feeSettings,
             exchangeRateDecimals

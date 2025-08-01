@@ -110,7 +110,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     {
         DcaDetails storage dcaSchedule = s_dcaSchedules[msg.sender][token][scheduleIndex];
         _validateScheduleId(scheduleId, dcaSchedule.scheduleId);
-        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
+        _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
         dcaSchedule.purchaseAmount = purchaseAmount;
         emit DcaManager__PurchaseAmountSet(msg.sender, scheduleId, purchaseAmount);
     }
@@ -151,7 +151,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
     ) external override {
         _validatePurchasePeriod(purchasePeriod);
         _validateDeposit(depositAmount);
-        _validatePurchaseAmount(token, purchaseAmount, depositAmount, lendingProtocolIndex);
+        _validatePurchaseAmount(token, purchaseAmount, depositAmount);
         _handler(token, lendingProtocolIndex).depositToken(msg.sender, depositAmount);
 
         DcaDetails[] storage schedules = s_dcaSchedules[msg.sender][token];
@@ -209,7 +209,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
             _handler(token, dcaSchedule.lendingProtocolIndex).depositToken(msg.sender, depositAmount);
         }
         if (purchaseAmount > 0) {
-            _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance, dcaSchedule.lendingProtocolIndex);
+            _validatePurchaseAmount(token, purchaseAmount, dcaSchedule.tokenBalance);
             dcaSchedule.purchaseAmount = purchaseAmount;
         }
 
@@ -455,13 +455,11 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param token: the token spent on DCA
      * @param purchaseAmount: the purchase amount to validate
      * @param tokenBalance: the current balance of the token in that DCA schedule
-     * @param lendingProtocolIndex: the index of the lending protocol
      */
     function _validatePurchaseAmount(
         address token,
         uint256 purchaseAmount,
-        uint256 tokenBalance,
-        uint256 lendingProtocolIndex
+        uint256 tokenBalance
     ) private view {
         uint256 minPurchaseAmount = s_tokenMinPurchaseAmounts[token];
         if (minPurchaseAmount == 0) {

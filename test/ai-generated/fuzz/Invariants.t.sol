@@ -351,7 +351,6 @@ contract TropykusHandlerWrapper is TropykusErc20Handler {
         dcaManagerAddress,
         stableTokenAddress,
         kTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS
@@ -487,7 +486,6 @@ contract SovrynHandlerWrapper is SovrynErc20Handler {
         dcaManagerAddress,
         stableTokenAddress,
         iSusdTokenAddress,
-        minPurchaseAmount,
         feeCollector,
         feeSettings,
         EXCHANGE_RATE_DECIMALS

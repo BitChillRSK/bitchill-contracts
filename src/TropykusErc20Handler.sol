@@ -26,7 +26,6 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
      * @param dcaManagerAddress the address of the DCA Manager contract
      * @param stableTokenAddress the address of the ERC20 stablecoin token on the blockchain of deployment
      * @param kTokenAddress the address of Tropykus'  kToken token contract
-     * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
      * @param feeSettings struct with the settings for fee calculations
      */
@@ -34,7 +33,6 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         address dcaManagerAddress,
         address stableTokenAddress,
         address kTokenAddress,
-        uint256 minPurchaseAmount,
         address feeCollector,
         FeeSettings memory feeSettings,
         uint256 exchangeRateDecimals

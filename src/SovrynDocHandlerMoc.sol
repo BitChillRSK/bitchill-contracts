@@ -32,7 +32,6 @@ contract SovrynDocHandlerMoc is SovrynErc20Handler, PurchaseMoc {
             dcaManagerAddress,
             docTokenAddress,
             iSusdTokenAddress,
-            minPurchaseAmount,
             feeCollector,
             feeSettings,
             exchangeRateDecimals
