@@ -31,7 +31,7 @@ interface IkToken {
     function redeem(uint256 redeemTokens) external returns (uint256);
 
     /**
-     * @dev This function is used to retrieve the amount of the underlying ERC20 corresponding to a user that holds kToken as of the last snapshot
+     * @dev This function is used to retrieve the amount of the underlying ERC20 corresponding to a user that holds kToken as of the last market update
      * @param owner the user that owns the the underlying ERC20 deposited into Tropykus
      */
     function getSupplierSnapshotStored(address owner)
