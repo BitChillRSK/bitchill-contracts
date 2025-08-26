@@ -23,7 +23,11 @@ interface ITokenLending is ITokenHandler {
         address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
     );
     event TokenLending__AmountToRepayAdjusted(
-        address indexed user, uint256 indexed originalAmount, uint256 indexed adjustedAmount
+        address indexed user, 
+        uint256 indexed originalLendingTokenAmount, 
+        uint256 indexed adjustedLendingTokenAmount, 
+        uint256 originalStablecoinAmount, 
+        uint256 adjustedStablecoinAmount
     );
 
     /*//////////////////////////////////////////////////////////////

@@ -159,24 +159,33 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
      * @param stablecoinToRedeem: the amount of stablecoin to redeem
      * @param exchangeRate: the exchange rate of stablecoin to rBTC
      * @param stablecoinRecipient: the address of the recipient of the stablecoin
-     * @return stablecoinRedeemed: the amount of stablecoin redeemed
+     * @return stablecoinRedeemed the amount of stablecoin redeemed
      */
     function _redeemStablecoin(address user, uint256 stablecoinToRedeem, uint256 exchangeRate, address stablecoinRecipient)
         internal
         virtual
-        returns (uint256)
+        returns (uint256 stablecoinRedeemed)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
         uint256 iSusdToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
         if (iSusdToRepay > usersIsusdBalance) {
-            emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
+            uint256 oldiSusdToRepay = iSusdToRepay;
+            uint256 oldStablecoinToRedeem = stablecoinToRedeem;
             iSusdToRepay = usersIsusdBalance;
+            stablecoinToRedeem = _lendingTokenToStablecoin(iSusdToRepay, exchangeRate);
+            emit TokenLending__AmountToRepayAdjusted(user, oldiSusdToRepay, iSusdToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
+        }
+        if (iSusdToRepay > i_iSusdToken.balanceOf(address(this))) {
+            uint256 oldiSusdToRepay = iSusdToRepay;
+            uint256 oldStablecoinToRedeem = stablecoinToRedeem;
+            iSusdToRepay = i_iSusdToken.balanceOf(address(this));
+            stablecoinToRedeem = _lendingTokenToStablecoin(iSusdToRepay, exchangeRate);
+            emit TokenLending__AmountToRepayAdjusted(user, oldiSusdToRepay, iSusdToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
         }
         s_iSusdBalances[user] -= iSusdToRepay;
-        uint256 stablecoinRedeemed = i_iSusdToken.burn(stablecoinRecipient, iSusdToRepay);
+        stablecoinRedeemed = i_iSusdToken.burn(stablecoinRecipient, iSusdToRepay);
         if (stablecoinRedeemed == 0) revert SovrynErc20Lending__RedeemUnderlyingFailed();
         emit TokenLending__UnderlyingRedeemed(user, stablecoinRedeemed, iSusdToRepay);
-        return stablecoinRedeemed;
     }
 
     /**
