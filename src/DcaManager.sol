@@ -307,7 +307,7 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
      * @param scheduleIndexes the indexes of the DCA schedules that correspond to each user's purchase
      * @param purchaseAmounts the purchase amount that corresponds to each user's purchase
      * @param lendingProtocolIndex the lending protocol to withdraw the tokens from before purchasing
-     * @notice the token and lending protocol are the same for all users in the batch.
+     * @notice the token and lending protocol are the same for all dca schedules in the batch.
      * @notice SWAPPER MUST NOT MIX SCHEDULES WITH DIFFERENT TOKENS OR LENDING PROTOCOLS IN THE SAME BATCH
      * @notice This is unchecked to save gas because access to this function is controlled by the onlySwapper modifier
      */
