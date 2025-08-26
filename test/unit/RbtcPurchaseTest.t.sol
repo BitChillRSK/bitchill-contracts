@@ -315,6 +315,9 @@ contract RbtcPurchaseTest is DcaDappTest {
     }
 
     // New test: exhaust handler balance across multiple users and schedules without revert
+    // @notice: this test won't pass for Tropykus on forked chains because updating
+    // the exchange rate requires to roll to a future block, which makes the MoC oracle
+    // throw an "Oracle have no Bitcoin Price" error.
     function testDepleteHandlerBalanceDoesNotRevert() external {
         // Prepare a second user
         address SECOND_USER = makeAddr("SECOND_USER");
@@ -394,11 +397,7 @@ contract RbtcPurchaseTest is DcaDappTest {
             );
 
             // Advance time and update exchange rate so future purchases are allowed and interest accrues
-            if (block.chainid == ANVIL_CHAIN_ID) {
-                updateExchangeRate(MIN_PURCHASE_PERIOD);
-            } else {
-                vm.warp(vm.getBlockTimestamp() + MIN_PURCHASE_PERIOD);
-            }
+            updateExchangeRate(MIN_PURCHASE_PERIOD);
         }
 
         // After time has passed and multiple purchase rounds, check that interest has accrued
@@ -421,6 +420,18 @@ contract RbtcPurchaseTest is DcaDappTest {
 
         // Handler must hold no DOC (stablecoin) after final purchase
         assertEq(stablecoin.balanceOf(address(docHandler)), 0);
+
+        // Withdrawing interest should not revert
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        vm.prank(USER);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+
+        // Withdrawing interest should not revert
+        vm.prank(SECOND_USER);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
     }
 
     /// @dev helper to create additional schedules for a user

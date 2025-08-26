@@ -8,6 +8,7 @@ import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TokenLending} from "src/TokenLending.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title SovrynErc20Handler
@@ -123,7 +124,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         returns (uint256 stablecoinInterestAmount)
     {
         uint256 totalErc20InLending = _lendingTokenToStablecoin(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
-        stablecoinInterestAmount = totalErc20InLending - stablecoinLockedInDcaSchedules;
+        stablecoinInterestAmount = totalErc20InLending > stablecoinLockedInDcaSchedules ? totalErc20InLending - stablecoinLockedInDcaSchedules : 0;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -198,10 +199,11 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
-            // @notice the amount of iSusd each user repays is proportional to the ratio of that user's stablecoin getting redeemed over the total stablecoin getting redeemed
-            uint256 usersRepayediSusd = totaliSusdToRepay * purchaseAmounts[i] / totalErc20ToRedeem;
-            s_iSusdBalances[users[i]] -= usersRepayediSusd;
-            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepayediSusd);
+            // @notice the amount of iSusd each user repays is proportional to the ratio of 
+            // that user's stablecoin getting redeemed over the total stablecoin getting redeemed
+            uint256 usersRepaidiSusd = Math.mulDiv(totaliSusdToRepay, purchaseAmounts[i], totalErc20ToRedeem, Math.Rounding.Up);
+            s_iSusdBalances[users[i]] -= usersRepaidiSusd;
+            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepaidiSusd);
         }
         uint256 stablecoinRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
         if (stablecoinRedeemed > 0) emit TokenLending__UnderlyingRedeemedBatch(totalErc20ToRedeem, totaliSusdToRepay);

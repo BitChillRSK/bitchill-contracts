@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 import {ITokenLending} from "./interfaces/ITokenLending.sol";
-import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title TokenLending
@@ -26,7 +25,7 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 lendingTokenAmount)
     {
-        lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate);
+        lendingTokenAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
     }
 
     /**
@@ -40,6 +39,6 @@ abstract contract TokenLending is ITokenLending {
         view
         returns (uint256 underlyingAmount)
     {
-        underlyingAmount = Math.mulDiv(lendingTokenAmount, exchangeRate, i_exchangeRateDecimals, Math.Rounding.Up);
+        underlyingAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
     }
 }

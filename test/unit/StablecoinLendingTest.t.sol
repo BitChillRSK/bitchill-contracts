@@ -169,7 +169,7 @@ contract StablecoinLendingTest is DcaDappTest {
         super.makeBatchPurchasesOneUser(); // Batched purchases add up to an amount of AMOUNT_TO_SPEND, this function makes two batch purchases
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
-        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1);
+        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
 
@@ -225,7 +225,7 @@ contract StablecoinLendingTest is DcaDappTest {
     }
 
     function testIfNoYieldWithdrawInterestFails() external {
-        vm.warp(block.timestamp + 10 days); // Jump to 10 days into the future (for example) so that some interest has been generated.
+        // vm.warp(block.timestamp + 10 days); // Jump to 10 days into the future (for example) so that some interest has been generated.
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
         updateExchangeRate(10 days);

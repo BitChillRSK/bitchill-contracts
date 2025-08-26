@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {DcaManagerAccessControl} from "../../src/DcaManagerAccessControl.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
@@ -21,6 +21,9 @@ import {DeployMocSwaps} from "../../script/DeployMocSwaps.s.sol";
 import {MockStablecoin} from "../mocks/MockStablecoin.sol";
 import {ILendingToken} from "../interfaces/ILendingToken.sol";
 import {MockMocProxy} from "../mocks/MockMocProxy.sol";
+import {IMocStateV1} from "../mocks/MocInterfaces.sol";
+import {MockMocPriceProvider} from "../mocks/MockMocPriceProvider.sol";
+import {GovernorMock} from "../mocks/MockMocGovernor.sol";
 import {MockWrbtcToken} from "../mocks/MockWrbtcToken.sol";
 import {MockSwapRouter02} from "../mocks/MockSwapRouter02.sol";
 import "../../script/Constants.sol";
@@ -71,6 +74,8 @@ contract DcaDappTest is Test {
     ICoinPairPrice mocOracle;
     address constant MOC_ORACLE_MAINNET = 0xe2927A0620b82A66D67F678FC9b826B0E01B1bFD;
     address constant MOC_ORACLE_TESTNET = 0xbffBD993FF1d229B0FfE55668F2009d20d4F7C5f;
+    address constant MOC_STATEV1_MAINNET = 0xb9C42EFc8ec54490a37cA91c423F7285Fa01e257;
+    address constant MOC_STATEV1_TESTNET = 0x0adb40132cB0ffcEf6ED81c26A1881e214100555;
     address constant MOC_IN_RATE_MAINNET = 0xc0f9B54c41E3d0587Ce0F7540738d8d649b0A3F3;
     address constant MOC_IN_RATE_TESTNET = 0x76790f846FAAf44cf1B2D717d0A6c5f6f5152B60;
     address DUMMY_COMMISSION_RECEIVER = makeAddr("Dummy commission receiver");
@@ -87,7 +92,8 @@ contract DcaDappTest is Test {
         bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
-        uint256 purchasePeriod
+        uint256 purchasePeriod,
+        uint256 lendingProtocolIndex
     );
     event DcaManager__DcaScheduleUpdated(
         address indexed user,
@@ -136,7 +142,7 @@ contract DcaDappTest is Test {
 
     modifier onlyDexSwaps() {
         if (!isDexSwaps) {
-            console.log("Skipping test: only applicable for dexSwaps");
+            console2.log("Skipping test: only applicable for dexSwaps");
             return;
         }
         _;
@@ -144,7 +150,7 @@ contract DcaDappTest is Test {
 
     modifier onlyMocSwaps() {
         if (!isMocSwaps) {
-            console.log("Skipping test: only applicable for mocSwaps");
+            console2.log("Skipping test: only applicable for mocSwaps");
             return;
         }
         _;
@@ -166,7 +172,7 @@ contract DcaDappTest is Test {
         
         // Skip test if Sovryn + USDRIF combination (not supported)
         if (isSovryn && isUSDRIF) {
-            console.log("Skipping test: USDRIF is not supported by Sovryn");
+            console2.log("Skipping test: USDRIF is not supported by Sovryn");
             vm.skip(true);
             return;
         }
@@ -229,6 +235,7 @@ contract DcaDappTest is Test {
                 // Get BTC price from oracle
                 mocOracle = ICoinPairPrice(MOC_ORACLE_MAINNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
+                _overrideMocPriceProvider(MOC_STATEV1_MAINNET);
             } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
                 vm.store(
                     address(MOC_IN_RATE_TESTNET),
@@ -247,6 +254,7 @@ contract DcaDappTest is Test {
 
                 mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
+                _overrideMocPriceProvider(MOC_STATEV1_TESTNET);
             }
         } else if (isDexSwaps) {
             DeployDexSwaps deployContracts = new DeployDexSwaps();
@@ -293,7 +301,9 @@ contract DcaDappTest is Test {
 
                 mocOracle = ICoinPairPrice(MOC_ORACLE_MAINNET);
                 s_btcPrice = mocOracle.getPrice() / 1e18;
+                _overrideMocPriceProvider(MOC_STATEV1_MAINNET);
             // } else if (block.chainid == RSK_TESTNET_CHAIN_ID) {
+            // THERE ARE NO UNSIWAP CONTRACTS ON RSK TESTNET, SO THIS BRANCH CAN'T BE TESTED
             //     vm.store(
             //         address(MOC_IN_RATE_TESTNET),
             //         bytes32(uint256(214)),
@@ -308,6 +318,7 @@ contract DcaDappTest is Test {
 
             //     mocOracle = ICoinPairPrice(MOC_ORACLE_TESTNET);
             //     s_btcPrice = mocOracle.getPrice() / 1e18;
+            // _overrideMocPriceProvider(MOC_STATEV1_TESTNET);
             }
         } else {
             revert("Invalid deploy environment");
@@ -406,7 +417,7 @@ contract DcaDappTest is Test {
             );
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
-                USER, address(stablecoin), scheduleId, docToDeposit, purchaseAmount, purchasePeriod
+                USER, address(stablecoin), scheduleId, docToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
             dcaManager.createDcaSchedule(
                 address(stablecoin), docToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
@@ -638,31 +649,43 @@ contract DcaDappTest is Test {
     }
 
     function updateExchangeRate(uint256 secondsPassed) internal {
-        vm.roll(block.number + secondsPassed / 30); // Jump to secondsPassed seconds (30 seconds per block) into the future so that some interest has been generated.
         vm.warp(block.timestamp + secondsPassed);
 
-        address newUser = makeAddr("Lending protocol new user");
-
         if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
-            vm.prank(USER);
-            stablecoin.transfer(newUser, 100 ether);
-            vm.startPrank(newUser);
-            stablecoin.approve(address(lendingToken), 100 ether);
-            console.log("Exchange rate before stablecoin deposit:", lendingToken.exchangeRateStored());
-            lendingToken.mint(100 ether);
-            console.log("Exchange rate after stablecoin deposit:", lendingToken.exchangeRateStored());
-            vm.stopPrank();
+            console2.log("Exchange rate before update:", lendingToken.exchangeRateStored());
+            vm.roll(block.number + secondsPassed / 30); // Jump to secondsPassed seconds (30 seconds per block) into the future so that some interest has been generated.
+            console2.log("Exchange rate after update:", lendingToken.exchangeRateCurrent()); // This is the one that should be used
         }
-        // else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
-        //         vm.prank(USER);
-        //         stablecoin.transfer(newUser, 100 ether);
-        //         vm.startPrank(newUser);
-        //         stablecoin.approve(address(lendingToken), 100 ether);
-        //         console.log("Exchange rate before stablecoin deposit:", lendingToken.tokenPrice());
-        //         lendingToken.mint(newUser, 100 ether);
-        //         console.log("Exchange rate after stablecoin deposit:", lendingToken.tokenPrice());
-        //         vm.stopPrank();
-        // }
+    }
+
+    /// @dev Replace MoC and BTC price providers with a MockMocPriceProvider that never expires
+    function _overrideMocPriceProvider(address mocStateV1Address) internal {
+        console2.log("Current chainid:", block.chainid);
+        // Only on forks where StateV1 exists (mainnet)
+        if (block.chainid != RSK_MAINNET_CHAIN_ID && block.chainid != RSK_TESTNET_CHAIN_ID) return;
+        IMocStateV1 mocStateV1 = IMocStateV1(mocStateV1Address);
+        // 1) Replace governor with a permissive mock so we can set the price provider
+        GovernorMock mockGovernor = new GovernorMock();
+        bytes32 slotGovernor = bytes32(uint256(155));
+        vm.store(MOC_STATEV1_MAINNET, slotGovernor, bytes32(uint256(uint160(address(mockGovernor)))));
+        
+        // 2) Read current provider price and clone it to the mock with the same price
+        address btcPriceProviderAddr = mocStateV1.getBtcPriceProvider();
+        MockMocPriceProvider btcPriceProvider = MockMocPriceProvider(btcPriceProviderAddr);
+        (bytes32 price,) = btcPriceProvider.peek();
+        MockMocPriceProvider mockMocBtcPriceProvider = new MockMocPriceProvider(uint256(price));
+        
+        // 2) Do the same for MoC price provider
+        address mocPriceProviderAddr = mocStateV1.getMoCPriceProvider();
+        MockMocPriceProvider mocPriceProvider = MockMocPriceProvider(mocPriceProviderAddr);
+        (bytes32 mocPrice,) = mocPriceProvider.peek();
+        MockMocPriceProvider mockMocMocPriceProvider = new MockMocPriceProvider(uint256(mocPrice));
+
+        // 3) Set the BTC price provider to mocStateV1 with the same price that now never expires
+        mocStateV1.setBtcPriceProvider(address(mockMocBtcPriceProvider));
+
+        // 4) Set the MoC price provider to mocStateV1 with the same price that now never expires
+        mocStateV1.setMoCPriceProvider(address(mockMocMocPriceProvider));
     }
 
     /*//////////////////////////////////////////////////////////////

@@ -28,7 +28,7 @@ contract DcaScheduleTest is DcaDappTest {
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
-            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD
+            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         dcaManager.createDcaSchedule(
             address(stablecoin), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
@@ -48,7 +48,7 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("First timestamp", block.timestamp);
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
-            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD
+            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         dcaManager.createDcaSchedule(
             address(stablecoin), AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
@@ -58,7 +58,7 @@ contract DcaScheduleTest is DcaDappTest {
         console.log("Second timestamp", block.timestamp);
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleCreated(
-            USER, address(stablecoin), scheduleId2, AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD
+            USER, address(stablecoin), scheduleId2, AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
         dcaManager.createDcaSchedule(
             address(stablecoin), AMOUNT_TO_DEPOSIT / 2, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex

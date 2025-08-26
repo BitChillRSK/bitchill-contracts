@@ -8,6 +8,7 @@ import {IkToken} from "./interfaces/IkToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TokenLending} from "src/TokenLending.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title TropykusErc20Handler
@@ -118,7 +119,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         returns (uint256 stablecoinInterestAmount)
     {
         uint256 totalStablecoinInLending = _lendingTokenToStablecoin(s_kTokenBalances[user], i_kToken.exchangeRateStored());
-        stablecoinInterestAmount = totalStablecoinInLending - stablecoinLockedInDcaSchedules;
+        stablecoinInterestAmount = totalStablecoinInLending > stablecoinLockedInDcaSchedules ? totalStablecoinInLending - stablecoinLockedInDcaSchedules : 0;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -220,10 +221,11 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
-            // @notice the amount of kToken each user repays is proportional to the ratio of that user's stablecoin getting redeemed over the total stablecoin getting redeemed
-            uint256 usersRepayedKtoken = totalKtokenToRepay * purchaseAmounts[i] / totalStablecoinToRedeem;
-            s_kTokenBalances[users[i]] -= usersRepayedKtoken;
-            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepayedKtoken);
+            // @notice the amount of kToken each user repays is proportional to the ratio of 
+            // that user's stablecoin getting redeemed over the total stablecoin getting redeemed
+            uint256 usersRepaidKtoken = Math.mulDiv(totalKtokenToRepay, purchaseAmounts[i], totalStablecoinToRedeem, Math.Rounding.Up);
+            s_kTokenBalances[users[i]] -= usersRepaidKtoken;
+            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepaidKtoken);
         }
         
         uint256 stablecoinBalanceBefore = i_stableToken.balanceOf(address(this));
