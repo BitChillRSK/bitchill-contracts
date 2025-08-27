@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {ITokenHandler} from "./ITokenHandler.sol";
-import {ITokenLending} from "./ITokenLending.sol";
+import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
+import {ITokenLending} from "../../src/interfaces/ITokenLending.sol";
 
 /**
  * @title IDocHandler: interface common to the different DocHandler contracts

@@ -6,7 +6,7 @@ import {Test, console2} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {DcaManagerAccessControl} from "../../src/DcaManagerAccessControl.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import {IDocHandler} from "../../src/interfaces/IDocHandler.sol";
+import {IDocHandler} from "../../test/interfaces/IDocHandler.sol";
 import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
