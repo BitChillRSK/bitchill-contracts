@@ -8,17 +8,17 @@ pragma solidity 0.8.19;
  */
 interface IiSusdToken {
     /**
-     * @dev This function is used to deposit DOC into the Sovryn protocol and get kDOC in exchange
+     * @dev This function is used to deposit stablecoin into the Sovryn protocol and get iSusd in exchange
      *
-     * @param depositAmount the amount of DOC to be deposited
-     * @param receiver the receiver of iSusdC in return for depositing DOC
-     * @return mintAmount the amount of iSusdC received
+     * @param depositAmount the amount of stablecoin to be deposited
+     * @param receiver the receiver of iSusd in return for depositing stablecoin
+     * @return mintAmount the amount of iSusd received
      */
     function mint(address receiver, uint256 depositAmount) external returns (uint256 mintAmount);
 
     /**
-     * @dev This function is used to withdraw DOC from the Sovryn protocol and give back the corresponding kDOC
-     * @param receiver The account getting the redeemed DOC tokens.
+     * @dev This function is used to withdraw stablecoin from the Sovryn protocol and give back the corresponding iSusd
+     * @param receiver The account getting the redeemed iSusd tokens.
      * @param burnAmount The amount of loan tokens to redeem.
      */
     function burn(address receiver, uint256 burnAmount) external returns (uint256 loanAmountPaid);
@@ -46,8 +46,8 @@ interface IiSusdToken {
     function balanceOf(address owner) external returns (uint256);
 
     /**
-     * @notice Calculates the exchange rate from the underlying DOC to iSusd
-     * @return price of iSusd/DOC
+     * @notice Calculates the exchange rate from the underlying stablecoin to iSusd
+     * @return price of iSusd/stablecoin
      */
     function tokenPrice() external view returns (uint256 price);
 }

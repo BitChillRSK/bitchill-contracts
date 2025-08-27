@@ -55,7 +55,7 @@ contract DcaDappTest is Test {
     address SWAPPER = makeAddr(SWAPPER_STRING);
     address FEE_COLLECTOR = makeAddr(FEE_COLLECTOR_STRING);
     uint256 constant STARTING_RBTC_USER_BALANCE = 10 ether; // 10 rBTC
-    uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 0.2 BTC
+    // uint256 constant RBTC_TO_MINT_DOC = 0.2 ether; // 0.2 BTC
 
     // Fixed constants for all stablecoin types
     uint256 constant USER_TOTAL_AMOUNT = 20000 ether;
@@ -124,7 +124,7 @@ contract DcaDappTest is Test {
         uint256 amountSpent
     );
     event PurchaseRbtc__SuccessfulRbtcBatchPurchase(
-        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
+        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalStablecoinAmountSpent
     );
 
     // OperationsAdmin
@@ -492,11 +492,11 @@ contract DcaDappTest is Test {
         // }
     }
 
-    function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalDocSpent) {
+    function makeSeveralPurchasesWithSeveralSchedules() internal returns (uint256 totalStablecoinSpent) {
         // createSeveralDcaSchedules();
 
         uint8 numOfPurchases = 5;
-        uint256 totalDocRedeemed;
+        uint256 totalStablecoinRedeemed;
 
         for (uint8 i; i < NUM_OF_SCHEDULES; ++i) {
             uint256 scheduleIndex = i;
@@ -530,8 +530,8 @@ contract DcaDappTest is Test {
                     MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
                 );
 
-                totalDocSpent += netPurchaseAmount;
-                totalDocRedeemed += schedulePurchaseAmount;
+                totalStablecoinSpent += netPurchaseAmount;
+                totalStablecoinRedeemed += schedulePurchaseAmount;
 
                 // vm.warp(block.timestamp + schedulePurchasePeriod);
                 if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(schedulePurchasePeriod);
@@ -541,11 +541,11 @@ contract DcaDappTest is Test {
         vm.prank(USER);
         assertApproxEqRel(
             IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance(),
-            totalDocSpent / s_btcPrice,
+            totalStablecoinSpent / s_btcPrice,
             MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
         );
         
-        return totalDocSpent;
+        return totalStablecoinSpent;
     }
 
     function makeBatchPurchasesOneUser() internal {

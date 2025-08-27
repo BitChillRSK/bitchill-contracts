@@ -70,22 +70,22 @@ contract DcaScheduleTest is DcaDappTest {
     function testUpdateDcaSchedule() external {
         uint256 newPurchaseAmount = AMOUNT_TO_SPEND / 2;
         uint256 newPurchasePeriod = MIN_PURCHASE_PERIOD * 10;
-        uint256 extraDocToDeposit = AMOUNT_TO_DEPOSIT / 3;
+        uint256 extraStablecoinToDeposit = AMOUNT_TO_DEPOSIT / 3;
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        stablecoin.approve(address(stablecoinHandler), extraDocToDeposit);
+        stablecoin.approve(address(stablecoinHandler), extraStablecoinToDeposit);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
         );
         vm.expectEmit(true, true, true, true);
         emit DcaManager__DcaScheduleUpdated(
-            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT + extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
+            USER, address(stablecoin), scheduleId, AMOUNT_TO_DEPOSIT + extraStablecoinToDeposit, newPurchaseAmount, newPurchasePeriod
         );
         dcaManager.updateDcaSchedule(
-            address(stablecoin), SCHEDULE_INDEX, scheduleId, extraDocToDeposit, newPurchaseAmount, newPurchasePeriod
+            address(stablecoin), SCHEDULE_INDEX, scheduleId, extraStablecoinToDeposit, newPurchaseAmount, newPurchasePeriod
         );
         uint256 userBalanceAfterDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        assertEq(extraDocToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+        assertEq(extraStablecoinToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
         assertEq(newPurchaseAmount, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), SCHEDULE_INDEX));
         assertEq(newPurchasePeriod, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), SCHEDULE_INDEX));
         vm.stopPrank();

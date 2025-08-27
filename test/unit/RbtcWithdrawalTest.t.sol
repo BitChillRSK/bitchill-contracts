@@ -55,7 +55,7 @@ contract RbtcWithdrawalTest is DcaDappTest {
 
     function testWithdrawRbtcAfterSeveralPurchases() external {
         super.createSeveralDcaSchedules();
-        uint256 totalDocSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
+        uint256 totalStablecoinSpent = super.makeSeveralPurchasesWithSeveralSchedules(); // 5 purchases
         uint256 rbtcBalanceBeforeWithdrawal = USER.balance;
         vm.prank(USER);
         uint256[] memory lendingProtocolIndexes = new uint256[](1);
@@ -64,14 +64,14 @@ contract RbtcWithdrawalTest is DcaDappTest {
         tokens[0] = address(stablecoin);
         dcaManager.withdrawAllAccumulatedRbtc(tokens, lendingProtocolIndexes);
         uint256 rbtcBalanceAfterWithdrawal = USER.balance;
-        // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
+        // assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalStablecoinSpent / s_btcPrice);
 
         // if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
-        //     assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalDocSpent / s_btcPrice);
+        //     assertEq(rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal, totalStablecoinSpent / s_btcPrice);
         // } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
         assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
             rbtcBalanceAfterWithdrawal - rbtcBalanceBeforeWithdrawal,
-            totalDocSpent / s_btcPrice,
+            totalStablecoinSpent / s_btcPrice,
             MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
         );
         // }
