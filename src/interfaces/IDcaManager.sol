@@ -181,11 +181,11 @@ interface IDcaManager {
      * @param lendingProtocolIndex the lending protocol to withdraw the tokens from before purchasing
      */
     function batchBuyRbtc(
-        address[] memory buyers,
+        address[] calldata buyers,
         address token,
-        uint256[] memory scheduleIndexes,
-        bytes32[] memory scheduleIds,
-        uint256[] memory purchaseAmounts,
+        uint256[] calldata scheduleIndexes,
+        bytes32[] calldata scheduleIds,
+        uint256[] calldata purchaseAmounts,
         uint256 lendingProtocolIndex
     ) external;
 
