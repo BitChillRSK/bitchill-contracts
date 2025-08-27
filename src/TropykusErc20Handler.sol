@@ -174,18 +174,14 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         returns (uint256 stablecoinRedeemed) 
     {
         uint256 usersKtokenBalance = s_kTokenBalances[user];
-        uint256 kTokenToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        (uint256 kTokenToRepay, bool hasTruncated) = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        if (hasTruncated) {
+            kTokenToRepay = _lendingTokenRoundUp(kTokenToRepay);
+        }
         if (kTokenToRepay > usersKtokenBalance) {
             uint256 oldKtokenToRepay = kTokenToRepay;
             uint256 oldStablecoinToRedeem = stablecoinToRedeem;
             kTokenToRepay = usersKtokenBalance;
-            stablecoinToRedeem = _lendingTokenToStablecoin(kTokenToRepay, exchangeRate);
-            emit TokenLending__AmountToRepayAdjusted(user, oldKtokenToRepay, kTokenToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
-        }
-        if (kTokenToRepay > i_kToken.balanceOf(address(this))) {
-            uint256 oldKtokenToRepay = kTokenToRepay;
-            uint256 oldStablecoinToRedeem = stablecoinToRedeem;
-            kTokenToRepay = i_kToken.balanceOf(address(this));
             stablecoinToRedeem = _lendingTokenToStablecoin(kTokenToRepay, exchangeRate);
             emit TokenLending__AmountToRepayAdjusted(user, oldKtokenToRepay, kTokenToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
         }
@@ -226,7 +222,10 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         if (totalStablecoinToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalStablecoinToRedeem, underlyingAmount);
         }
-        uint256 totalKtokenToRepay = _stablecoinToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
+        (uint256 totalKtokenToRepay, bool hasTruncated) = _stablecoinToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
+        if (hasTruncated) {
+            totalKtokenToRepay = _lendingTokenRoundUp(totalKtokenToRepay);
+        }
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {

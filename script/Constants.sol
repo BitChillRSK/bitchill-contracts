@@ -50,7 +50,9 @@ uint256 constant BTC_PRICE = 50_000; // 1 BTC = 50,000 DOC
 
 // Token holders on mainnet with significant balances (for fork testing)
 address constant DOC_HOLDER = 0x65d189e839aF28B78567bD7255f3f796495141bc; // Large DOC holder on RSK mainnet
-address constant USDRIF_HOLDER = 0xaC31A4bEedd7EC916B7A48a612230cb85c1aaf56; // Large USDRIF holder on RSK mainnet 
+address constant USDRIF_HOLDER = 0x8C3df683703cAbEDD5EabF4b3B781eA3E46603ee; // Large USDRIF holder on RSK mainnet 
+// If these swap their holdings, we can look for other holders at 
+// https://rootstock.blockscout.com/token/0x3A15461d8AE0f0Fb5fA2629e9dA7D66A794a6E37?tab=holders
 // Token holders on testnet with significant balances (for fork testing)
 address constant DOC_HOLDER_TESTNET = 0x53Ec0aF115619c536480C95Dec4a065e27E6419F; // Large DOC holder on RSK testnet
 address constant USDRIF_HOLDER_TESTNET = 0xe38C86970543173D334b828485D8bc48d19Ff701; // Large USDRIF holder on RSK testnet

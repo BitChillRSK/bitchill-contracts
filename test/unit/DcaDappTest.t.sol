@@ -30,6 +30,7 @@ import "../../script/Constants.sol";
 import "./TestsHelper.t.sol";
 import {IkToken} from "../../src/interfaces/IkToken.sol";
 import {IiSusdToken} from "../../src/interfaces/IiSusdToken.sol";
+import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
 
 contract DcaDappTest is Test {
     DcaManager dcaManager;
@@ -148,6 +149,13 @@ contract DcaDappTest is Test {
         _;
     }
 
+    /// @dev Keep mock oracle's lastPublicationBlock current after vm.roll calls
+    // function _keepMockOracleCurrent() internal {
+    //     if (address(mockMocOracle) != address(0)) {
+    //         mockMocOracle.setValidPriceForBlock(block.number);
+    //     }
+    // }
+
     modifier onlyMocSwaps() {
         if (!isMocSwaps) {
             console2.log("Skipping test: only applicable for mocSwaps");
@@ -173,6 +181,12 @@ contract DcaDappTest is Test {
         // Skip test if Sovryn + USDRIF combination (not supported)
         if (isSovryn && isUSDRIF) {
             console2.log("Skipping test: USDRIF is not supported by Sovryn");
+            vm.skip(true);
+            return;
+        }
+        // Skip test if MoC Swaps + USDRIF combination (not supported)
+        if (isMocSwaps && isUSDRIF) {
+            console2.log("Skipping test: USDRIF is not supported by MoC Swaps");
             vm.skip(true);
             return;
         }
@@ -520,7 +534,8 @@ contract DcaDappTest is Test {
                 totalDocSpent += netPurchaseAmount;
                 totalDocRedeemed += schedulePurchaseAmount;
 
-                vm.warp(block.timestamp + schedulePurchasePeriod);
+                // vm.warp(block.timestamp + schedulePurchasePeriod);
+                if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(schedulePurchasePeriod);
             }
         }
         
@@ -686,6 +701,12 @@ contract DcaDappTest is Test {
 
         // 4) Set the MoC price provider to mocStateV1 with the same price that now never expires
         mocStateV1.setMoCPriceProvider(address(mockMocMocPriceProvider));
+
+        // Make the mock oracle the one for Uniswap interactions as well
+        if(isDexSwaps) {
+            vm.prank(OWNER);
+            IPurchaseUniswap(address(docHandler)).updateMocOracle(address(mockMocBtcPriceProvider));
+        }
     }
 
     /*//////////////////////////////////////////////////////////////

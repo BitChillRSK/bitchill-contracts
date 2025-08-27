@@ -23,9 +23,10 @@ abstract contract TokenLending is ITokenLending {
     function _stablecoinToLendingToken(uint256 underlyingAmount, uint256 exchangeRate)
         internal
         view
-        returns (uint256 lendingTokenAmount)
+        returns (uint256 lendingTokenAmount, bool hasTruncated)
     {
         lendingTokenAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
+        hasTruncated = underlyingAmount * i_exchangeRateDecimals % exchangeRate != 0;
     }
 
     /**
@@ -40,5 +41,15 @@ abstract contract TokenLending is ITokenLending {
         returns (uint256 underlyingAmount)
     {
         underlyingAmount = lendingTokenAmount * exchangeRate / i_exchangeRateDecimals;
+    }
+
+    /**
+     * @notice round up the lending token amount to avoid underestimating the amount
+     * to withdraw from each user's balance
+     * @param lendingTokenAmount: the amount of lending token to round up
+     * @return lendingTokenAmount the rounded up amount of lending token
+     */
+    function _lendingTokenRoundUp(uint256 lendingTokenAmount) internal pure returns (uint256) {
+        return lendingTokenAmount + 1;
     }
 }

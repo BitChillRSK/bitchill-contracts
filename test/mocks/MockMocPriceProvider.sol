@@ -43,4 +43,18 @@ contract MockMocPriceProvider {
     function removeLastPublicationBlock() external {
         useLastPublicationBlock = false;
     }
+
+    // Return the current price.
+    function getPrice() external view returns (uint256) {
+        return uint256(mocPrice);
+    }
+
+    // Return the result of getPrice, getIsValid and getLastPublicationBlock at once.
+    function getPriceInfo()
+        external
+        view
+        returns (uint256 price, bool isValid, uint256 lastPubBlock)
+    {
+        return (uint256(mocPrice), true, lastPublicationBlock);
+    }
 }

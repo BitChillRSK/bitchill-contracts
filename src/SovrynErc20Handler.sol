@@ -167,18 +167,14 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         returns (uint256 stablecoinRedeemed)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
-        uint256 iSusdToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        (uint256 iSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        if (hasTruncated) {
+            iSusdToRepay = _lendingTokenRoundUp(iSusdToRepay);
+        }
         if (iSusdToRepay > usersIsusdBalance) {
             uint256 oldiSusdToRepay = iSusdToRepay;
             uint256 oldStablecoinToRedeem = stablecoinToRedeem;
             iSusdToRepay = usersIsusdBalance;
-            stablecoinToRedeem = _lendingTokenToStablecoin(iSusdToRepay, exchangeRate);
-            emit TokenLending__AmountToRepayAdjusted(user, oldiSusdToRepay, iSusdToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
-        }
-        if (iSusdToRepay > i_iSusdToken.balanceOf(address(this))) {
-            uint256 oldiSusdToRepay = iSusdToRepay;
-            uint256 oldStablecoinToRedeem = stablecoinToRedeem;
-            iSusdToRepay = i_iSusdToken.balanceOf(address(this));
             stablecoinToRedeem = _lendingTokenToStablecoin(iSusdToRepay, exchangeRate);
             emit TokenLending__AmountToRepayAdjusted(user, oldiSusdToRepay, iSusdToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
         }
@@ -204,7 +200,10 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         if (totalErc20ToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalErc20ToRedeem, underlyingAmount);
         }
-        uint256 totaliSusdToRepay = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
+        (uint256 totaliSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
+        if (hasTruncated) {
+            totaliSusdToRepay = _lendingTokenRoundUp(totaliSusdToRepay);
+        }
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {

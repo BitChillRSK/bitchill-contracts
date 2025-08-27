@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
 import {ITokenHandler} from "../../src/interfaces/ITokenHandler.sol";
@@ -125,19 +125,21 @@ contract StablecoinLendingTest is DcaDappTest {
         super.makeSeveralPurchasesWithSeveralSchedules();
         uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
 
-        if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
+        // if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
 
         // @notice In this test we don't use assertEq because calculating the exact number on the right hand side would be too much hassle
         // However, we check that the lending tokens spent to redeem stablecoin to make the rBTC purchases is lower than the amount we would have
-        // needed if the exchange rate were constant and greater than the amount necessary if all the redemptions had been made at the latest exchange rate (since as time passes fewer tokens are necessary to redeem each stablecoin)
+        // needed if the exchange rate were constant and greater than the amount necessary if all the redemptions had been made at the latest 
+        // exchange rate (since as time passes fewer tokens are necessary to redeem each stablecoin)
         assertLt(
             prevLendingTokenBalance - postLendingTokenBalance,
             NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / startingExchangeRate
         );
         assertGt(
-            prevLendingTokenBalance - postLendingTokenBalance, NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / exchangeRate
+            prevLendingTokenBalance - postLendingTokenBalance, 
+            NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / exchangeRate
         );
 
         // @notice Similarly, here we check that the remaining lending token balance of the stablecoin Token Handler contract is lower
@@ -212,7 +214,7 @@ contract StablecoinLendingTest is DcaDappTest {
         emit TokenLending__InterestWithdrawn(USER, address(stablecoin), withdrawableInterest);
         dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
         uint256 userStablecoinBalanceAfterInterestWithdrawal = stablecoin.balanceOf(USER);
-        console.log("userStablecoinBalanceAfterInterestWithdrawal:", userStablecoinBalanceAfterInterestWithdrawal);
+        console2.log("userStablecoinBalanceAfterInterestWithdrawal:", userStablecoinBalanceAfterInterestWithdrawal);
         // assertEq(userStablecoinBalanceAfterInterestWithdrawal - userStablecoinBalanceBeforeInterestWithdrawal, withdrawableInterest);
         assertApproxEqRel(
             userStablecoinBalanceAfterInterestWithdrawal - userStablecoinBalanceBeforeInterestWithdrawal,
@@ -278,17 +280,17 @@ contract StablecoinLendingTest is DcaDappTest {
     // in the lending protocol, which only happenes in edge cases on mainnet or a live testnet
     // function testWithdrawalAmountAdjustedToBalance() external {
     //     // Add debug logging
-    //     console.log("Initial user lending token balance:", docHandler.getUsersLendingTokenBalance(USER));
+    //     console2.log("Initial user lending token balance:", docHandler.getUsersLendingTokenBalance(USER));
 
     //     uint256 exchangeRate =
     //         s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
-    //     console.log("Exchange rate:", exchangeRate);
+    //     console2.log("Exchange rate:", exchangeRate);
 
     //     uint256 stablecoinInLendingProtocol = docHandler.getUsersLendingTokenBalance(USER) * exchangeRate / 1e18;
-    //     console.log("Stablecoin in lending protocol:", stablecoinInLendingProtocol);
+    //     console2.log("Stablecoin in lending protocol:", stablecoinInLendingProtocol);
 
     //     uint256 attemptedWithdrawalAmount = stablecoinInLendingProtocol + 1;
-    //     console.log("Attempted withdrawal amount:", attemptedWithdrawalAmount);
+    //     console2.log("Attempted withdrawal amount:", attemptedWithdrawalAmount);
 
     //     vm.expectEmit(true, true, true, true);
     //     emit TokenLending__WithdrawalAmountAdjusted(USER, attemptedWithdrawalAmount, stablecoinInLendingProtocol);

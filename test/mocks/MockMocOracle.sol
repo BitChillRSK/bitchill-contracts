@@ -22,7 +22,7 @@ contract MockMocOracle {
 
     // Mock function for the ICoinPairPrice.getPriceInfo() interface
     function getPriceInfo() external view returns (uint256, bool, uint256) {
-        return (s_price, s_isValid, s_timestamp);
+        return (s_price, s_isValid, block.number);
     }
 
     // Function to update the price for testing purposes
