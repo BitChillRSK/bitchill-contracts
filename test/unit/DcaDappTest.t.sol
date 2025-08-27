@@ -183,6 +183,12 @@ contract DcaDappTest is Test {
             vm.skip(true);
             return;
         }
+        // Skip test if Dex Swaps + DOC combination (not supported)
+        if (isDexSwaps && !isUSDRIF) {
+            console2.log("Skipping test: DOC is not supported by Dex Swaps");
+            vm.skip(true);
+            return;
+        }
         
         if (keccak256(abi.encodePacked(lendingProtocol)) == keccak256(abi.encodePacked(TROPYKUS_STRING))) {
             s_lendingProtocolIndex = TROPYKUS_INDEX;
