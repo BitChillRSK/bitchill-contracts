@@ -434,6 +434,99 @@ contract RbtcPurchaseTest is DcaDappTest {
         dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
     }
 
+    /// @dev Similar to testDepleteHandlerBalanceDoesNotRevert but uses individual buyRbtc calls instead of batchBuyRbtc
+    function testDepleteHandlerBalanceDoesNotRevertIndividual() external {
+        // Prepare a second user
+        address SECOND_USER = makeAddr("SECOND_USER");
+
+        // Fund SECOND_USER with rBTC for gas
+        vm.deal(SECOND_USER, 10 ether);
+
+        // Give SECOND_USER enough stablecoin
+        uint256 secondUserInitialStable = USER_TOTAL_AMOUNT;
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            // Local tests – mint directly
+            stablecoin.mint(SECOND_USER, secondUserInitialStable);
+        } else {
+            // On forked chains we transfer from USER (who already owns tokens)
+            vm.startPrank(USER);
+            stablecoin.transfer(SECOND_USER, secondUserInitialStable);
+            vm.stopPrank();
+        }
+
+        // Define how many schedules each user will have
+        uint256 SCHEDULES_PER_USER = 3;
+
+        // USER already has 1 schedule from setUp → create 2 more so both users end up with 3 each
+        _createAdditionalSchedules(USER, SCHEDULES_PER_USER - 1);
+        // Create 3 schedules for SECOND_USER
+        _createAdditionalSchedules(SECOND_USER, SCHEDULES_PER_USER);
+
+        // Each schedule can execute AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND purchases before running out of balance
+        uint256 purchasesPerSchedule = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
+
+        // Store initial interest accrued (should be 0 initially)
+        uint256 initialInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 initialInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have 0 interest initially
+        assertEq(initialInterestUser, 0, "USER should have 0 interest initially");
+        assertEq(initialInterestSecondUser, 0, "SECOND_USER should have 0 interest initially");
+
+        // Perform the required number of purchase rounds
+        for (uint256 round; round < purchasesPerSchedule; ++round) {
+            // Execute individual purchases for USER's schedules
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), i);
+                vm.prank(SWAPPER);
+                dcaManager.buyRbtc(USER, address(stablecoin), i, scheduleId);
+            }
+
+            // Execute individual purchases for SECOND_USER's schedules
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                bytes32 scheduleId = dcaManager.getScheduleId(SECOND_USER, address(stablecoin), i);
+                vm.prank(SWAPPER);
+                dcaManager.buyRbtc(SECOND_USER, address(stablecoin), i, scheduleId);
+            }
+
+            // Advance time and update exchange rate so future purchases are allowed and interest accrues
+            updateExchangeRate(MIN_PURCHASE_PERIOD);
+        }
+
+        // After time has passed and multiple purchase rounds, check that interest has accrued
+        uint256 finalInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 finalInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have accrued some interest during the test
+        assertGt(finalInterestUser, initialInterestUser, "USER should have accrued interest during the test");
+        assertGt(finalInterestSecondUser, initialInterestSecondUser, "SECOND_USER should have accrued interest during the test");
+        
+        // The interest should be positive (greater than 0) since time has passed
+        assertGt(finalInterestUser, 0, "USER should have positive interest after time passage");
+        assertGt(finalInterestSecondUser, 0, "SECOND_USER should have positive interest after time passage");
+
+        // After depletion all schedule balances should be zero
+        for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+            assertEq(dcaManager.getScheduleTokenBalance(USER, address(stablecoin), i), 0);
+            assertEq(dcaManager.getScheduleTokenBalance(SECOND_USER, address(stablecoin), i), 0);
+        }
+
+        // Handler must hold no DOC (stablecoin) after final purchase
+        assertEq(stablecoin.balanceOf(address(docHandler)), 0);
+
+        // Withdrawing interest should not revert
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+        vm.prank(USER);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+
+        // Withdrawing interest should not revert
+        vm.prank(SECOND_USER);
+        dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+    }
+
     /// @dev helper to create additional schedules for a user
     function _createAdditionalSchedules(address user, uint256 num) internal {
         if (num == 0) return;
