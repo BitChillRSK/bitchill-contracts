@@ -149,13 +149,6 @@ contract DcaDappTest is Test {
         _;
     }
 
-    /// @dev Keep mock oracle's lastPublicationBlock current after vm.roll calls
-    // function _keepMockOracleCurrent() internal {
-    //     if (address(mockMocOracle) != address(0)) {
-    //         mockMocOracle.setValidPriceForBlock(block.number);
-    //     }
-    // }
-
     modifier onlyMocSwaps() {
         if (!isMocSwaps) {
             console2.log("Skipping test: only applicable for mocSwaps");

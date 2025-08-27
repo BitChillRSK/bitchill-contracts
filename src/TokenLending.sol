@@ -44,8 +44,7 @@ abstract contract TokenLending is ITokenLending {
     }
 
     /**
-     * @notice round up the lending token amount to avoid underestimating the amount
-     * to withdraw from each user's balance
+     * @notice round up (add 1 WEI to) the lending token amount to avoid underestimating the amount to withdraw from each user's balance
      * @param lendingTokenAmount: the amount of lending token to round up
      * @return lendingTokenAmount the rounded up amount of lending token
      */
