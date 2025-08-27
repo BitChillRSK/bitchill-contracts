@@ -209,7 +209,7 @@ forge script script/DeployMocSwaps.s.sol \
 ```
 
 ### Compilation profile for deployment
-Before deploying on-chain, compile using the dedicated `deploy` profile that activates the Yul IR (via_IR) pipeline (see `foundry.toml`).
+Before deploying on-chain, compile using the dedicated `deploy` profile that activates the Yul Intermediate Representation (via_IR) pipeline (see `foundry.toml`).
 
 ```bash
 # One-off compilation
@@ -219,7 +219,9 @@ FOUNDRY_PROFILE=deploy forge build
 FOUNDRY_PROFILE=deploy forge script ...
 ```
 
-The profile sets `via_ir = true` and `optimizer_runs = 200`, producing smaller, cheaper byte-code, under the 24,576-byte limit (as per EIP-170).
+This profile sets `via_ir = true` and `optimizer_runs = 200`, producing smaller, cheaper byte-code, under the 24,576-byte limit (as per EIP-170). 
+
+*Warning*: viaIR compilation might cause unexpected results. Be sure to run the full test suite again before deploying the contracts on Rootstock mainnet!
 
 ## Dependency Management
 
