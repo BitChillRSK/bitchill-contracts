@@ -85,6 +85,12 @@ abstract contract PurchaseRbtc is IPurchaseRbtc, Ownable, DcaManagerAccessContro
         emit PurchaseRbtc__rBtcWithdrawn(user, rbtcBalance);
     }
 
+    /**
+     * @notice withdraw rBTC from stuck contract. Only necessary for users who (poorly) interacted with Bitchill from a contract
+     * @param stuckUserContract: the address of the contract that interacted with Bitchill
+     * @param rescueAddress: the address to send the rBTC to
+     * @param rbtcBalance: the amount of rBTC to withdraw
+     */
     function _withdrawStuckRbtc(address stuckUserContract, address rescueAddress, uint256 rbtcBalance) internal {
         // First try to send to the contract (might work if it has a fallback)
         (bool sentToContract,) = stuckUserContract.call{value: rbtcBalance}("");
@@ -99,13 +105,26 @@ abstract contract PurchaseRbtc is IPurchaseRbtc, Ownable, DcaManagerAccessContro
         }
     }
 
-    // @notice: define abstract functions to be implemented by child contracts
-    // @dev: these functions semantically belong to the TokenLending contract,
-    // however, putting them there and changing the inheritance graph made it 
-    // impossible to linearize and finding another solution  would have required a major refactor.
+    /**
+     * @notice redeem stablecoin for rBTC
+     * @notice define abstract functions to be implemented by child contracts
+     * @dev these functions semantically belong to the TokenLending contract,
+     * however, putting them there and changing the inheritance graph made it 
+     * impossible to linearize and finding another solution  would have required a major refactor.
+     * @param buyer: the address of the buyer
+     * @param amount: the amount of stablecoin to redeem
+     * @return the amount of stablecoin redeemed
+     */
     function _redeemStablecoin(address buyer, uint256 amount) internal virtual returns (uint256);
 
-    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
+    /**
+     * @notice redeem stablecoin for rBTC in batch
+     * @param buyers: the addresses of the buyers
+     * @param purchaseAmounts: the amounts of stablecoin to redeem for each buyer
+     * @param totalStablecoinAmountToRedeem: the total amount of stablecoin to redeem
+     * @return the total amount of stablecoin redeemed
+     */
+    function _batchRedeemStablecoin(address[] memory buyers, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToRedeem)
         internal
         virtual
         returns (uint256);

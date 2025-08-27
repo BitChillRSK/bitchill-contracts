@@ -66,14 +66,14 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
      * @param users The array of user addresses for whom the stablecoin is being redeemed
      * @param purchaseAmounts The array of amounts of stablecoin to redeem for each user
-     * @param totalStablecoinAmountToSpend The total amount of stablecoin to redeem from Tropykus
+     * @param totalStablecoinAmountToRedeem The total amount of stablecoin to redeem from Tropykus
      */
-    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToRedeem)
         internal
         override(TropykusErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call TropykusErc20Handler's version of _batchRedeemStablecoin
-        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalStablecoinAmountToSpend);
+        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalStablecoinAmountToRedeem);
     }
 }

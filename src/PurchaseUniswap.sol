@@ -121,7 +121,7 @@ abstract contract PurchaseUniswap is
             _calculateFeeAndNetAmounts(purchaseAmounts);
 
         // Redeem stablecoin (and repay lending token)
-        uint256 stablecoinRedeemed = _batchRedeemStablecoin(buyers, purchaseAmounts, totalStablecoinAmountToSpend + aggregatedFee); // total stablecoin to redeem by repaying yield bearing token in order to spend it to redeem rBTC is totalStablecoinAmountToSpend + aggregatedFee
+        uint256 stablecoinRedeemed = _batchRedeemStablecoin(buyers, purchaseAmounts, totalStablecoinAmountToSpend + aggregatedFee); // totalStablecoinAmountToSpend (on rBTC) + aggregatedFee (charged by BitChill)
         totalStablecoinAmountToSpend = stablecoinRedeemed - aggregatedFee;
 
         // Charge fees
