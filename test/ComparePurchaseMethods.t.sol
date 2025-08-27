@@ -6,7 +6,6 @@ import {Test, console2} from "forge-std/Test.sol";
 import {DeployMocAndUniswap} from "../script/DeployMocAndUniswap.s.sol";
 import {DcaManager} from "../src/DcaManager.sol";
 import {OperationsAdmin} from "../src/OperationsAdmin.sol";
-import {IDocHandler} from "../src/interfaces/IDocHandler.sol";
 import {IPurchaseRbtc} from "../src/interfaces/IPurchaseRbtc.sol";
 import {ICoinPairPrice} from "../src/interfaces/ICoinPairPrice.sol";
 import {MocHelperConfig} from "../script/MocHelperConfig.s.sol";

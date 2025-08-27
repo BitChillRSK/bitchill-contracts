@@ -8,6 +8,7 @@ import {IiSusdToken} from "./interfaces/IiSusdToken.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {TokenLending} from "src/TokenLending.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title SovrynErc20Handler
@@ -123,7 +124,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         returns (uint256 stablecoinInterestAmount)
     {
         uint256 totalErc20InLending = _lendingTokenToStablecoin(s_iSusdBalances[user], i_iSusdToken.tokenPrice());
-        stablecoinInterestAmount = totalErc20InLending - stablecoinLockedInDcaSchedules;
+        stablecoinInterestAmount = totalErc20InLending > stablecoinLockedInDcaSchedules ? totalErc20InLending - stablecoinLockedInDcaSchedules : 0;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -158,24 +159,29 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
      * @param stablecoinToRedeem: the amount of stablecoin to redeem
      * @param exchangeRate: the exchange rate of stablecoin to rBTC
      * @param stablecoinRecipient: the address of the recipient of the stablecoin
-     * @return stablecoinRedeemed: the amount of stablecoin redeemed
+     * @return stablecoinRedeemed the amount of stablecoin redeemed
      */
     function _redeemStablecoin(address user, uint256 stablecoinToRedeem, uint256 exchangeRate, address stablecoinRecipient)
         internal
         virtual
-        returns (uint256)
+        returns (uint256 stablecoinRedeemed)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
-        uint256 iSusdToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        (uint256 iSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
+        if (hasTruncated) {
+            iSusdToRepay = _lendingTokenRoundUp(iSusdToRepay);
+        }
         if (iSusdToRepay > usersIsusdBalance) {
-            emit TokenLending__AmountToRepayAdjusted(user, iSusdToRepay, usersIsusdBalance);
+            uint256 oldiSusdToRepay = iSusdToRepay;
+            uint256 oldStablecoinToRedeem = stablecoinToRedeem;
             iSusdToRepay = usersIsusdBalance;
+            stablecoinToRedeem = _lendingTokenToStablecoin(iSusdToRepay, exchangeRate);
+            emit TokenLending__AmountToRepayAdjusted(user, oldiSusdToRepay, iSusdToRepay, oldStablecoinToRedeem, stablecoinToRedeem);
         }
         s_iSusdBalances[user] -= iSusdToRepay;
-        uint256 stablecoinRedeemed = i_iSusdToken.burn(stablecoinRecipient, iSusdToRepay);
+        stablecoinRedeemed = i_iSusdToken.burn(stablecoinRecipient, iSusdToRepay);
         if (stablecoinRedeemed == 0) revert SovrynErc20Lending__RedeemUnderlyingFailed();
         emit TokenLending__UnderlyingRedeemed(user, stablecoinRedeemed, iSusdToRepay);
-        return stablecoinRedeemed;
     }
 
     /**
@@ -194,14 +200,18 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         if (totalErc20ToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalErc20ToRedeem, underlyingAmount);
         }
-        uint256 totaliSusdToRepay = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
+        (uint256 totaliSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
+        if (hasTruncated) {
+            totaliSusdToRepay = _lendingTokenRoundUp(totaliSusdToRepay);
+        }
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
-            // @notice the amount of iSusd each user repays is proportional to the ratio of that user's stablecoin getting redeemed over the total stablecoin getting redeemed
-            uint256 usersRepayediSusd = totaliSusdToRepay * purchaseAmounts[i] / totalErc20ToRedeem;
-            s_iSusdBalances[users[i]] -= usersRepayediSusd;
-            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepayediSusd);
+            // @notice the amount of iSusd each user repays is proportional to the ratio of 
+            // that user's stablecoin getting redeemed over the total stablecoin getting redeemed
+            uint256 usersRepaidiSusd = Math.mulDiv(totaliSusdToRepay, purchaseAmounts[i], totalErc20ToRedeem, Math.Rounding.Up);
+            s_iSusdBalances[users[i]] -= usersRepaidiSusd;
+            emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepaidiSusd);
         }
         uint256 stablecoinRedeemed = i_iSusdToken.burn(address(this), totaliSusdToRepay);
         if (stablecoinRedeemed > 0) emit TokenLending__UnderlyingRedeemedBatch(totalErc20ToRedeem, totaliSusdToRepay);

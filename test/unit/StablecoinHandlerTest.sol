@@ -24,16 +24,16 @@ contract StablecoinHandlerTest is DcaDappTest {
     ////////////////////////////
 
     function testStablecoinHandlerSupportsInterface() external {
-        assertEq(IERC165(address(docHandler)).supportsInterface(type(ITokenHandler).interfaceId), true);
+        assertEq(IERC165(address(stablecoinHandler)).supportsInterface(type(ITokenHandler).interfaceId), true);
     }
 
     function testStablecoinHandlerSetFeeRateParams() external {
         vm.prank(OWNER);
-        IFeeHandler(address(docHandler)).setFeeRateParams(5, 5, 5, 5);
-        assertEq(IFeeHandler(address(docHandler)).getMinFeeRate(), 5);
-        assertEq(IFeeHandler(address(docHandler)).getMaxFeeRate(), 5);
-        assertEq(IFeeHandler(address(docHandler)).getFeePurchaseLowerBound(), 5);
-        assertEq(IFeeHandler(address(docHandler)).getFeePurchaseUpperBound(), 5);
+        IFeeHandler(address(stablecoinHandler)).setFeeRateParams(5, 5, 5, 5);
+        assertEq(IFeeHandler(address(stablecoinHandler)).getMinFeeRate(), 5);
+        assertEq(IFeeHandler(address(stablecoinHandler)).getMaxFeeRate(), 5);
+        assertEq(IFeeHandler(address(stablecoinHandler)).getFeePurchaseLowerBound(), 5);
+        assertEq(IFeeHandler(address(stablecoinHandler)).getFeePurchaseUpperBound(), 5);
     }
 
     function testStablecoinHandlerSetFeeCollectorAddress() external {
@@ -41,7 +41,7 @@ contract StablecoinHandlerTest is DcaDappTest {
         vm.prank(OWNER);
         vm.expectEmit(true, true, true, true);
         emit FeeHandler__FeeCollectorAddressSet(newFeeCollector);
-        IFeeHandler(address(docHandler)).setFeeCollectorAddress(newFeeCollector);
-        assertEq(IFeeHandler(address(docHandler)).getFeeCollectorAddress(), newFeeCollector);
+        IFeeHandler(address(stablecoinHandler)).setFeeCollectorAddress(newFeeCollector);
+        assertEq(IFeeHandler(address(stablecoinHandler)).getFeeCollectorAddress(), newFeeCollector);
     }
 } 

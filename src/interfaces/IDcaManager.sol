@@ -35,7 +35,8 @@ interface IDcaManager {
         bytes32 indexed scheduleId,
         uint256 depositAmount,
         uint256 purchaseAmount,
-        uint256 purchasePeriod
+        uint256 purchasePeriod,
+        uint256 lendingProtocolIndex
     );
     event DcaManager__DcaScheduleUpdated(
         address indexed user,

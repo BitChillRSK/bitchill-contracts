@@ -166,7 +166,7 @@ contract GettersTest is DcaDappTest {
 
     function test_operationsAdmin_getTokenHandler() public {
         address handler = operationsAdmin.getTokenHandler(address(stablecoin), s_lendingProtocolIndex);
-        assertEq(handler, address(docHandler));
+        assertEq(handler, address(stablecoinHandler));
         
         // Test non-existent handler
         address nonExistentHandler = operationsAdmin.getTokenHandler(address(0x999), 1);
@@ -202,37 +202,37 @@ contract GettersTest is DcaDappTest {
     //////////////////////////////////////////////////////////////*/
 
     function test_feeHandler_getMinFeeRate() public {
-        uint256 minFeeRate = IFeeHandler(address(docHandler)).getMinFeeRate();
+        uint256 minFeeRate = IFeeHandler(address(stablecoinHandler)).getMinFeeRate();
         assertGt(minFeeRate, 0); // Should be greater than 0
     }
 
     function test_feeHandler_getMaxFeeRate() public {
-        uint256 maxFeeRate = IFeeHandler(address(docHandler)).getMaxFeeRate();
+        uint256 maxFeeRate = IFeeHandler(address(stablecoinHandler)).getMaxFeeRate();
         assertGt(maxFeeRate, 0);
     }
 
     function test_feeHandler_getFeePurchaseLowerBound() public {
-        uint256 lowerBound = IFeeHandler(address(docHandler)).getFeePurchaseLowerBound();
+        uint256 lowerBound = IFeeHandler(address(stablecoinHandler)).getFeePurchaseLowerBound();
         assertGe(lowerBound, 0);
     }
 
     function test_feeHandler_getFeePurchaseUpperBound() public {
-        uint256 upperBound = IFeeHandler(address(docHandler)).getFeePurchaseUpperBound();
+        uint256 upperBound = IFeeHandler(address(stablecoinHandler)).getFeePurchaseUpperBound();
         assertGe(upperBound, 0);
         
         // Upper bound should be >= lower bound
-        uint256 lowerBound = IFeeHandler(address(docHandler)).getFeePurchaseLowerBound();
+        uint256 lowerBound = IFeeHandler(address(stablecoinHandler)).getFeePurchaseLowerBound();
         assertGe(upperBound, lowerBound);
     }
 
     function test_feeHandler_getFeeCollectorAddress() public {
-        address feeCollector = IFeeHandler(address(docHandler)).getFeeCollectorAddress();
+        address feeCollector = IFeeHandler(address(stablecoinHandler)).getFeeCollectorAddress();
         assertNotEq(feeCollector, address(0));
     }
 
     function test_feeHandler_feeRateConsistency() public {
-        uint256 minFeeRate = IFeeHandler(address(docHandler)).getMinFeeRate();
-        uint256 maxFeeRate = IFeeHandler(address(docHandler)).getMaxFeeRate();
+        uint256 minFeeRate = IFeeHandler(address(stablecoinHandler)).getMinFeeRate();
+        uint256 maxFeeRate = IFeeHandler(address(stablecoinHandler)).getMaxFeeRate();
         assertLe(minFeeRate, maxFeeRate); // Min should be <= Max
     }
 
@@ -263,11 +263,11 @@ contract GettersTest is DcaDappTest {
 
     function test_tokenHandler_supportsInterface() public {
         // Test ERC165 support
-        bool supportsERC165 = IERC165(address(docHandler)).supportsInterface(0x01ffc9a7);
+        bool supportsERC165 = IERC165(address(stablecoinHandler)).supportsInterface(0x01ffc9a7);
         assertTrue(supportsERC165);
         
         // Test ITokenHandler interface support
-        bool supportsTokenHandler = IERC165(address(docHandler)).supportsInterface(type(ITokenHandler).interfaceId);
+        bool supportsTokenHandler = IERC165(address(stablecoinHandler)).supportsInterface(type(ITokenHandler).interfaceId);
         assertTrue(supportsTokenHandler);
     }
 
@@ -276,13 +276,13 @@ contract GettersTest is DcaDappTest {
     //////////////////////////////////////////////////////////////*/
 
     function test_purchaseRbtc_getAccumulatedRbtcBalance_withUser() public {
-        uint256 balance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(USER);
+        uint256 balance = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance(USER);
         assertGe(balance, 0);
     }
 
     function test_purchaseRbtc_getAccumulatedRbtcBalance_caller() public {
         vm.prank(USER);
-        uint256 balance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 balance = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
         assertGe(balance, 0);
     }
 
@@ -291,27 +291,27 @@ contract GettersTest is DcaDappTest {
     //////////////////////////////////////////////////////////////*/
 
     function test_purchaseUniswap_getters() public onlyDexSwaps {
-        if (address(docHandler).code.length > 0) {
-            try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent() returns (uint256 percent) {
+        if (address(stablecoinHandler).code.length > 0) {
+            try IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumPercent() returns (uint256 percent) {
                 assertEq(percent, DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT);
             } catch {
                 // Some handlers might not implement this interface
                 return;
             }
 
-            try IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck() returns (uint256 safetyCheck) {
+            try IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumSafetyCheck() returns (uint256 safetyCheck) {
                 assertEq(safetyCheck, DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK);
             } catch {
                 return;
             }
 
-            try IPurchaseUniswap(address(docHandler)).getMocOracle() returns (ICoinPairPrice oracle) {
+            try IPurchaseUniswap(address(stablecoinHandler)).getMocOracle() returns (ICoinPairPrice oracle) {
                 assertNotEq(address(oracle), address(0));
             } catch {
                 return;
             }
 
-            try IPurchaseUniswap(address(docHandler)).getSwapPath() returns (bytes memory path) {
+            try IPurchaseUniswap(address(stablecoinHandler)).getSwapPath() returns (bytes memory path) {
                 assertGt(path.length, 0);
             } catch {
                 return;
@@ -325,7 +325,7 @@ contract GettersTest is DcaDappTest {
 
     function test_tokenLending_getUsersLendingTokenBalance() public {
         if (s_lendingProtocolIndex > 0) {
-            uint256 balance = ITokenLending(address(docHandler)).getUsersLendingTokenBalance(USER);
+            uint256 balance = ITokenLending(address(stablecoinHandler)).getUsersLendingTokenBalance(USER);
             assertGe(balance, 0);
         }
     }
@@ -333,7 +333,7 @@ contract GettersTest is DcaDappTest {
     function test_tokenLending_getAccruedInterest() public {
         if (s_lendingProtocolIndex > 0) {
             vm.prank(address(dcaManager));
-            uint256 interest = ITokenLending(address(docHandler)).getAccruedInterest(USER, AMOUNT_TO_DEPOSIT);
+            uint256 interest = ITokenLending(address(stablecoinHandler)).getAccruedInterest(USER, AMOUNT_TO_DEPOSIT);
             assertGe(interest, 0);
         }
     }
@@ -346,21 +346,21 @@ contract GettersTest is DcaDappTest {
         // Test that the docHandler has the correct DCA manager address
         // The public immutable creates an automatic getter
         if (s_lendingProtocolIndex == TROPYKUS_INDEX) {
-            try TropykusErc20Handler(payable(address(docHandler))).i_dcaManager() returns (address dcaManagerAddr) {
+            try TropykusErc20Handler(payable(address(stablecoinHandler))).i_dcaManager() returns (address dcaManagerAddr) {
                 assertEq(dcaManagerAddr, address(dcaManager));
             } catch {
                 // Try the Dex version
-                try TropykusErc20HandlerDex(payable(address(docHandler))).i_dcaManager() returns (address dcaManagerAddr) {
+                try TropykusErc20HandlerDex(payable(address(stablecoinHandler))).i_dcaManager() returns (address dcaManagerAddr) {
                     assertEq(dcaManagerAddr, address(dcaManager));
                 } catch {
                     // Handler might not expose this getter
                 }
             }
         } else if (s_lendingProtocolIndex == SOVRYN_INDEX) {
-            try SovrynErc20Handler(payable(address(docHandler))).i_dcaManager() returns (address dcaManagerAddr) {
+            try SovrynErc20Handler(payable(address(stablecoinHandler))).i_dcaManager() returns (address dcaManagerAddr) {
                 assertEq(dcaManagerAddr, address(dcaManager));
             } catch {
-                try SovrynErc20HandlerDex(payable(address(docHandler))).i_dcaManager() returns (address dcaManagerAddr) {
+                try SovrynErc20HandlerDex(payable(address(stablecoinHandler))).i_dcaManager() returns (address dcaManagerAddr) {
                     assertEq(dcaManagerAddr, address(dcaManager));
                 } catch {
                     // Handler might not expose this getter
@@ -378,7 +378,7 @@ contract GettersTest is DcaDappTest {
         IDcaManager.DcaDetails[] memory schedules = dcaManager.getDcaSchedules(address(0), address(stablecoin));
         assertEq(schedules.length, 0);
 
-        uint256 balance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(address(0));
+        uint256 balance = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance(address(0));
         assertEq(balance, 0);
     }
 
@@ -442,8 +442,8 @@ contract GettersTest is DcaDappTest {
         assertEq(operationsAdmin.getLendingProtocolName(2), SOVRYN_STRING);
 
         // Test fee bounds consistency
-        uint256 lowerBound = IFeeHandler(address(docHandler)).getFeePurchaseLowerBound();
-        uint256 upperBound = IFeeHandler(address(docHandler)).getFeePurchaseUpperBound();
+        uint256 lowerBound = IFeeHandler(address(stablecoinHandler)).getFeePurchaseLowerBound();
+        uint256 upperBound = IFeeHandler(address(stablecoinHandler)).getFeePurchaseUpperBound();
         assertLe(lowerBound, upperBound);
     }
 
@@ -483,7 +483,7 @@ contract GettersTest is DcaDappTest {
         assertLt(newBalance, initialBalance);
         
         // Check rBTC balance increased
-        uint256 rbtcBalance = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(USER);
+        uint256 rbtcBalance = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance(USER);
         assertGt(rbtcBalance, 0);
     }
 

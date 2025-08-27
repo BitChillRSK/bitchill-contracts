@@ -23,7 +23,7 @@ contract StablecoinDepositTest is DcaDappTest {
 
     function testCannotDepositZeroStablecoin() external {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         vm.expectRevert(IDcaManager.DcaManager__DepositAmountMustBeGreaterThanZero.selector);
         dcaManager.depositToken(address(stablecoin), SCHEDULE_INDEX, scheduleId, 0);

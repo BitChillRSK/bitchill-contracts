@@ -117,7 +117,7 @@ contract DcaConfigurationTest is DcaDappTest {
         );
         for (uint256 i; i < maxSchedulesPerToken; ++i) {
             vm.startPrank(USER);
-            stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+            stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
             if (i == maxSchedulesPerToken - 1) {
                 vm.expectRevert(encodedRevert);
             }

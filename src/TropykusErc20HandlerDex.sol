@@ -12,7 +12,7 @@ import {TropykusErc20Handler} from "./TropykusErc20Handler.sol";
 contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
     /**
      * @param dcaManagerAddress the address of the DCA Manager contract
-     * @param docTokenAddress the address of the Dollar On Chain token on the blockchain of deployment
+     * @param stablecoinAddress the address of the stablecoin token
      * @param kTokenAddress the address of Tropykus' kToken contract
      * @param minPurchaseAmount  the minimum amount of stablecoin for periodic purchases
      * @param feeCollector the address of to which fees will sent on every purchase
@@ -22,7 +22,7 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      */
     constructor(
         address dcaManagerAddress,
-        address docTokenAddress,
+        address stablecoinAddress,
         address kTokenAddress,
         UniswapSettings memory uniswapSettings,
         uint256 minPurchaseAmount,
@@ -34,14 +34,14 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
     )
         TropykusErc20Handler(
             dcaManagerAddress,
-            docTokenAddress,
+            stablecoinAddress,
             kTokenAddress,
             feeCollector,
             feeSettings,
             exchangeRateDecimals
         )
         PurchaseUniswap(
-            docTokenAddress, 
+            stablecoinAddress, 
             uniswapSettings, 
             amountOutMinimumPercent, 
             amountOutMinimumSafetyCheck
@@ -66,14 +66,14 @@ contract TropykusErc20HandlerDex is TropykusErc20Handler, PurchaseUniswap {
      * @notice Override the _batchRedeemStablecoin function to resolve ambiguity between parent contracts
      * @param users The array of user addresses for whom the stablecoin is being redeemed
      * @param purchaseAmounts The array of amounts of stablecoin to redeem for each user
-     * @param totalDocAmountToSpend The total amount of stablecoin to redeem
+     * @param totalStablecoinAmountToRedeem The total amount of stablecoin to redeem from Tropykus
      */
-    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalDocAmountToSpend)
+    function _batchRedeemStablecoin(address[] memory users, uint256[] memory purchaseAmounts, uint256 totalStablecoinAmountToRedeem)
         internal
         override(TropykusErc20Handler, PurchaseRbtc)
         returns (uint256)
     {
         // Call TropykusErc20Handler's version of _batchRedeemStablecoin
-        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalDocAmountToSpend);
+        return TropykusErc20Handler._batchRedeemStablecoin(users, purchaseAmounts, totalStablecoinAmountToRedeem);
     }
 }

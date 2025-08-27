@@ -130,7 +130,7 @@ contract OperationsAdminTest is DcaDappTest {
             abi.encodeWithSelector(IOperationsAdmin.OperationsAdmin__LendingProtocolNotAllowed.selector, 3);
         vm.expectRevert(encodedRevert);
         vm.prank(ADMIN);
-        operationsAdmin.assignOrUpdateTokenHandler(address(stablecoin), 3, address(docHandler));
+        operationsAdmin.assignOrUpdateTokenHandler(address(stablecoin), 3, address(stablecoinHandler));
     }
 
     function testAddOrUpdateLendingProtocol() external {

@@ -19,7 +19,7 @@ interface IPurchaseRbtc {
         uint256 amountSpent
     );
     event PurchaseRbtc__SuccessfulRbtcBatchPurchase(
-        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalDocAmountSpent
+        address indexed token, uint256 indexed totalPurchasedRbtc, uint256 indexed totalStablecoinAmountSpent
     );
     event PurchaseRbtc__rBtcRescued(address indexed stuckContract, address indexed rescueAddress, uint256 amount);
 
