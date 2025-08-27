@@ -26,8 +26,8 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
 
     function testSlippageSettings() public onlyDexSwaps {
         // Get the initial values
-        uint256 initialPercent = IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent();
-        uint256 initialSafetyCheck = IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck();
+        uint256 initialPercent = IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumPercent();
+        uint256 initialSafetyCheck = IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumSafetyCheck();
         
         // Verify initial values - should match what we set in the contract
         assertEq(initialPercent, DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT, "Wrong initial slippage percent");
@@ -43,11 +43,11 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
 
         // Set the new value
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(newPercent);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumPercent(newPercent);
         
         // Verify the new value was set
         assertEq(
-            IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent(), 
+            IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumPercent(), 
             newPercent, 
             "Slippage percent should be updated"
         );
@@ -59,11 +59,11 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         
         // Execute the function that should emit the event
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(newSafetyCheck);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumSafetyCheck(newSafetyCheck);
 
         // Verify the new value was set
         assertEq(
-            IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck(), 
+            IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumSafetyCheck(), 
             newSafetyCheck, 
             "Safety check should be updated"
         );
@@ -73,28 +73,28 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Try to set slippage too high (over 100%)
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__AmountOutMinimumPercentTooHigh.selector);
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(1.01e18);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumPercent(1.01e18);
     }
     
     function testSetAmountOutMinimumPercentRevertsIfTooLow() public onlyDexSwaps {
         // Get the safety check value
-        uint256 safetyCheck = IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck();
+        uint256 safetyCheck = IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumSafetyCheck();
         
         // Try to set slippage below safety check
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__AmountOutMinimumPercentTooLow.selector);
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(safetyCheck - 1);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumPercent(safetyCheck - 1);
     }
     
     function testSetAmountOutMinimumSafetyCheck() public onlyDexSwaps {
         // Set new safety check
         uint256 newSafetyCheck = DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK * 90 / 100;
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(newSafetyCheck);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumSafetyCheck(newSafetyCheck);
         
         // Verify it was set
         assertEq(
-            IPurchaseUniswap(address(docHandler)).getAmountOutMinimumSafetyCheck(), 
+            IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumSafetyCheck(), 
             newSafetyCheck, 
             "Safety check should be updated"
         );
@@ -102,11 +102,11 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Now we can set a lower slippage percent
         uint256 newPercent = DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT * 90 / 100;
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(newPercent);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumPercent(newPercent);
         
         // Verify it was set
         assertEq(
-            IPurchaseUniswap(address(docHandler)).getAmountOutMinimumPercent(), 
+            IPurchaseUniswap(address(stablecoinHandler)).getAmountOutMinimumPercent(), 
             newPercent, 
             "Slippage percent should be updated to lower value"
         );
@@ -116,19 +116,19 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Try to set safety check too high
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__AmountOutMinimumSafetyCheckTooHigh.selector);
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(1.01e18);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumSafetyCheck(1.01e18);
     }
     
     function testOnlyOwnerCanSetSlippageSettings() public onlyDexSwaps {
         // Try to set slippage as non-owner
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumPercent(0.98e18);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumPercent(0.98e18);
         
         // Try to set safety check as non-owner
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
-        IPurchaseUniswap(address(docHandler)).setAmountOutMinimumSafetyCheck(0.95e18);
+        IPurchaseUniswap(address(stablecoinHandler)).setAmountOutMinimumSafetyCheck(0.95e18);
     }
 
     ////////////////////////////
@@ -140,7 +140,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         MockMocOracle newMocOracle = new MockMocOracle();
         
         // Store the current oracle for comparison
-        ICoinPairPrice currentOracle = IPurchaseUniswap(address(docHandler)).getMocOracle();
+        ICoinPairPrice currentOracle = IPurchaseUniswap(address(stablecoinHandler)).getMocOracle();
         address oldOracleAddress = address(currentOracle);
         
         // Expect the event with the correct parameters
@@ -149,10 +149,10 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
 
         // Update the oracle
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).updateMocOracle(address(newMocOracle));
+        IPurchaseUniswap(address(stablecoinHandler)).updateMocOracle(address(newMocOracle));
         
         // Verify the oracle was updated
-        address updatedOracleAddress = address(IPurchaseUniswap(address(docHandler)).getMocOracle());
+        address updatedOracleAddress = address(IPurchaseUniswap(address(stablecoinHandler)).getMocOracle());
         assertEq(updatedOracleAddress, address(newMocOracle), "Oracle address should be updated");
         assertNotEq(updatedOracleAddress, oldOracleAddress, "Oracle address should be different from the old one");
     }
@@ -161,7 +161,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Try to update with zero address
         vm.expectRevert(IPurchaseUniswap.PurchaseUniswap__InvalidOracleAddress.selector);
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).updateMocOracle(address(0));
+        IPurchaseUniswap(address(stablecoinHandler)).updateMocOracle(address(0));
     }
     
     function testOnlyOwnerCanUpdateOracle() public onlyDexSwaps {
@@ -171,7 +171,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Try to update oracle as non-owner
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
-        IPurchaseUniswap(address(docHandler)).updateMocOracle(address(newMocOracle));
+        IPurchaseUniswap(address(stablecoinHandler)).updateMocOracle(address(newMocOracle));
     }
 
     ////////////////////////////
@@ -181,7 +181,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
     function testOutdatedPriceRevertsSwap() public onlyDexSwaps {
         // Setup: First perform the necessary setup for the test
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         bytes32 scheduleId = dcaManager.getMyScheduleId(address(stablecoin), SCHEDULE_INDEX);
         dcaManager.setPurchaseAmount(address(stablecoin), SCHEDULE_INDEX, scheduleId, AMOUNT_TO_SPEND);
         vm.stopPrank();
@@ -192,7 +192,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         
         // Update the oracle to use our invalid one
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).updateMocOracle(address(invalidOracle));
+        IPurchaseUniswap(address(stablecoinHandler)).updateMocOracle(address(invalidOracle));
         
         
         // Try to make a purchase, which should revert due to invalid price
@@ -215,7 +215,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         poolFeeRates[1] = 300; // 0.03%
         
         // Get the current path
-        bytes memory oldPath = IPurchaseUniswap(address(docHandler)).getSwapPath();
+        bytes memory oldPath = IPurchaseUniswap(address(stablecoinHandler)).getSwapPath();
         
         // Expect the event with the correct parameters
         vm.expectEmit(true, true, false, false);
@@ -223,10 +223,10 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
 
         // Set the new path
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
+        IPurchaseUniswap(address(stablecoinHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
         
         // Verify the path was updated
-        bytes memory newPath = IPurchaseUniswap(address(docHandler)).getSwapPath();
+        bytes memory newPath = IPurchaseUniswap(address(stablecoinHandler)).getSwapPath();
         assertNotEq(keccak256(newPath), keccak256(oldPath), "Path should be updated");
     }
     
@@ -247,7 +247,7 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
             poolFeeRates.length
         ));
         vm.prank(OWNER);
-        IPurchaseUniswap(address(docHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
+        IPurchaseUniswap(address(stablecoinHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
     }
     
     function testOnlyOwnerCanSetPurchasePath() public onlyDexSwaps {
@@ -262,6 +262,6 @@ contract PurchaseUniswapSettingsTest is DcaDappTest {
         // Try to set path as non-owner
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(USER);
-        IPurchaseUniswap(address(docHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
+        IPurchaseUniswap(address(stablecoinHandler)).setPurchasePath(intermediateTokens, poolFeeRates);
     }
 }

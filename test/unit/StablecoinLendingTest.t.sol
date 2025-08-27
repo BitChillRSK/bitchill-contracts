@@ -36,16 +36,16 @@ contract StablecoinLendingTest is DcaDappTest {
         uint256 ltStablecoinBalanceAfterDeposit = stablecoin.balanceOf(address(lendingToken));
         
         // Check that the stablecoin handler has 0 balance (all stablecoin was sent to lending token)
-        assertEq(stablecoin.balanceOf(address(docHandler)), 0, "Stablecoin balance in handler should be 0");
+        assertEq(stablecoin.balanceOf(address(stablecoinHandler)), 0, "Stablecoin balance in handler should be 0");
         
         // Check that the correct amount was added to the lending token
         assertEq(ltStablecoinBalanceAfterDeposit - ltStablecoinBalanceBeforeDeposit, AMOUNT_TO_DEPOSIT, "Incorrect amount deposited in lending token");
     }
 
     function testStablecoinDepositIncreasesLendingTokenBalance() external {
-        uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 prevLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
         super.depositStablecoin();
-        uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 postLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
 
         uint256 exchangeRate = s_lendingProtocolIndex == TROPYKUS_INDEX 
             ? lendingToken.exchangeRateCurrent() 
@@ -53,7 +53,7 @@ contract StablecoinLendingTest is DcaDappTest {
 
         // Check that the actual lending token (the one used by the stablecoin handler) has the correct balance
         assertApproxEqRel(
-            lendingToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(stablecoinHandler)),
             2 * AMOUNT_TO_DEPOSIT * 1e18 / exchangeRate,
             1 // Allow a maximum difference of 1e-18%
         );
@@ -62,14 +62,14 @@ contract StablecoinLendingTest is DcaDappTest {
     }
 
     function testStablecoinWithdrawalBurnsLendingToken() external {
-        uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 prevLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
         super.withdrawStablecoin();
-        uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 postLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
         uint256 exchangeRate =
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
         
         assertApproxEqAbs(
-            lendingToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(stablecoinHandler)),
             0,
             100 // Allow a maximum difference of 100e-18%
         );
@@ -81,9 +81,9 @@ contract StablecoinLendingTest is DcaDappTest {
     }
 
     function testRbtcPurchaseBurnsLendingToken() external {
-        uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 prevLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
         super.makeSinglePurchase();
-        uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 postLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
 
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
@@ -97,7 +97,7 @@ contract StablecoinLendingTest is DcaDappTest {
             s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
 
         assertApproxEqRel(
-            lendingToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(stablecoinHandler)),
             (AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - AMOUNT_TO_SPEND * 1e18 / exchangeRate),
             0.3e16 // Allow a maximum difference of 0.3%
         );
@@ -112,7 +112,7 @@ contract StablecoinLendingTest is DcaDappTest {
     function testSeveralRbtcPurchasesBurnLendingToken() external {
         // This just for one user, for many users this will get tested in invariant tests
         super.createSeveralDcaSchedules();
-        uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 prevLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
 
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
@@ -123,7 +123,7 @@ contract StablecoinLendingTest is DcaDappTest {
         }
 
         super.makeSeveralPurchasesWithSeveralSchedules();
-        uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 postLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
 
         // if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
         uint256 exchangeRate =
@@ -146,11 +146,11 @@ contract StablecoinLendingTest is DcaDappTest {
         // than it would have been if the redemptions had been made at the highest exchange rate but greater than
         // if the redemptions had been made at the starting exchange rate
         assertLt(
-            lendingToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(stablecoinHandler)),
             AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / exchangeRate
         );
         assertGt(
-            lendingToken.balanceOf(address(docHandler)),
+            lendingToken.balanceOf(address(stablecoinHandler)),
             AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - NUM_OF_SCHEDULES * AMOUNT_TO_SPEND * 1e18 / startingExchangeRate
         );
     }
@@ -158,7 +158,7 @@ contract StablecoinLendingTest is DcaDappTest {
     function testRbtcBatchPurchaseBurnsLendingToken() external {
         // This just for one user, for many users this will get tested in invariant tests
         super.createSeveralDcaSchedules(); // This creates NUM_OF_SCHEDULES schedules with purchaseAmount = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES
-        uint256 prevLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 prevLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
 
         uint256 startingExchangeRate = KDOC_STARTING_EXCHANGE_RATE;
         // On fork tests we need to simulate some operation on Tropykus so that the exchange rate gets updated
@@ -169,7 +169,7 @@ contract StablecoinLendingTest is DcaDappTest {
         }
 
         super.makeBatchPurchasesOneUser(); // Batched purchases add up to an amount of AMOUNT_TO_SPEND, this function makes two batch purchases
-        uint256 postLendingTokenBalance = docHandler.getUsersLendingTokenBalance(USER);
+        uint256 postLendingTokenBalance = stablecoinHandler.getUsersLendingTokenBalance(USER);
 
         if (block.chainid != ANVIL_CHAIN_ID) updateExchangeRate(1 days);
         uint256 exchangeRate =
@@ -183,14 +183,14 @@ contract StablecoinLendingTest is DcaDappTest {
 
         if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
             assertApproxEqRel(
-                lendingToken.balanceOf(address(docHandler)),
+                lendingToken.balanceOf(address(stablecoinHandler)),
                 AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - (AMOUNT_TO_SPEND * 1e18 / startingExchangeRate)
                     - (AMOUNT_TO_SPEND * 1e18 / exchangeRate),
                 0.1e16 // Allow a maximum difference of 0.1%
             );
         } else if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"))) {
             assertApproxEqRel( // The mock contract that simulates swapping on Uniswap allows for some slippage
-                lendingToken.balanceOf(address(docHandler)),
+                lendingToken.balanceOf(address(stablecoinHandler)),
                 AMOUNT_TO_DEPOSIT * 1e18 / startingExchangeRate - (AMOUNT_TO_SPEND * 1e18 / startingExchangeRate)
                     - (AMOUNT_TO_SPEND * 1e18 / exchangeRate),
                 MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5%
@@ -280,13 +280,13 @@ contract StablecoinLendingTest is DcaDappTest {
     // in the lending protocol, which only happenes in edge cases on mainnet or a live testnet
     // function testWithdrawalAmountAdjustedToBalance() external {
     //     // Add debug logging
-    //     console2.log("Initial user lending token balance:", docHandler.getUsersLendingTokenBalance(USER));
+    //     console2.log("Initial user lending token balance:", stablecoinHandler.getUsersLendingTokenBalance(USER));
 
     //     uint256 exchangeRate =
     //         s_lendingProtocolIndex == TROPYKUS_INDEX ? lendingToken.exchangeRateCurrent() : lendingToken.tokenPrice();
     //     console2.log("Exchange rate:", exchangeRate);
 
-    //     uint256 stablecoinInLendingProtocol = docHandler.getUsersLendingTokenBalance(USER) * exchangeRate / 1e18;
+    //     uint256 stablecoinInLendingProtocol = stablecoinHandler.getUsersLendingTokenBalance(USER) * exchangeRate / 1e18;
     //     console2.log("Stablecoin in lending protocol:", stablecoinInLendingProtocol);
 
     //     uint256 attemptedWithdrawalAmount = stablecoinInLendingProtocol + 1;
@@ -301,6 +301,6 @@ contract StablecoinLendingTest is DcaDappTest {
     //     // Verify user received their full balance
     //     assertEq(stablecoin.balanceOf(USER), stablecoinInLendingProtocol);
     //     // Verify lending token balance is now 0
-    //     assertEq(docHandler.getUsersLendingTokenBalance(USER), 0);
+    //     assertEq(stablecoinHandler.getUsersLendingTokenBalance(USER), 0);
     // }
 } 

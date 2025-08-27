@@ -6,7 +6,7 @@ import {Test, console2} from "forge-std/Test.sol";
 import {DcaManager} from "../../src/DcaManager.sol";
 import {DcaManagerAccessControl} from "../../src/DcaManagerAccessControl.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
-import {IDocHandler} from "../../test/interfaces/IDocHandler.sol";
+import {IStablecoinHandler} from "../../test/interfaces/IStablecoinHandler.sol";
 import {ICoinPairPrice} from "../../src/interfaces/ICoinPairPrice.sol";
 import {TropykusDocHandlerMoc} from "../../src/TropykusDocHandlerMoc.sol";
 import {SovrynDocHandlerMoc} from "../../src/SovrynDocHandlerMoc.sol";
@@ -35,7 +35,7 @@ import {IPurchaseUniswap} from "../../src/interfaces/IPurchaseUniswap.sol";
 contract DcaDappTest is Test {
     DcaManager dcaManager;
     MockMocProxy mocProxy;
-    IDocHandler docHandler;
+    IStablecoinHandler stablecoinHandler;
     OperationsAdmin operationsAdmin;
     MockStablecoin stablecoin;
     ILendingToken lendingToken;
@@ -69,7 +69,7 @@ contract DcaDappTest is Test {
     bool isMocSwaps = keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"));
     bool isDexSwaps = keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("dexSwaps"));
     string lendingProtocol = vm.envString("LENDING_PROTOCOL");
-    address docHandlerAddress;
+    address stablecoinHandlerAddress;
     uint256 s_lendingProtocolIndex;
     uint256 s_btcPrice;
     ICoinPairPrice mocOracle;
@@ -204,14 +204,14 @@ contract DcaDappTest is Test {
 
         if (isMocSwaps) {
             DeployMocSwaps deployContracts = new DeployMocSwaps();
-            (operationsAdmin, docHandlerAddress, dcaManager, mocHelperConfig) = deployContracts.run();
-            docHandler = IDocHandler(docHandlerAddress);
+            (operationsAdmin, stablecoinHandlerAddress, dcaManager, mocHelperConfig) = deployContracts.run();
+            stablecoinHandler = IStablecoinHandler(stablecoinHandlerAddress);
             MocHelperConfig.NetworkConfig memory networkConfig = mocHelperConfig.getActiveNetworkConfig();
 
-            address docTokenAddress = mocHelperConfig.getStablecoinAddress();
+            address stablecoinAddress = mocHelperConfig.getStablecoinAddress();
             address mocProxyAddress = networkConfig.mocProxyAddress;
 
-            stablecoin = MockStablecoin(docTokenAddress);
+            stablecoin = MockStablecoin(stablecoinAddress);
             mocProxy = MockMocProxy(mocProxyAddress);
 
             // Give the MoC proxy contract allowance
@@ -223,9 +223,9 @@ contract DcaDappTest is Test {
                 // Deal rBTC funds to MoC contract
                 vm.deal(mocProxyAddress, 1000 ether);
 
-                // Give the MoC proxy contract allowance to move stablecoin from docHandler
+                // Give the MoC proxy contract allowance to move stablecoin from stablecoinHandler
                 // This is necessary for local tests because of how the mock contract works, but not for the live contract
-                vm.prank(address(docHandler));
+                vm.prank(address(stablecoinHandler));
                 stablecoin.approve(mocProxyAddress, type(uint256).max);
                 stablecoin.mint(USER, USER_TOTAL_AMOUNT);
             } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
@@ -271,8 +271,8 @@ contract DcaDappTest is Test {
             }
         } else if (isDexSwaps) {
             DeployDexSwaps deployContracts = new DeployDexSwaps();
-            (operationsAdmin, docHandlerAddress, dcaManager, dexHelperConfig) = deployContracts.run();
-            docHandler = IDocHandler(docHandlerAddress);
+            (operationsAdmin, stablecoinHandlerAddress, dcaManager, dexHelperConfig) = deployContracts.run();
+            stablecoinHandler = IStablecoinHandler(stablecoinHandlerAddress);
             
             address stablecoinAddress = dexHelperConfig.getStablecoinAddress();
             address wrBtcTokenAddress = dexHelperConfig.getActiveNetworkConfig().wrbtcTokenAddress;
@@ -288,7 +288,7 @@ contract DcaDappTest is Test {
                 // Local tests
                 stablecoin.mint(USER, USER_TOTAL_AMOUNT);
                 // Deal 1000 rBTC to the mock SwapRouter02 contract, so that it can deposit rBTC on the mock WRBTC contract
-                // to simulate that the DocHandlerDex contract has received WRBTC after calling the `exactInput()` function
+                // to simulate that the StablecoinHandlerDex contract has received WRBTC after calling the `exactInput()` function
                 vm.deal(swapRouter02Address, 1000 ether);
             } else if (block.chainid == RSK_MAINNET_CHAIN_ID) {
                 vm.store(
@@ -361,13 +361,13 @@ contract DcaDappTest is Test {
 
         // Add tokenHandler
         vm.expectEmit(true, true, true, false);
-        emit OperationsAdmin__TokenHandlerUpdated(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
+        emit OperationsAdmin__TokenHandlerUpdated(address(stablecoin), s_lendingProtocolIndex, address(stablecoinHandler));
         vm.prank(ADMIN);
-        operationsAdmin.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, address(docHandler));
+        operationsAdmin.assignOrUpdateTokenHandler(address(stablecoin), s_lendingProtocolIndex, address(stablecoinHandler));
 
         // The starting point of the tests is that the user has already deposited stablecoin (so withdrawals can also be tested without much hassle)
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         dcaManager.createDcaSchedule(
             address(stablecoin), AMOUNT_TO_DEPOSIT, AMOUNT_TO_SPEND, MIN_PURCHASE_PERIOD, s_lendingProtocolIndex
         );
@@ -381,7 +381,7 @@ contract DcaDappTest is Test {
     function depositStablecoin() internal returns (uint256, uint256) {
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
         );
@@ -408,8 +408,8 @@ contract DcaDappTest is Test {
 
     function createSeveralDcaSchedules() internal {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
-        uint256 docToDeposit = AMOUNT_TO_DEPOSIT / NUM_OF_SCHEDULES;
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
+        uint256 stablecoinToDeposit = AMOUNT_TO_DEPOSIT / NUM_OF_SCHEDULES;
         uint256 purchaseAmount = AMOUNT_TO_SPEND / NUM_OF_SCHEDULES;
         // Delete the schedule created in setUp to have all five schedules with the same amounts
         bytes32 scheduleId = keccak256(
@@ -430,13 +430,13 @@ contract DcaDappTest is Test {
             );
             vm.expectEmit(true, true, true, true);
             emit DcaManager__DcaScheduleCreated(
-                USER, address(stablecoin), scheduleId, docToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+                USER, address(stablecoin), scheduleId, stablecoinToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
             dcaManager.createDcaSchedule(
-                address(stablecoin), docToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
+                address(stablecoin), stablecoinToDeposit, purchaseAmount, purchasePeriod, s_lendingProtocolIndex
             );
             uint256 userBalanceAfterDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
-            assertEq(docToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
+            assertEq(stablecoinToDeposit, userBalanceAfterDeposit - userBalanceBeforeDeposit);
             assertEq(purchaseAmount, dcaManager.getMySchedulePurchaseAmount(address(stablecoin), scheduleIndex));
             assertEq(purchasePeriod, dcaManager.getMySchedulePurchasePeriod(address(stablecoin), scheduleIndex));
         }
@@ -445,8 +445,8 @@ contract DcaDappTest is Test {
 
     function makeSinglePurchase() internal {
         vm.startPrank(USER);
-        uint256 docBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 stablecoinBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
         IDcaManager.DcaDetails[] memory dcaDetails = dcaManager.getMyDcaSchedules(address(stablecoin));
         vm.stopPrank();
 
@@ -474,12 +474,12 @@ contract DcaDappTest is Test {
         dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, dcaDetails[SCHEDULE_INDEX].scheduleId);
 
         vm.startPrank(USER);
-        uint256 docBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        uint256 rbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 stablecoinBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
+        uint256 rbtcBalanceAfterPurchase = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
         vm.stopPrank();
 
         // Check that stablecoin was subtracted and rBTC was added to user's balances
-        assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, AMOUNT_TO_SPEND);
+        assertEq(stablecoinBalanceBeforePurchase - stablecoinBalanceAfterPurchase, AMOUNT_TO_SPEND);
 
         // if (keccak256(abi.encodePacked(swapType)) == keccak256(abi.encodePacked("mocSwaps"))) {
         //     assertEq(rbtcBalanceAfterPurchase - rbtcBalanceBeforePurchase, netPurchaseAmount / s_btcPrice);
@@ -509,8 +509,8 @@ contract DcaDappTest is Test {
 
             for (uint8 j; j < numOfPurchases; ++j) {
                 vm.startPrank(USER);
-                uint256 docBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
-                uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+                uint256 stablecoinBalanceBeforePurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
+                uint256 rbtcBalanceBeforePurchase = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
                 bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), scheduleIndex);
                 vm.stopPrank();
                 
@@ -518,12 +518,12 @@ contract DcaDappTest is Test {
                 dcaManager.buyRbtc(USER, address(stablecoin), scheduleIndex, scheduleId);
                 
                 vm.startPrank(USER);
-                uint256 docBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
-                uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+                uint256 stablecoinBalanceAfterPurchase = dcaManager.getMyScheduleTokenBalance(address(stablecoin), scheduleIndex);
+                uint256 RbtcBalanceAfterPurchase = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
                 vm.stopPrank();
                 
                 // Check that stablecoin was subtracted and rBTC was added to user's balances
-                assertEq(docBalanceBeforePurchase - docBalanceAfterPurchase, schedulePurchaseAmount);
+                assertEq(stablecoinBalanceBeforePurchase - stablecoinBalanceAfterPurchase, schedulePurchaseAmount);
                 assertApproxEqRel(
                     RbtcBalanceAfterPurchase - rbtcBalanceBeforePurchase,
                     netPurchaseAmount / s_btcPrice,
@@ -540,7 +540,7 @@ contract DcaDappTest is Test {
         
         vm.prank(USER);
         assertApproxEqRel(
-            IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance(),
+            IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance(),
             totalDocSpent / s_btcPrice,
             MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.75% (on fork tests we saw this was necessary for both MoC and Uniswap swaps)
         );
@@ -549,16 +549,16 @@ contract DcaDappTest is Test {
     }
 
     function makeBatchPurchasesOneUser() internal {
-        uint256 prevDocHandlerBalance;
+        uint256 prevStablecoinHandlerBalance;
 
         if (isMocSwaps) {
-            prevDocHandlerBalance = address(docHandler).balance;
+            prevStablecoinHandlerBalance = address(stablecoinHandler).balance;
         } else if (isDexSwaps) {
-            prevDocHandlerBalance = wrBtcToken.balanceOf(address(docHandler));
+            prevStablecoinHandlerBalance = wrBtcToken.balanceOf(address(stablecoinHandler));
         }
 
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPrev = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPrev = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
         address[] memory users = new address[](NUM_OF_SCHEDULES);
         uint256[] memory scheduleIndexes = new uint256[](NUM_OF_SCHEDULES);
         uint256[] memory purchaseAmounts = new uint256[](NUM_OF_SCHEDULES);
@@ -613,22 +613,22 @@ contract DcaDappTest is Test {
             s_lendingProtocolIndex
         );
 
-        uint256 postDocHandlerBalance;
+        uint256 postStablecoinHandlerBalance;
 
         if (isMocSwaps) {
-            postDocHandlerBalance = address(docHandler).balance;
+            postStablecoinHandlerBalance = address(stablecoinHandler).balance;
         } else if (isDexSwaps) {
-            postDocHandlerBalance = wrBtcToken.balanceOf(address(docHandler));
+            postStablecoinHandlerBalance = wrBtcToken.balanceOf(address(stablecoinHandler));
         }
 
         assertApproxEqRel(
-            postDocHandlerBalance - prevDocHandlerBalance,
+            postStablecoinHandlerBalance - prevStablecoinHandlerBalance,
             totalNetPurchaseAmount / s_btcPrice,
             MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap purchases)
         );
 
         vm.prank(USER);
-        uint256 userAccumulatedRbtcPost = IPurchaseRbtc(address(docHandler)).getAccumulatedRbtcBalance();
+        uint256 userAccumulatedRbtcPost = IPurchaseRbtc(address(stablecoinHandler)).getAccumulatedRbtcBalance();
 
         assertApproxEqRel(
             userAccumulatedRbtcPost - userAccumulatedRbtcPrev,
@@ -647,16 +647,16 @@ contract DcaDappTest is Test {
             s_lendingProtocolIndex
         );
         
-        uint256 postDocHandlerBalance2;
+        uint256 postStablecoinHandlerBalance2;
 
         if (isMocSwaps) {
-            postDocHandlerBalance2 = address(docHandler).balance;
+            postStablecoinHandlerBalance2 = address(stablecoinHandler).balance;
         } else if (isDexSwaps) {
-            postDocHandlerBalance2 = wrBtcToken.balanceOf(address(docHandler));
+            postStablecoinHandlerBalance2 = wrBtcToken.balanceOf(address(stablecoinHandler));
         }
 
         assertApproxEqRel(
-            postDocHandlerBalance2 - postDocHandlerBalance,
+            postStablecoinHandlerBalance2 - postStablecoinHandlerBalance,
             totalNetPurchaseAmount / s_btcPrice,
             MAX_SLIPPAGE_PERCENT // Allow a maximum difference of 0.5% (on fork tests we saw this was necessary for both MoC and Uniswap purchases)
         );
@@ -704,7 +704,7 @@ contract DcaDappTest is Test {
         // Make the mock oracle the one for Uniswap interactions as well
         if(isDexSwaps) {
             vm.prank(OWNER);
-            IPurchaseUniswap(address(docHandler)).updateMocOracle(address(mockMocBtcPriceProvider));
+            IPurchaseUniswap(address(stablecoinHandler)).updateMocOracle(address(mockMocBtcPriceProvider));
         }
     }
 
@@ -739,15 +739,15 @@ contract DcaDappTest is Test {
         }
         
         // If we couldn't get the lending token address from the helper configs, try to get it from the handler
-        if (lendingTokenAddress == address(0) && address(docHandler) != address(0)) {
+        if (lendingTokenAddress == address(0) && address(stablecoinHandler) != address(0)) {
             if (lendingProtocolIndex == TROPYKUS_INDEX) {
-                try TropykusDocHandlerMoc(payable(address(docHandler))).i_kToken() returns (IkToken kToken) {
+                try TropykusDocHandlerMoc(payable(address(stablecoinHandler))).i_kToken() returns (IkToken kToken) {
                     lendingTokenAddress = address(kToken);
                 } catch {
                     revert("Failed to get Tropykus lending token from handler");
                 }
             } else if (lendingProtocolIndex == SOVRYN_INDEX) {
-                try SovrynDocHandlerMoc(payable(address(docHandler))).i_iSusdToken() returns (IiSusdToken iSusdToken) {
+                try SovrynDocHandlerMoc(payable(address(stablecoinHandler))).i_iSusdToken() returns (IiSusdToken iSusdToken) {
                     lendingTokenAddress = address(iSusdToken);
                 } catch {
                     revert("Failed to get Sovryn lending token from handler");

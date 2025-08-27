@@ -23,7 +23,7 @@ contract DcaScheduleTest is DcaDappTest {
     function testCreateDcaSchedule() external {
         vm.startPrank(USER);
         uint256 scheduleIndex = dcaManager.getMyDcaSchedules(address(stablecoin)).length;
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
         vm.expectEmit(true, true, true, true);
@@ -42,7 +42,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDcaScheduleIdsDontCollide() external {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT);
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
         console.log("First timestamp", block.timestamp);
@@ -73,7 +73,7 @@ contract DcaScheduleTest is DcaDappTest {
         uint256 extraDocToDeposit = AMOUNT_TO_DEPOSIT / 3;
         vm.startPrank(USER);
         uint256 userBalanceBeforeDeposit = dcaManager.getMyScheduleTokenBalance(address(stablecoin), SCHEDULE_INDEX);
-        stablecoin.approve(address(docHandler), extraDocToDeposit);
+        stablecoin.approve(address(stablecoinHandler), extraDocToDeposit);
         bytes32 scheduleId = keccak256(
             abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length - 1)
         );
@@ -93,7 +93,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDeleteDcaSchedule() external {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT * 5);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
@@ -121,7 +121,7 @@ contract DcaScheduleTest is DcaDappTest {
 
     function testDeleteTwoDcaSchedules() public {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT * 5);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
@@ -170,7 +170,7 @@ contract DcaScheduleTest is DcaDappTest {
      */
     function testCannotDeleteLastDcaScheduleInTheSameBlock() external {
         vm.startPrank(USER);
-        stablecoin.approve(address(docHandler), AMOUNT_TO_DEPOSIT * 5);
+        stablecoin.approve(address(stablecoinHandler), AMOUNT_TO_DEPOSIT * 5);
         // Create two schedules in different blocks
         bytes32 scheduleId =
             keccak256(abi.encodePacked(USER, address(stablecoin), block.timestamp, dcaManager.getMyDcaSchedules(address(stablecoin)).length));
