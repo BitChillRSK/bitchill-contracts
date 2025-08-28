@@ -28,7 +28,7 @@ uint256 constant SOVRYN_INDEX = 2;
 
 // Default configurations
 string constant DEFAULT_STABLECOIN = "DOC"; // Default stablecoin to use if not specified
-uint256 constant DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT = 0.988 ether; // 98.8%
+uint256 constant DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT = 0.995 ether; // 99.5% -> 0.5% slippage
 uint256 constant DEFAULT_AMOUNT_OUT_MINIMUM_SAFETY_CHECK = 0.95 ether; // 95%
 uint256 constant MAX_SLIPPAGE_PERCENT = 1 ether - DEFAULT_AMOUNT_OUT_MINIMUM_PERCENT; 
 uint256 constant EXCHANGE_RATE_DECIMALS = 1e18; // Valid for DOC and USDRIF in both Tropykus and Sovryn
