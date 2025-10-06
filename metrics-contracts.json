@@ -1,0 +1,32 @@
+[
+    {
+        "Name": "Solidity",
+        "Bytes": 593957,
+        "CodeBytes": 0,
+        "Lines": 13737,
+        "Code": 8465,
+        "Comment": 3215,
+        "Blank": 2057,
+        "Complexity": 527,
+        "Count": 79,
+        "WeightedComplexity": 0,
+        "Files": [],
+        "LineLength": null,
+        "ULOC": 0
+    },
+    {
+        "Name": "Markdown",
+        "Bytes": 3637,
+        "CodeBytes": 0,
+        "Lines": 98,
+        "Code": 71,
+        "Comment": 0,
+        "Blank": 27,
+        "Complexity": 0,
+        "Count": 1,
+        "WeightedComplexity": 0,
+        "Files": [],
+        "LineLength": null,
+        "ULOC": 0
+    }
+]
