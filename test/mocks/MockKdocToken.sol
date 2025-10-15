@@ -80,9 +80,4 @@ contract MockKdocToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
         return newRate;
     }
-
-    function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
-        uint256 underlyingAmount = balanceOf(user) * exchangeRateStored() / DECIMALS;
-        return (0, underlyingAmount, 0, 0);
-    }
 }

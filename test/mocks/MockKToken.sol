@@ -73,9 +73,4 @@ contract MockKToken is ERC20, ERC20Burnable, Ownable, ERC20Permit {
 
         return STARTING_EXCHANGE_RATE + exchangeRateIncrease; // Current exchange rate
     }
-
-    function getSupplierSnapshotStored(address user) external view returns (uint256, uint256, uint256, uint256) {
-        uint256 underlyingAmount = balanceOf(user) * exchangeRateCurrent() / DECIMALS;
-        return (0, underlyingAmount, 0, 0);
-    }
 }

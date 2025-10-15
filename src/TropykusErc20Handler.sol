@@ -174,10 +174,7 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         returns (uint256 stablecoinRedeemed) 
     {
         uint256 usersKtokenBalance = s_kTokenBalances[user];
-        (uint256 kTokenToRepay, bool hasTruncated) = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
-        if (hasTruncated) {
-            kTokenToRepay = _lendingTokenRoundUp(kTokenToRepay);
-        }
+        uint256 kTokenToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
         if (kTokenToRepay > usersKtokenBalance) {
             uint256 oldKtokenToRepay = kTokenToRepay;
             uint256 oldStablecoinToRedeem = stablecoinToRedeem;
@@ -216,21 +213,12 @@ abstract contract TropykusErc20Handler is TokenHandler, TokenLending, ITropykusE
         virtual
         returns (uint256)
     {
-        (, uint256 underlyingAmount,,) = i_kToken.getSupplierSnapshotStored(address(this)); 
-        // @notice underlyingAmount is the amount of stablecoin that can be redeemed by this contract as of the latest market update
-        // this is just a safety check to avoid trying to redeem more than the contract has in deposit
-        if (totalStablecoinToRedeem > underlyingAmount) {
-            revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalStablecoinToRedeem, underlyingAmount);
-        }
-        (uint256 totalKtokenToRepay, bool hasTruncated) = _stablecoinToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
-        if (hasTruncated) {
-            totalKtokenToRepay = _lendingTokenRoundUp(totalKtokenToRepay);
-        }
-
+        uint256 totalKtokenToRepay = _stablecoinToLendingToken(totalStablecoinToRedeem, i_kToken.exchangeRateCurrent());
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
             // @notice the amount of kToken each user repays is proportional to the ratio of 
             // that user's stablecoin getting redeemed over the total stablecoin getting redeemed
+            // @notice Rounds up the lending token amount to avoid underestimating the amount to subtract from each user's balance
             uint256 usersRepaidKtoken = Math.mulDiv(totalKtokenToRepay, purchaseAmounts[i], totalStablecoinToRedeem, Math.Rounding.Up);
             s_kTokenBalances[users[i]] -= usersRepaidKtoken;
             emit TokenLending__UnderlyingRedeemed(users[i], purchaseAmounts[i], usersRepaidKtoken);
