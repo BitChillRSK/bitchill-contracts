@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {ITokenLending} from "./interfaces/ITokenLending.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 /**
  * @title TokenLending
@@ -16,6 +17,8 @@ abstract contract TokenLending is ITokenLending {
 
     /**
      * @notice convert underlying token to lending token
+     * @dev Rounds up the lending token amount to avoid underestimating the amount to subtract from each user's balance when 
+     * redeeming stablecoin (which would cause accounting errors if 1 WEI less than gets burned is subtracted)
      * @param underlyingAmount: the amount of underlying token to convert
      * @param exchangeRate: the exchange rate of underlying token to lending token
      * @return lendingTokenAmount the amount of lending token
@@ -23,10 +26,9 @@ abstract contract TokenLending is ITokenLending {
     function _stablecoinToLendingToken(uint256 underlyingAmount, uint256 exchangeRate)
         internal
         view
-        returns (uint256 lendingTokenAmount, bool hasTruncated)
+        returns (uint256 lendingTokenAmount)
     {
-        lendingTokenAmount = underlyingAmount * i_exchangeRateDecimals / exchangeRate;
-        hasTruncated = underlyingAmount * i_exchangeRateDecimals % exchangeRate != 0;
+        lendingTokenAmount = Math.mulDiv(underlyingAmount, i_exchangeRateDecimals, exchangeRate, Math.Rounding.Up);
     }
 
     /**

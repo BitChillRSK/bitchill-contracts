@@ -167,10 +167,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         returns (uint256 stablecoinRedeemed)
     {
         uint256 usersIsusdBalance = s_iSusdBalances[user];
-        (uint256 iSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
-        if (hasTruncated) {
-            iSusdToRepay = _lendingTokenRoundUp(iSusdToRepay);
-        }
+        uint256 iSusdToRepay = _stablecoinToLendingToken(stablecoinToRedeem, exchangeRate);
         if (iSusdToRepay > usersIsusdBalance) {
             uint256 oldiSusdToRepay = iSusdToRepay;
             uint256 oldStablecoinToRedeem = stablecoinToRedeem;
@@ -200,10 +197,7 @@ abstract contract SovrynErc20Handler is TokenHandler, TokenLending, ISovrynErc20
         if (totalErc20ToRedeem > underlyingAmount) {
             revert TokenLending__UnderlyingRedeemAmountExceedsBalance(totalErc20ToRedeem, underlyingAmount);
         }
-        (uint256 totaliSusdToRepay, bool hasTruncated) = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
-        if (hasTruncated) {
-            totaliSusdToRepay = _lendingTokenRoundUp(totaliSusdToRepay);
-        }
+        uint256 totaliSusdToRepay = _stablecoinToLendingToken(totalErc20ToRedeem, i_iSusdToken.tokenPrice());
 
         uint256 numOfPurchases = users.length;
         for (uint256 i; i < numOfPurchases; ++i) {
