@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.19;
 
-import {Test, console} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 import {DcaDappTest} from "./DcaDappTest.t.sol";
 // import {RbtcBaseTest} from "./RbtcBaseTest.t.sol";
 import {IDcaManager} from "../../src/interfaces/IDcaManager.sol";
@@ -12,6 +12,13 @@ import {IDcaManagerAccessControl} from "../../src/interfaces/IDcaManagerAccessCo
 import "../../script/Constants.sol";
 
 contract RbtcPurchaseTest is DcaDappTest {
+
+    struct BatchPurchase {
+        address[] buyers;
+        uint256[] scheduleIndexes;
+        bytes32[] scheduleIds;
+        uint256[] purchaseAmounts;
+    }
 
     event PurchaseRbtc__rBtcRescued(address indexed stuckUserContract, address indexed rescueAddress, uint256 amount);
 
@@ -361,38 +368,40 @@ contract RbtcPurchaseTest is DcaDappTest {
 
         // Perform the required number of purchase rounds
         for (uint256 round; round < purchasesPerSchedule; ++round) {
-            // Build batch arrays
-            address[] memory buyers = new address[](totalSchedules);
-            uint256[] memory scheduleIndexes = new uint256[](totalSchedules);
-            bytes32[] memory scheduleIds = new bytes32[](totalSchedules);
-            uint256[] memory purchaseAmounts = new uint256[](totalSchedules);
+            // Build batch arrays in auxiliary struct
+            BatchPurchase memory batchPurchase = BatchPurchase({
+                buyers: new address[](totalSchedules),
+                scheduleIndexes: new uint256[](totalSchedules),
+                scheduleIds: new bytes32[](totalSchedules),
+                purchaseAmounts: new uint256[](totalSchedules)
+            });
 
             uint256 idx;
             // Fill arrays for USER
             for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
-                buyers[idx] = USER;
-                scheduleIndexes[idx] = i;
-                purchaseAmounts[idx] = AMOUNT_TO_SPEND;
-                scheduleIds[idx] = dcaManager.getScheduleId(USER, address(stablecoin), i);
+                batchPurchase.buyers[idx] = USER;
+                batchPurchase.scheduleIndexes[idx] = i;
+                batchPurchase.purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                batchPurchase.scheduleIds[idx] = dcaManager.getScheduleId(USER, address(stablecoin), i);
                 ++idx;
             }
             // Fill arrays for SECOND_USER
             for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
-                buyers[idx] = SECOND_USER;
-                scheduleIndexes[idx] = i;
-                purchaseAmounts[idx] = AMOUNT_TO_SPEND;
-                scheduleIds[idx] = dcaManager.getScheduleId(SECOND_USER, address(stablecoin), i);
+                batchPurchase.buyers[idx] = SECOND_USER;
+                batchPurchase.scheduleIndexes[idx] = i;
+                batchPurchase.purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                batchPurchase.scheduleIds[idx] = dcaManager.getScheduleId(SECOND_USER, address(stablecoin), i);
                 ++idx;
             }
 
             // Execute batch purchase as SWAPPER
             vm.prank(SWAPPER);
             dcaManager.batchBuyRbtc(
-                buyers,
+                batchPurchase.buyers,
                 address(stablecoin),
-                scheduleIndexes,
-                scheduleIds,
-                purchaseAmounts,
+                batchPurchase.scheduleIndexes,
+                batchPurchase.scheduleIds,
+                batchPurchase.purchaseAmounts,
                 s_lendingProtocolIndex
             );
 
@@ -525,6 +534,124 @@ contract RbtcPurchaseTest is DcaDappTest {
         // Withdrawing interest should not revert
         vm.prank(SECOND_USER);
         dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+    }
+
+    // New test: exhaust handler balance across multiple users and schedules with interest withdrawals in between batch purchases without revert
+    // @notice: this test won't pass for Tropykus on forked chains because updating
+    // the exchange rate requires to roll to a future block, which makes the MoC oracle
+    // throw an "Oracle have no Bitcoin Price" error.
+    function testDepleteHandlerBalanceWithInterestWithdrawalsDoesNotRevert() external {
+        // Prepare a second user
+        address SECOND_USER = makeAddr("SECOND_USER");
+
+        // Fund SECOND_USER with rBTC for gas
+        vm.deal(SECOND_USER, 10 ether);
+
+        // Give SECOND_USER enough stablecoin
+        uint256 secondUserInitialStable = USER_TOTAL_AMOUNT;
+        if (block.chainid == ANVIL_CHAIN_ID) {
+            // Local tests – mint directly
+            stablecoin.mint(SECOND_USER, secondUserInitialStable);
+        } else {
+            // On forked chains we transfer from USER (who already owns tokens)
+            vm.startPrank(USER);
+            stablecoin.transfer(SECOND_USER, secondUserInitialStable);
+            vm.stopPrank();
+        }
+
+        // Define how many schedules each user will have
+        uint256 SCHEDULES_PER_USER = 3;
+
+        // USER already has 1 schedule from setUp → create 2 more so both users end up with 3 each
+        _createAdditionalSchedules(USER, SCHEDULES_PER_USER - 1);
+        // Create 3 schedules for SECOND_USER
+        _createAdditionalSchedules(SECOND_USER, SCHEDULES_PER_USER);
+
+        // Total number of schedules in batch operations
+        uint256 totalSchedules = SCHEDULES_PER_USER * 2;
+
+        // Each schedule can execute AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND purchases before running out of balance
+        uint256 purchasesPerSchedule = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
+
+        // Store initial interest accrued (should be 0 initially)
+        uint256 initialInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 initialInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have 0 interest initially
+        assertEq(initialInterestUser, 0, "USER should have 0 interest initially");
+        assertEq(initialInterestSecondUser, 0, "SECOND_USER should have 0 interest initially");
+
+        address[] memory tokens = new address[](1);
+        tokens[0] = address(stablecoin);
+        uint256[] memory lendingProtocolIndexes = new uint256[](1);
+        lendingProtocolIndexes[0] = s_lendingProtocolIndex;
+
+        // Perform the required number of purchase rounds
+        for (uint256 round; round < purchasesPerSchedule; ++round) {
+            // Build batch arrays in auxiliary struct
+            BatchPurchase memory batchPurchase = BatchPurchase({
+                buyers: new address[](totalSchedules),
+                scheduleIndexes: new uint256[](totalSchedules),
+                scheduleIds: new bytes32[](totalSchedules),
+                purchaseAmounts: new uint256[](totalSchedules)
+            });
+
+            uint256 idx;
+            // Fill arrays for USER
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                batchPurchase.buyers[idx] = USER;
+                batchPurchase.scheduleIndexes[idx] = i;
+                batchPurchase.purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                batchPurchase.scheduleIds[idx] = dcaManager.getScheduleId(USER, address(stablecoin), i);
+                ++idx;
+            }
+            // Fill arrays for SECOND_USER
+            for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+                batchPurchase.buyers[idx] = SECOND_USER;
+                batchPurchase.scheduleIndexes[idx] = i;
+                batchPurchase.purchaseAmounts[idx] = AMOUNT_TO_SPEND;
+                batchPurchase.scheduleIds[idx] = dcaManager.getScheduleId(SECOND_USER, address(stablecoin), i);
+                ++idx;
+            }
+
+            // Execute batch purchase as SWAPPER
+            vm.prank(SWAPPER);
+            dcaManager.batchBuyRbtc(
+                batchPurchase.buyers,
+                address(stablecoin),
+                batchPurchase.scheduleIndexes,
+                batchPurchase.scheduleIds,
+                batchPurchase.purchaseAmounts,
+                s_lendingProtocolIndex
+            );
+
+            // Withdrawing interest should not revert
+            vm.prank(USER);
+            dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+            // Withdrawing interest should not revert
+            vm.prank(SECOND_USER);
+            dcaManager.withdrawAllAccumulatedInterest(tokens, lendingProtocolIndexes);
+
+            // Advance time and update exchange rate so future purchases are allowed and interest accrues
+            updateExchangeRate(MIN_PURCHASE_PERIOD);
+        }
+
+        // After time has passed and multiple purchase rounds, check that interest has accrued
+        uint256 finalInterestUser = dcaManager.getInterestAccrued(USER, address(stablecoin), s_lendingProtocolIndex);
+        uint256 finalInterestSecondUser = dcaManager.getInterestAccrued(SECOND_USER, address(stablecoin), s_lendingProtocolIndex);
+        
+        // Both users should have accrued some interest during the test
+        assertEq(finalInterestUser, 0, "USER should have already withdrawn all interest");
+        assertEq(finalInterestSecondUser, 0, "SECOND_USER should have already withdrawn all interest");
+        
+        // After depletion all schedule balances should be zero
+        for (uint256 i; i < SCHEDULES_PER_USER; ++i) {
+            assertEq(dcaManager.getScheduleTokenBalance(USER, address(stablecoin), i), 0);
+            assertEq(dcaManager.getScheduleTokenBalance(SECOND_USER, address(stablecoin), i), 0);
+        }
+
+        // Handler must hold no stablecoin after final purchase except for some dust due to precision loss
+        assertLt(stablecoin.balanceOf(address(stablecoinHandler)), 100); // Allow 100 wei of dust due to precision loss
     }
 
     /// @dev helper to create additional schedules for a user
