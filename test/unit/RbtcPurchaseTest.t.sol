@@ -96,6 +96,28 @@ contract RbtcPurchaseTest is DcaDappTest {
         // }
     }
 
+    // This test would be relevant if a schedule runs out of stablecoin and later the user deposits more
+    function testLastPurchaseTimestampConsistencyWhenScheduleResumed(uint256 timeUntilResume) public {
+        if (timeUntilResume < MIN_PURCHASE_PERIOD) return; // Avoid known revert
+        if (timeUntilResume > 100 * 52 weeks) return; // Avoid overflows
+        uint256 firstPurchaseTimestamp = block.timestamp;
+        bytes32 scheduleId = dcaManager.getScheduleId(USER, address(stablecoin), SCHEDULE_INDEX);
+        vm.prank(SWAPPER);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
+        
+        // Imagine after the first purchase, the schedule runs out of stablecoin and is resumed later 
+        vm.warp(vm.getBlockTimestamp() + timeUntilResume); 
+        
+        vm.prank(SWAPPER);
+        dcaManager.buyRbtc(USER, address(stablecoin), SCHEDULE_INDEX, scheduleId);
+
+        IDcaManager.DcaDetails memory schedule = dcaManager.getDcaSchedules(USER, address(stablecoin))[SCHEDULE_INDEX];
+        assertLe(schedule.lastPurchaseTimestamp, block.timestamp);
+        assertGt(schedule.lastPurchaseTimestamp, block.timestamp - MIN_PURCHASE_PERIOD);
+        uint256 periodsElapsed = (block.timestamp - firstPurchaseTimestamp) / MIN_PURCHASE_PERIOD;
+        assertEq(schedule.lastPurchaseTimestamp, firstPurchaseTimestamp + periodsElapsed * MIN_PURCHASE_PERIOD);
+    }
+
     function testRevertPurchasetIfStablecoinRunsOut() external {
         uint256 numOfPurchases = AMOUNT_TO_DEPOSIT / AMOUNT_TO_SPEND;
         bytes32 scheduleId =

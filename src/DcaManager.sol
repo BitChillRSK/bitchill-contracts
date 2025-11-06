@@ -546,11 +546,15 @@ contract DcaManager is IDcaManager, Ownable, ReentrancyGuard {
         dcaScheduleStorage.tokenBalance = dcaSchedule.tokenBalance;
         emit DcaManager__TokenBalanceUpdated(token, scheduleId, dcaSchedule.tokenBalance);
 
-        // @notice: this way purchases are possible with the wanted periodicity even if a previous purchase was delayed
-        dcaSchedule.lastPurchaseTimestamp =
-            dcaSchedule.lastPurchaseTimestamp == 0
+        // @notice: this way purchases are possible with the wanted periodicity even if 
+        // - a previous purchase was delayed
+        // - the schedule run out of stablecoin and was resumed later with a new deposit
+        uint256 periodsElapsed = (block.timestamp - dcaSchedule.lastPurchaseTimestamp) / dcaSchedule.purchasePeriod;
+        unchecked {
+            dcaSchedule.lastPurchaseTimestamp = dcaSchedule.lastPurchaseTimestamp == 0
                 ? block.timestamp
-                : dcaSchedule.lastPurchaseTimestamp + dcaSchedule.purchasePeriod;
+                : dcaSchedule.lastPurchaseTimestamp + periodsElapsed * dcaSchedule.purchasePeriod;
+        }
         dcaScheduleStorage.lastPurchaseTimestamp = dcaSchedule.lastPurchaseTimestamp;
         emit DcaManager__LastPurchaseTimestampUpdated(token, scheduleId, dcaSchedule.lastPurchaseTimestamp);
 
