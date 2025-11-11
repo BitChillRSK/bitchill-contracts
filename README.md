@@ -180,13 +180,65 @@ forge test --match-test invariant_totalDepositedTokensMatchesLendingProtocol -vv
 
 ### Deployment
 
-To deploy the BitChill smart contracts on Rootstock testnet follow these steps:
+#### 🔐 Secure Wallet Management (Recommended)
+
+**Using Keystores (Recommended for Production):**
+
+Keystores encrypt your private keys and are much more secure than plain text private keys in `.env` files.
+
+1. **Import your private key into a keystore:**
+   ```bash
+   # Interactive password prompt (recommended)
+   cast wallet import --private-key <RAW_PRIVATE_KEY> <ACCOUNT_NAME>
+   # Enter a strong password when prompted
+   ```
+
+2. **Use keystore in deployment commands:**
+   ```bash
+   forge script script/DeployMocSwaps.s.sol \
+     --rpc-url $RSK_TESTNET_RPC_URL \
+     --account dev_wallet \
+     --broadcast \
+     --verify \
+     --verifier blockscout \
+     --verifier-url $BLOCKSCOUT_API_URL \
+     --legacy
+
+   # Enter password when prompted
+   ```
+
+**Using Hardware Wallets (Most Secure):**
+
+For maximum security, use a Ledger or Trezor hardware wallet:
+
+```bash
+# With Ledger
+forge script script/DeployMocSwaps.s.sol \
+  --rpc-url $RSK_TESTNET_RPC_URL \
+  --ledger \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url $BLOCKSCOUT_API_URL \
+  --legacy
+
+# With Trezor
+forge script script/DeployMocSwaps.s.sol \
+  --rpc-url $RSK_TESTNET_RPC_URL \
+  --trezor \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url $BLOCKSCOUT_API_URL \
+  --legacy
+```
+
+#### Deployment Steps
 
 1. Set up your environment variables in `.env`:
 ```bash
 # Required variables
 RSK_TESTNET_RPC_URL=your_rsk_testnet_rpc_url
-PRIVATE_KEY=your_private_key
 BLOCKSCOUT_API_KEY=your_blockscout_api_key
 BLOCKSCOUT_API_URL=https://rootstock-testnet.blockscout.com/api
 
@@ -198,9 +250,22 @@ export REAL_DEPLOYMENT=true  # Set to true for actual deployment on a live netwo
 
 2. Deploy the contracts:
 ```bash
+# Deploy to Rootstock Testnet
+REAL_DEPLOYMENT=true \
 forge script script/DeployMocSwaps.s.sol \
   --rpc-url $RSK_TESTNET_RPC_URL \
-  --private-key $PRIVATE_KEY \
+  --account dev_wallet \
+  --broadcast \
+  --verify \
+  --verifier blockscout \
+  --verifier-url $BLOCKSCOUT_API_URL \
+  --legacy
+
+# Deploy to Rootstock Mainnet
+REAL_DEPLOYMENT=true \
+forge script script/DeployMocSwaps.s.sol \
+  --rpc-url $RSK_MAINNET_RPC_URL \
+  --account dev_wallet \
   --broadcast \
   --verify \
   --verifier blockscout \
